@@ -1,0 +1,49 @@
+;; NOTE defcfg = global configuration options (zie hierboven in extraDefCfg)
+
+ ;; define keys that will be modified (all keys still processed)
+ (defsrc
+    caps
+    a s d f g h j k l ;
+    v
+    ;; TODO mss alt keys rebinden?
+)
+
+;; default/base layer modifications always active
+(deflayer default
+    @cap
+    @a @s @d @f _ _ @j @k @l @;
+    @v
+)
+
+;; values used by multiple changes
+(defvar
+    tap-time 200
+    hold-time 250
+)
+
+(defchordsv2-experimental 
+    ;; (j  k     ) esc 100 all-released ()
+    (lshift rshift) rght 100 all-released ()
+)
+
+;; remapping between physical keys and functionality
+(defalias
+    capsword (caps-word 2000)
+    cap (tap-hold-press $tap-time $hold-time esc @capsword )
+    a (tap-hold $tap-time $hold-time a lmet)
+    s (tap-hold $tap-time $hold-time s lalt)
+    d (tap-hold $tap-time $hold-time d lsft)
+    f (tap-hold $tap-time $hold-time f lctl)
+    j (tap-hold $tap-time $hold-time j rctl)
+    k (tap-hold $tap-time $hold-time k rsft)
+    l (tap-hold $tap-time $hold-time l lalt)
+    ; (tap-hold $tap-time $hold-time ; lmet)
+    vim_layer_toggle (layer-toggle vim_layer)
+    v (tap-hold $tap-time $hold-time v @vim_layer_toggle)
+)
+
+(deflayer vim_layer
+    _
+    lmet lalt lsft lctl _ left down up right _
+    _
+)
