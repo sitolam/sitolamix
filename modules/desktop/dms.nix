@@ -82,14 +82,15 @@ in
             # frosted-glass blur behind DMS surfaces (bar, popouts, modals).
             blurEnabled = true;
             blurForegroundLayers = true;
-            # blur the wallpaper only while the niri overview is open (handled
-            # internally, gated on NiriService.inOverview — no niri rule needed).
+            # blur the wallpaper inside the overview. Two cooperating pieces:
+            #  - blurWallpaperOnOverview: blurs the live wallpaper in the
+            #    workspace tiles (internal MultiEffect, gated on inOverview).
+            #  - blurredWallpaperLayer: draws a blurred wallpaper duplicate on the
+            #    dms:blurwallpaper background layer, which the niri layer-rule
+            #    below pins into the overview backdrop (place-within-backdrop). So
+            #    the blurred copy only shows in the overview, not on the desktop.
             blurWallpaperOnOverview = true;
-            # NB: leave this off. It draws a *second, always-blurred* wallpaper
-            # copy on the background layer (namespace dms:blurwallpaper) that only
-            # makes sense with a manual niri layer-rule; on its own it just blurs
-            # the whole desktop permanently.
-            blurredWallpaperLayer = false;
+            blurredWallpaperLayer = true;
             # blur only shows through transparent pixels: stylix.opacity defaults
             # to fully opaque, so force the shell surfaces translucent enough to
             # see the blur. (mkForce overrides the stylix opacity target.)
@@ -101,6 +102,19 @@ in
         # DMS honours DMS_DISABLE_MATUGEN to skip generating app theme templates
         # entirely; merges with the environment block in niri/layout.nix.
         programs.niri.settings.environment.DMS_DISABLE_MATUGEN = "1";
+
+        # Pin DMS's blurred-wallpaper duplicate into niri's overview backdrop, so
+        # it's only visible in the overview / between workspaces (never on the
+        # normal desktop). This is the "manual niri configuration" that the
+        # blurredWallpaperLayer setting requires. The layer is a Background
+        # surface that ignores exclusive zones, which is what place-within-backdrop
+        # needs.
+        programs.niri.settings.layer-rules = [
+          {
+            matches = [ { namespace = "^dms:blurwallpaper$"; } ];
+            place-within-backdrop = true;
+          }
+        ];
       };
   };
 }
