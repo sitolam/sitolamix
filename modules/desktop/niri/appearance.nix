@@ -66,6 +66,12 @@ in
               inactive.color = "#${config.lib.stylix.colors.base02}";
             };
 
+            # Overview backdrop (visible between workspaces, and as the fallback
+            # on any output where DMS's blurred-wallpaper backdrop doesn't render
+            # — currently the non-focused monitor). Use the theme's base so it
+            # reads as an intentional dark surface rather than a sharp wallpaper.
+            overview.backdrop-color = "#${config.lib.stylix.colors.base00}";
+
             debug = {
               honor-xdg-activation-with-invalid-serial = [ ];
             };
