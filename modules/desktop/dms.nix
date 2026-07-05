@@ -96,6 +96,71 @@ in
             # see the blur. (mkForce overrides the stylix opacity target.)
             popupTransparency = lib.mkForce 0.82;
             dockTransparency = lib.mkForce 0.82;
+
+            # ---- captured from GUI tuning (declarative; GUI edits won't persist) ----
+            use24HourClock = true;
+            showDock = false;
+            # let stylix own GTK/Qt app theming; DMS shouldn't apply its own.
+            gtkThemingEnabled = false;
+            qtThemingEnabled = false;
+
+            # custom bar layout (configVersion 5 barConfigs).
+            barConfigs = [
+              {
+                id = "default";
+                name = "Main Bar";
+                enabled = true;
+                position = 0;
+                screenPreferences = [ "all" ];
+                showOnLastDisplay = true;
+                leftWidgets = [
+                  "launcherButton"
+                  "workspaceSwitcher"
+                  "focusedWindow"
+                ];
+                centerWidgets = [
+                  "music"
+                  "clock"
+                  "weather"
+                ];
+                rightWidgets = [
+                  "systemTray"
+                  "clipboard"
+                  "cpuUsage"
+                  "memUsage"
+                  "notificationButton"
+                  "battery"
+                  "controlCenterButton"
+                ];
+                spacing = 4;
+                innerPadding = 4;
+                bottomGap = 0;
+                transparency = 0.7;
+                widgetTransparency = 0.7;
+                squareCorners = false;
+                noBackground = false;
+                gothCornersEnabled = false;
+                borderEnabled = false;
+                fontScale = 1;
+                autoHide = false;
+                autoHideDelay = 250;
+                openOnOverview = false;
+                visible = true;
+                popupGapsAuto = true;
+                popupGapsManual = 4;
+              }
+            ];
+          };
+
+          # session.json — night mode (auto, IP-located). stylix sets the
+          # wallpaper keys here too; these merge with those.
+          session = {
+            nightModeEnabled = true;
+            nightModeAutoEnabled = true;
+            nightModeAutoMode = "location";
+            nightModeUseIPLocation = true;
+            nightModeTemperature = 5000;
+            nightModeHighTemperature = 6500;
           };
         };
 
