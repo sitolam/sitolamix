@@ -13,7 +13,18 @@ in
 
   config = lib.mkIf cfg.enable {
     home.extraOptions =
-      { lib, pkgs, ... }:
+      { config, lib, pkgs, ... }:
+      let
+        # Prefer a hand-tuned per-scheme DMS theme from ./assets/dms-themes,
+        # keyed by the active stylix scheme slug (e.g. "catppuccin-mocha.json").
+        # Stylix's auto-generated base16->M3 mapping leads with base0D (blue),
+        # which makes cool schemes look Nord-ish; these files let us pick the
+        # accent that actually reads as the scheme (mauve for mocha). When no
+        # matching file exists, we fall through to stylix's generated theme, so
+        # dropping in e.g. nord.json later is all it takes to cover a new scheme.
+        schemeThemeFile = ../../assets/dms-themes + "/${config.lib.stylix.colors.slug}.json";
+        hasSchemeTheme = builtins.pathExists schemeThemeFile;
+      in
       {
         imports = [ inputs.dms.homeModules.dank-material-shell ];
 
@@ -38,6 +49,10 @@ in
           # ~/.config/DankMaterialShell/settings.json (HM-managed => declarative).
           settings = {
             runUserMatugenTemplates = false;
+
+            # override stylix's generated palette with our per-scheme file when
+            # one exists; otherwise stylix's customThemeFile stays in effect.
+            customThemeFile = lib.mkIf hasSchemeTheme (lib.mkForce schemeThemeFile);
 
             # ---- blur (niri 26.04 ext-background-effect) ----
             blurEnabled = true;
