@@ -24,7 +24,7 @@ in
       cursor = {
         name = "Bibata-Modern-Classic";
         package = pkgs.bibata-cursors;
-        size = 20;
+        size = 7;
       };
 
       fonts = {
@@ -58,9 +58,8 @@ in
 
       icons = {
         enable = true;
-        dark = "Papirus-Dark";
-        light = "Papirus-Light";
-        package = pkgs.papirus-icon-theme;
+        dark = "WhiteSur";
+        package = pkgs.whitesur-icon-theme;
       };
 
       targets = {

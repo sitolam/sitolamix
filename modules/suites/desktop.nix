@@ -8,6 +8,7 @@ in
   config = lib.mkIf cfg.enable {
     desktop.niri.enable = true;
     desktop.noctalia.enable = true;
+    desktop.greetd.enable = true;
     theming.stylix.enable = true;
     keyboard.kanata.enable = true;
   };

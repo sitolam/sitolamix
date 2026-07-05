@@ -19,12 +19,7 @@ in
       package = inputs.niri.packages.${pkgs.stdenv.hostPlatform.system}.niri-unstable;
     };
 
-    # display manager
-    services.displayManager.sddm = {
-      enable = true;
-      package = pkgs.kdePackages.sddm;
-      wayland.enable = true;
-    };
+    # login manager lives in modules/desktop/greetd.nix (greetd + ReGreet)
 
     # xdg-portals for wayland
     xdg.portal = {
