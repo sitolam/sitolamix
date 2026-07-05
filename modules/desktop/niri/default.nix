@@ -19,6 +19,15 @@ in
       package = inputs.niri.packages.${pkgs.stdenv.hostPlatform.system}.niri-unstable;
     };
 
+    # tools for the region-screenshot / OCR / color-pick keybinds
+    environment.systemPackages = with pkgs; [
+      grim
+      slurp
+      wl-clipboard
+      tesseract
+      hyprpicker
+    ];
+
     # login manager lives in modules/desktop/greetd.nix (greetd + ReGreet)
 
     # xdg-portals for wayland

@@ -242,6 +242,23 @@
             "Alt+Print" = noArg "screenshot-window";
             "Print" = noArg "screenshot";
 
+            # region screenshot / OCR / color-pick -> clipboard
+            "Mod+Print" = spawn [
+              "sh"
+              "-c"
+              "grim -g \"$(slurp)\" - | wl-copy"
+            ];
+            "Mod+Shift+O" = spawn [
+              "sh"
+              "-c"
+              "grim -g \"$(slurp)\" - | tesseract - - | wl-copy"
+            ];
+            "Mod+Shift+C" = spawn [
+              "sh"
+              "-c"
+              "hyprpicker -a"
+            ];
+
             # session-level
             "Mod+Escape" = {
               allow-inhibiting = false;
