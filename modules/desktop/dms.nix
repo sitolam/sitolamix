@@ -7,24 +7,25 @@
 }:
 let
   cfg = config.desktop.dms;
+
+  # the DankMaterialShell palette carried by the active theme in ./themes (null
+  # => let stylix's auto base16->M3 mapping stand). See themes/<name>.nix.
+  theme = (import ../../themes { inherit lib; }).get config.theming.stylix.theme;
+  dmsThemeFile =
+    if (theme.dms or null) == null then
+      null
+    else
+      (pkgs.formats.json { }).generate "dms-${theme.themeName}-theme.json" {
+        dark = theme.dms;
+        light = theme.dms;
+      };
 in
 {
   options.desktop.dms.enable = lib.mkEnableOption "DankMaterialShell (Quickshell bar + panels, blur)";
 
   config = lib.mkIf cfg.enable {
     home.extraOptions =
-      { config, lib, pkgs, ... }:
-      let
-        # Prefer a hand-tuned per-scheme DMS theme from ./assets/dms-themes,
-        # keyed by the active stylix scheme slug (e.g. "catppuccin-mocha.json").
-        # Stylix's auto-generated base16->M3 mapping leads with base0D (blue),
-        # which makes cool schemes look Nord-ish; these files let us pick the
-        # accent that actually reads as the scheme (mauve for mocha). When no
-        # matching file exists, we fall through to stylix's generated theme, so
-        # dropping in e.g. nord.json later is all it takes to cover a new scheme.
-        schemeThemeFile = ../../assets/dms-themes + "/${config.lib.stylix.colors.slug}.json";
-        hasSchemeTheme = builtins.pathExists schemeThemeFile;
-      in
+      { lib, pkgs, ... }:
       {
         imports = [ inputs.dms.homeModules.dank-material-shell ];
 
@@ -50,9 +51,9 @@ in
           settings = {
             runUserMatugenTemplates = false;
 
-            # override stylix's generated palette with our per-scheme file when
-            # one exists; otherwise stylix's customThemeFile stays in effect.
-            customThemeFile = lib.mkIf hasSchemeTheme (lib.mkForce schemeThemeFile);
+            # override stylix's generated palette with the active theme's `dms`
+            # table when it has one; otherwise stylix's customThemeFile stays.
+            customThemeFile = lib.mkIf (dmsThemeFile != null) (lib.mkForce dmsThemeFile);
 
             # ---- blur (niri 26.04 ext-background-effect) ----
             blurEnabled = true;

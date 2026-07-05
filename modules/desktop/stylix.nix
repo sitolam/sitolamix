@@ -7,19 +7,29 @@
 }:
 let
   cfg = config.theming.stylix;
+  themes = import ../../themes { inherit lib; };
+  theme = themes.get cfg.theme;
 in
 {
   imports = [ inputs.stylix.nixosModules.stylix ];
 
-  options.theming.stylix.enable = lib.mkEnableOption "stylix system-wide theming (catppuccin-mocha)";
+  options.theming.stylix = {
+    enable = lib.mkEnableOption "stylix system-wide theming";
+    theme = lib.mkOption {
+      type = lib.types.str;
+      default = "catppuccin-mocha";
+      description = "Theme to use from ./themes (by attr name).";
+    };
+  };
 
   config = lib.mkIf cfg.enable {
     stylix = {
       enable = true;
 
-      image = ../../assets/wallpaper.jpg;
-      base16Scheme = "${pkgs.base16-schemes}/share/themes/catppuccin-mocha.yaml";
-      polarity = "dark";
+      image = theme.wallpaper;
+      base16Scheme = "${pkgs.base16-schemes}/share/themes/${theme.themeName}.yaml";
+      polarity = theme.polarity;
+      override = lib.mkIf (theme.override != null) theme.override;
 
       cursor = {
         name = "Bibata-Modern-Classic";
