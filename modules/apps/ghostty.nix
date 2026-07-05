@@ -9,7 +9,14 @@ in
     home.extraOptions.programs.ghostty = {
       enable = true;
       settings = {
-        font-family = "MesloLGS Nerd Font Mono";
+        # non-Mono Nerd Font as primary: the "Mono" variant squishes the wide
+        # icons (folder/git) and rounded powerline separators the starship prompt
+        # uses. mkForce because stylix's ghostty target otherwise puts the "Mono"
+        # family first in the fallback list.
+        font-family = lib.mkForce [
+          "MesloLGS Nerd Font"
+          "Noto Color Emoji"
+        ];
         font-size = 13;
         window-padding-x = 14;
         window-padding-y = 14;
