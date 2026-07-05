@@ -33,5 +33,5 @@ outputs:
 windows:
     niri msg windows
 
-noctalia-reload:
-    systemctl --user restart noctalia.service
+dms-reload:
+    systemctl --user restart dms.service

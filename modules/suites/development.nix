@@ -7,6 +7,7 @@ in
 
   config = lib.mkIf cfg.enable {
     apps.vscode.enable = true;
+    apps.zed.enable = true;
     services.docker.enable = true;
 
     home.extraOptions =
