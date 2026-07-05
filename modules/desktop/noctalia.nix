@@ -14,7 +14,22 @@ in
   config = lib.mkIf cfg.enable {
     environment.systemPackages = [
       inputs.noctalia.packages.${pkgs.stdenv.hostPlatform.system}.default
-    ];
+    ]
+    # runtime deps for the noctalia plugins we use (enable them via `noctalia
+    # plugin` / the plugin panel; v5 has no declarative plugin config).
+    ++ (with pkgs; [
+      # screen-toolkit: screenshot / OCR / record
+      grim
+      slurp
+      wl-clipboard
+      tesseract
+      imagemagick
+      wl-screenrec
+      ffmpeg
+      # usb-drive-manager
+      udisks
+      util-linux
+    ]);
 
     home.extraOptions =
       { lib, ... }:
@@ -28,6 +43,7 @@ in
           settings = lib.mkForce {
             shell = {
               corner_radius_scale = 1.25;
+              avatar_path = toString ../../assets/avatar.png;
               shadow = {
                 direction = "down";
                 alpha = 0.52;
@@ -49,6 +65,29 @@ in
               enabled = true;
               blur_intensity = 0.85;
               tint_intensity = 0.45;
+            };
+
+            # lock screen: blurred desktop snapshot as background + media widget.
+            lockscreen = {
+              enabled = true;
+              blurred_desktop = true;
+              blur_intensity = 0.6;
+              tint_intensity = 0.35;
+            };
+
+            # positioned widgets shown on the lock screen (v5 lockscreen_widgets).
+            # media_main = now-playing/media controls, centered-ish on the primary output.
+            lockscreen_widgets = {
+              enabled = true;
+              widget_order = [ "media_main" ];
+              widget.media_main = {
+                type = "media";
+                output = "DP-3";
+                cx = 960.0;
+                cy = 820.0;
+                scale = 1.0;
+                rotation = 0.0;
+              };
             };
 
             # stylix drives every other app; noctalia's bar reads the same wallpaper.
@@ -84,6 +123,7 @@ in
                 "wallpaper"
                 "workspaces"
                 "active_window"
+                "sysmon"
               ];
               center = [ "clock" ];
               end = [
