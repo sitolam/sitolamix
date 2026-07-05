@@ -8,17 +8,11 @@
 let
   cfg = config.desktop.dms;
 
-  # the DankMaterialShell palette carried by the active theme in ./themes (null
-  # => let stylix's auto base16->M3 mapping stand). See themes/<name>.nix.
+  # the active theme in ./themes. Its `dms` attr maps DankMaterialShell M3
+  # tokens -> base16 slot names (null => let stylix's auto mapping stand); we
+  # resolve those slots against the live scheme below so the shell palette comes
+  # straight out of the stylix base16 colors. See themes/<name>.nix.
   theme = (import ../../themes { inherit lib; }).get config.theming.stylix.theme;
-  dmsThemeFile =
-    if (theme.dms or null) == null then
-      null
-    else
-      (pkgs.formats.json { }).generate "dms-${theme.themeName}-theme.json" {
-        dark = theme.dms;
-        light = theme.dms;
-      };
 in
 {
   options.desktop.dms.enable = lib.mkEnableOption "DankMaterialShell (Quickshell bar + panels, blur)";
@@ -26,6 +20,26 @@ in
   config = lib.mkIf cfg.enable {
     home.extraOptions =
       { config, lib, pkgs, ... }:
+      let
+        # resolve the theme's M3-token -> base16-slot map into actual hex from
+        # the active stylix scheme (config.lib.stylix.colors), then hand DMS a
+        # custom theme file built from those base16 colors.
+        c = config.lib.stylix.colors.withHashtag;
+        palette = theme.dms or null;
+        dmsThemeFile =
+          if palette == null then
+            null
+          else
+            let
+              variant = (builtins.mapAttrs (_token: slot: c.${slot}) palette) // {
+                name = config.lib.stylix.colors.scheme-name;
+              };
+            in
+            (pkgs.formats.json { }).generate "dms-${theme.themeName}-theme.json" {
+              dark = variant;
+              light = variant;
+            };
+      in
       {
         imports = [ inputs.dms.homeModules.dank-material-shell ];
 
