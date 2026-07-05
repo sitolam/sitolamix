@@ -49,6 +49,10 @@
         ELECTRON_OZONE_PLATFORM_HINT = "auto";
         XDG_SESSION_TYPE = "wayland";
         XDG_CURRENT_DESKTOP = "niri";
+        # GTK 4.20+ dropped built-in compose/dead-key handling on Wayland when no
+        # input method is running, breaking us-intl dead keys in GTK apps like
+        # ghostty. Force the classic simple IM to get dead keys/compose back.
+        GTK_IM_MODULE = "simple";
       };
     };
   };
