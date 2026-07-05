@@ -79,10 +79,17 @@ in
             customThemeFile = lib.mkIf (dmsThemeFile != null) (lib.mkForce dmsThemeFile);
 
             # ---- blur (niri 26.04 ext-background-effect) ----
+            # frosted-glass blur behind DMS surfaces (bar, popouts, modals).
             blurEnabled = true;
             blurForegroundLayers = true;
-            blurredWallpaperLayer = true;
+            # blur the wallpaper only while the niri overview is open (handled
+            # internally, gated on NiriService.inOverview — no niri rule needed).
             blurWallpaperOnOverview = true;
+            # NB: leave this off. It draws a *second, always-blurred* wallpaper
+            # copy on the background layer (namespace dms:blurwallpaper) that only
+            # makes sense with a manual niri layer-rule; on its own it just blurs
+            # the whole desktop permanently.
+            blurredWallpaperLayer = false;
             # blur only shows through transparent pixels: stylix.opacity defaults
             # to fully opaque, so force the shell surfaces translucent enough to
             # see the blur. (mkForce overrides the stylix opacity target.)
