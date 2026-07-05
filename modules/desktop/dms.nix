@@ -97,12 +97,32 @@ in
             popupTransparency = lib.mkForce 0.82;
             dockTransparency = lib.mkForce 0.82;
 
-            # ---- captured from GUI tuning (declarative; GUI edits won't persist) ----
             use24HourClock = true;
             showDock = false;
             # let stylix own GTK/Qt app theming; DMS shouldn't apply its own.
             gtkThemingEnabled = false;
             qtThemingEnabled = false;
+
+            animationSpeed = 2;
+
+            showWorkspaceIndex = true;
+            showOccupiedWorkspacesOnly = true;
+
+            osdMediaPlaybackEnabled = true;
+
+            launcherLogoMode = "os";
+
+            dankLauncherV2ShowFooter = false;
+            dankLauncherV2UnloadOnClose = true;
+
+            clipboardEnterToPaste = true;
+
+            lockScreenShowPowerActions = false;
+
+            lockBeforeSuspend = true;
+
+            powerMenuActions = [ "logout" "reboot" "suspend" "hibernate" "poweroff" "lock" "restart" ];
+            powerMenuDefaultAction = "poweroff";
 
             # custom bar layout (configVersion 5 barConfigs).
             barConfigs = [
@@ -155,6 +175,9 @@ in
           # session.json — night mode (auto, IP-located). stylix sets the
           # wallpaper keys here too; these merge with those.
           session = {
+            weatherLocation = "Eeklo, 9900";
+            weatherCoordinates = "51.2,3.6";
+
             nightModeEnabled = true;
             nightModeAutoEnabled = true;
             nightModeAutoMode = "location";
