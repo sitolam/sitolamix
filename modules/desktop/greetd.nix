@@ -10,5 +10,16 @@ in
     services.greetd.enable = true;
     programs.regreet.enable = true;
     # stylix.targets.regreet auto-themes the greeter (wallpaper background + palette).
+
+    # cage extends across all outputs by default, so the greeter spans both
+    # monitors as one surface (login box on the bezel). cage can't mirror, so
+    # pin it to a single output instead. `-m last` = only the last-connected
+    # monitor; `-s` VT switching + `-d` no client-side decorations (defaults).
+    programs.regreet.cageArgs = [
+      "-s"
+      "-d"
+      "-m"
+      "last"
+    ];
   };
 }
