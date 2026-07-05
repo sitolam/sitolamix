@@ -12,5 +12,6 @@ in
     desktop.greetd.enable = true;
     theming.stylix.enable = true;
     keyboard.kanata.enable = true;
+    services.kde-connect.enable = true;
   };
 }
