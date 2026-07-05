@@ -12,6 +12,11 @@ in
         programs.zed-editor = {
           enable = true;
           package = pkgs.zed-editor;
+          # stylix's zed target sets the theme + fonts in userSettings; this
+          # merges with it (different keys).
+          userSettings = {
+            vim_mode = true;
+          };
         };
       };
   };
