@@ -25,9 +25,18 @@ in
 
   config = lib.mkIf cfg.enable {
     home.extraOptions =
-      { lib, pkgs, ... }:
+      { config, lib, pkgs, ... }:
       {
         imports = [ inputs.dms.homeModules.dank-material-shell ];
+
+        # DMS only reads its settings at startup, and the systemd user service's
+        # unit doesn't change when only settings.json/the theme file change — so
+        # nothing restarts it on rebuild. Trigger a restart (via sd-switch) when
+        # the generated settings.json changes, so theme/blur edits take effect
+        # after `nixos-rebuild switch` without a manual restart or relogin.
+        systemd.user.services.dms.Unit.X-Restart-Triggers = [
+          config.xdg.configFile."DankMaterialShell/settings.json".source
+        ];
 
         programs.dank-material-shell = {
           enable = true;
