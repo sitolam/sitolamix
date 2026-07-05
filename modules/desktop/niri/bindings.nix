@@ -6,10 +6,10 @@
         noArg = action: { action.${action} = [ ]; };
         withArg = action: value: { action.${action} = value; };
         spawn = command: { action.spawn = command; };
-        noctalia =
+        dms =
           command:
           [
-            "noctalia"
+            "dms"
             "ipc"
             "call"
           ]
@@ -67,58 +67,61 @@
       {
         programs.niri.settings.binds = lib.mkMerge [
           {
-            # noctalia panels
-            "Mod+Space" = spawn (noctalia [
-              "launcher"
+            # DankMaterialShell panels (dms ipc)
+            "Mod+Space" = spawn (dms [
+              "spotlight"
               "toggle"
             ]);
-            "Mod+Ctrl+Return" = spawn (noctalia [
-              "launcher"
+            "Mod+Ctrl+Return" = spawn (dms [
+              "spotlight"
               "toggle"
             ]);
-            "Mod+V" = spawn (noctalia [
-              "launcher"
+            "Mod+V" = spawn (dms [
               "clipboard"
-            ]);
-            "Mod+Shift+Period" = spawn (noctalia [
-              "launcher"
-              "emoji"
-            ]);
-            "Mod+Return" = spawn (noctalia [
-              "plugin:assistant-panel"
               "toggle"
             ]);
-            "Mod+Slash" = spawn (noctalia [
-              "plugin:keybind-cheatsheet"
+            "Mod+Slash" = spawn (dms [
+              "keybinds"
+              "toggleBinds"
+            ]);
+            "Mod+P" = spawn (dms [
+              "notepad"
               "toggle"
             ]);
-            "Mod+S" = spawn (noctalia [
-              "controlCenter"
+            "Mod+S" = spawn (dms [
+              "control-center"
               "toggle"
             ]);
-            "Mod+N" = spawn (noctalia [
+            "Mod+N" = spawn (dms [
               "notifications"
+              "toggle"
+            ]);
+            "Mod+M" = spawn (dms [
+              "processlist"
               "toggle"
             ]);
 
             # session
-            "Mod+BackSpace" = spawn (noctalia [
-              "lockScreen"
+            "Mod+BackSpace" = spawn (dms [
+              "lock"
               "lock"
             ]);
-            "Mod+Shift+BackSpace" = spawn (noctalia [
-              "sessionMenu"
-              "lockAndSuspend"
-            ]);
-            "Mod+Ctrl+BackSpace" = spawn (noctalia [
-              "sessionMenu"
+            "Mod+Ctrl+BackSpace" = spawn (dms [
+              "powermenu"
               "toggle"
             ]);
 
             # theme control
-            "Mod+Shift+T" = spawn "switch-theme";
-            "Mod+Shift+W" = spawn (noctalia [
-              "plugin:theme-picker"
+            "Mod+Shift+T" = spawn (dms [
+              "theme"
+              "toggle"
+            ]);
+            "Mod+Shift+W" = spawn (dms [
+              "dankdash"
+              "wallpaper"
+            ]);
+            "Mod+Alt+N" = spawn (dms [
+              "night"
               "toggle"
             ]);
 

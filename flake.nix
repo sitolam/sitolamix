@@ -45,6 +45,13 @@
 
     noctalia.url = "github:noctalia-dev/noctalia-shell";
 
+    # DankMaterialShell (Quickshell + Go). Tried on this branch as an
+    # alternative to noctalia; drives blur via niri's ext-background-effect.
+    dms = {
+      url = "github:AvengeMedia/DankMaterialShell/stable";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     nix-cachyos-kernel.url = "github:xddxdd/nix-cachyos-kernel/release";
 
     zen-browser = {
