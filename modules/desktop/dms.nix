@@ -24,6 +24,22 @@ in
     hardware.i2c.enable = true;
     users.users.otis.extraGroups = [ "i2c" ];
 
+    # runtime deps the enabled DMS plugins shell out to (registry ships only the
+    # plugin source). nix dedups any already present (mpv/udisks/util-linux/...).
+    environment.systemPackages = with pkgs; [
+      jq
+      curl
+      cliphist # clipboardplus
+      socat # ambient-sound
+      mpv # ambient-sound
+      parted # usb-manager
+      dosfstools # usb-manager
+      e2fsprogs # usb-manager
+      exfatprogs # usb-manager
+      udisks # usb-manager
+      util-linux # usb-manager (lsblk)
+    ];
+
     home.extraOptions =
       { config, lib, pkgs, ... }:
       let
@@ -50,7 +66,24 @@ in
         imports = [
           inputs.dms.homeModules.dank-material-shell
           inputs.dms.homeModules.niri
+          # declares programs.dank-material-shell.plugins.<id> (enable=false + a
+          # pinned src) for every registry plugin; we flip on the ones we want.
+          inputs.dms-plugin-registry.homeModules.default
         ];
+
+        # DMS plugins from the registry (github:AvengeMedia/dms-plugin-registry).
+        programs.dank-material-shell.plugins = {
+          aiOverviewControl.enable = true; # bernardopg/AiOverviewControl
+          emojiLauncher.enable = true; # devnullvoid/dms-emoji-launcher
+          homeAssistantMonitor.enable = true; # xxyangyoulin/dms-plugin-hass (hyprland-only upstream)
+          fullscreenPowerMenu.enable = true; # JDKamalakar/DMS-Fullscreen_Power_Menu
+          clipboardPlus.enable = true; # Dadangdut33 ClipboardPlus
+          usbManager.enable = true; # NordicsSys/dms-usb-manager
+          simpleAudioControl.enable = true; # Dadangdut33 SimpleAudioControl
+          ambientSound.enable = true; # hthienloc/dms-ambient-sound
+          takeABreak.enable = true; # hthienloc/dms-take-a-break
+          dankBatteryAlerts.enable = true; # AvengeMedia DankBatteryAlerts
+        };
 
         # Let DMS manage niri outputs from its settings UI. It writes display
         # config to ~/.config/niri/dms/outputs.kdl; this include mechanism
