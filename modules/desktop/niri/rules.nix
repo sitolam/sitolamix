@@ -23,28 +23,17 @@
         matches = [
           { app-id = "^spotify$"; }
           { app-id = "^Spotify$"; }
-          { app-id = "^helium$"; }
         ];
         opacity = 0.65;
       }
       {
+        # browsers: a little less frosted than the 0.8 global.
         matches = [
+          { app-id = "^helium$"; }
           { app-id = "^zen$"; }
           { app-id = "^zen-browser$"; }
-          { app-id = "^firefox$"; }
-          { app-id = "^helium$"; }
         ];
-        draw-border-with-background = false;
-      }
-      {
-        matches = [
-          { app-id = "^steam$"; }
-          { app-id = "^Steam$"; }
-          { app-id = "^com\\.heroicgameslauncher\\.hgl$"; }
-          { app-id = "^net\\.lutris\\.Lutris$"; }
-        ];
-        variable-refresh-rate = true;
-        opacity = 1.0; # never dim games
+        opacity = 0.9;
       }
       {
         matches = [
