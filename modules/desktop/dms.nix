@@ -157,6 +157,13 @@ in
           config.xdg.configFile."DankMaterialShell/settings.json".source
         ];
 
+        # the Home Assistant plugin does `import QtWebSockets`, which quickshell
+        # doesn't bundle. Add the module to the shell's QML path (the quickshell
+        # wrapper prefixes NIXPKGS_QT6_QML_IMPORT_PATH, so this value is kept).
+        systemd.user.services.dms.Service.Environment = [
+          "NIXPKGS_QT6_QML_IMPORT_PATH=${pkgs.qt6.qtwebsockets}/lib/qt-6/qml"
+        ];
+
         programs.dank-material-shell = {
           enable = true;
           systemd.enable = true;
