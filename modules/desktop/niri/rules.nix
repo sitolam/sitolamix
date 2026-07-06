@@ -10,18 +10,18 @@
           bottom-left = 18.0;
         };
         clip-to-geometry = true;
-        # subtle translucency on every window so the global blur (niri/
-        # appearance.nix) shows through everywhere.
-        opacity = 0.95;
+        # translucency on every window so the global blur (niri/appearance.nix)
+        # is clearly visible everywhere.
+        opacity = 0.85;
       }
       {
-        # more frosted for the apps we want glassy.
+        # extra glassy for the apps we want frosted.
         matches = [
           { app-id = "^spotify$"; }
           { app-id = "^Spotify$"; }
           { app-id = "^helium$"; }
         ];
-        opacity = 0.9;
+        opacity = 0.72;
       }
       {
         matches = [
