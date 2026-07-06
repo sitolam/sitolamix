@@ -76,11 +76,9 @@
               "spotlight"
               "toggle"
             ]);
-            # ClipboardPlus plugin replaces the built-in clipboard (needs its bar
-            # widget present for the IPC to work — it is, see dms.nix barConfigs).
             "Mod+V" = spawn (dms [
-              "clipboardPlus"
-              "togglePanel"
+              "clipboard"
+              "toggle"
             ]);
             "Mod+Slash" = spawn (dms [
               "keybinds"

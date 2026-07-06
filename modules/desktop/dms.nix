@@ -89,12 +89,25 @@ in
             };
           };
           fullscreenPowerMenu.enable = true; # JDKamalakar/DMS-Fullscreen_Power_Menu
-          clipboardPlus = {
-            enable = true; # Dadangdut33 ClipboardPlus
-            settings = {
-              showBarWidget = false; # hide the bar icon (Mod+V/IPC still works)
-              hidePanelBackground = true; # let DMS's blur frost the panel
-            };
+          # collapsible bar group (rdannenbring/widget-group): fold ambient sound,
+          # simple audio control and the Claude/AI overview behind one button.
+          # The bar widget id is "widgetGroup:<variant.id>" (see barConfigs).
+          widgetGroup = {
+            enable = true;
+            settings.variants = [
+              {
+                id = "media";
+                name = "Media & AI";
+                icon = "widgets";
+                display = "icon";
+                mainTarget = "";
+                targets = [
+                  "ambientSound"
+                  "simpleAudioControl"
+                  "aiOverviewControl"
+                ];
+              }
+            ];
           };
           usbManager.enable = true; # NordicsSys/dms-usb-manager
           simpleAudioControl.enable = true; # Dadangdut33 SimpleAudioControl (bar-only)
@@ -241,12 +254,11 @@ in
                 ];
                 rightWidgets = [
                   { id = "systemTray"; enabled = true; }
-                  # plugin widgets (dankbar-widget capability)
                   { id = "usbManager"; enabled = true; }
-                  { id = "ambientSound"; enabled = true; }
-                  { id = "simpleAudioControl"; enabled = true; }
-                  { id = "clipboardPlus"; enabled = true; } # replaces the built-in clipboard
-                  { id = "aiOverviewControl"; enabled = true; }
+                  # ambientSound + simpleAudioControl + aiOverviewControl are
+                  # folded into this collapsible group button.
+                  { id = "widgetGroup:media"; enabled = true; }
+                  { id = "homeAssistantMonitor"; enabled = true; } # hyprland-only upstream
                   { id = "memUsage"; enabled = true; }
                   {
                     id = "diskUsage";
