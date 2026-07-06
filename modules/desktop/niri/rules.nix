@@ -33,7 +33,7 @@
           { app-id = "^zen$"; }
           { app-id = "^zen-browser$"; }
         ];
-        opacity = 0.9;
+        opacity = 0.85;
       }
       {
         matches = [
