@@ -18,6 +18,12 @@ in
   options.desktop.dms.enable = lib.mkEnableOption "DankMaterialShell (Quickshell bar + panels, blur)";
 
   config = lib.mkIf cfg.enable {
+    # external-monitor (DDC/CI) brightness: DMS opens /dev/i2c-* directly, so
+    # load i2c-dev (creates the nodes + i2c group + udev perms) and add the user
+    # to the i2c group so the shell can read/write them.
+    hardware.i2c.enable = true;
+    users.users.otis.extraGroups = [ "i2c" ];
+
     home.extraOptions =
       { config, lib, pkgs, ... }:
       let
@@ -41,7 +47,33 @@ in
             };
       in
       {
-        imports = [ inputs.dms.homeModules.dank-material-shell ];
+        imports = [
+          inputs.dms.homeModules.dank-material-shell
+          inputs.dms.homeModules.niri
+        ];
+
+        # Let DMS manage niri outputs from its settings UI. It writes display
+        # config to ~/.config/niri/dms/outputs.kdl; this include mechanism
+        # relocates our niri config to niri/hm.kdl and makes config.kdl include
+        # both — so DMS's output changes persist. We only pull in "outputs"
+        # (binds/layout/colors/wpblur stay ours). override=true (default) means
+        # DMS's outputs win over the defaults in hosts/gamingpc.
+        programs.dank-material-shell.niri.includes = {
+          enable = true;
+          filesToInclude = [ "outputs" ];
+        };
+
+        # niri reads its config (incl. the dms/outputs.kdl include) at startup,
+        # before DMS runs — so seed an empty outputs file if absent to avoid a
+        # missing-include error. Not a home.file symlink: DMS must be able to
+        # overwrite it when you change displays.
+        home.activation.dmsOutputsPlaceholder = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+          f="$HOME/.config/niri/dms/outputs.kdl"
+          if [ ! -e "$f" ]; then
+            run mkdir -p "$(dirname "$f")"
+            run touch "$f"
+          fi
+        '';
 
         # DMS reads the profile image from the AccountsService user icon, which
         # defaults to ~/.face (confirmed via busctl). So just put the avatar
