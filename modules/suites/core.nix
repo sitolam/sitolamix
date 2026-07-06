@@ -16,6 +16,7 @@ in
       neovim.enable = true;
       yazi.enable = true;
       fastfetch.enable = true;
+      nitch.enable = true;
       cli.enable = true;
       nautilus.enable = true;
       gparted.enable = true;
