@@ -18,22 +18,6 @@ in
   options.desktop.dms.enable = lib.mkEnableOption "DankMaterialShell (Quickshell bar + panels, blur)";
 
   config = lib.mkIf cfg.enable {
-    # DMS shows the AccountsService user icon as the profile image (it has no
-    # settings.json key for it). Point that icon at the avatar. Clobber-safe:
-    # only manages the Icon key, leaving greetd's saved session/user state alone.
-    system.activationScripts.dmsProfileImage = ''
-      install -Dm0444 ${../../assets/avatar.png} /var/lib/AccountsService/icons/otis
-      install -d /var/lib/AccountsService/users
-      uf=/var/lib/AccountsService/users/otis
-      if [ ! -e "$uf" ]; then
-        printf '[User]\nIcon=/var/lib/AccountsService/icons/otis\n' > "$uf"
-      elif grep -q '^Icon=' "$uf"; then
-        sed -i 's#^Icon=.*#Icon=/var/lib/AccountsService/icons/otis#' "$uf"
-      else
-        printf 'Icon=/var/lib/AccountsService/icons/otis\n' >> "$uf"
-      fi
-    '';
-
     home.extraOptions =
       { config, lib, pkgs, ... }:
       let
@@ -58,6 +42,11 @@ in
       in
       {
         imports = [ inputs.dms.homeModules.dank-material-shell ];
+
+        # DMS reads the profile image from the AccountsService user icon, which
+        # defaults to ~/.face (confirmed via busctl). So just put the avatar
+        # there — no AccountsService plumbing needed.
+        home.file.".face".source = ../../assets/avatar.png;
 
         # DMS only reads its settings at startup, and the systemd user service's
         # unit doesn't change when only settings.json/the theme file change — so
