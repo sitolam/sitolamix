@@ -25,32 +25,7 @@
     gaming.enable = true;
   };
 
-  # per-host monitors — HM niri outputs (aliased through home.extraOptions)
-  home.extraOptions.programs.niri.settings.outputs = {
-    "DP-3" = {
-      mode = {
-        width = 1920;
-        height = 1080;
-        refresh = 60.000;
-      };
-      scale = 1.0;
-      position = {
-        x = 0;
-        y = 0;
-      };
-      focus-at-startup = true;
-    };
-    "HDMI-A-1" = {
-      mode = {
-        width = 1920;
-        height = 1080;
-        refresh = 60.000;
-      };
-      scale = 1.0;
-      position = {
-        x = 1920;
-        y = 0;
-      };
-    };
-  };
+  # Monitors are managed by DMS (settings UI -> ~/.config/niri/dms/outputs.kdl,
+  # included via desktop.dms). Don't also declare outputs here — a second
+  # definition in hm.kdl conflicts and DMS's changes wouldn't apply.
 }
