@@ -18,6 +18,22 @@ in
   options.desktop.dms.enable = lib.mkEnableOption "DankMaterialShell (Quickshell bar + panels, blur)";
 
   config = lib.mkIf cfg.enable {
+    # DMS shows the AccountsService user icon as the profile image (it has no
+    # settings.json key for it). Point that icon at the avatar. Clobber-safe:
+    # only manages the Icon key, leaving greetd's saved session/user state alone.
+    system.activationScripts.dmsProfileImage = ''
+      install -Dm0444 ${../../assets/avatar.png} /var/lib/AccountsService/icons/otis
+      install -d /var/lib/AccountsService/users
+      uf=/var/lib/AccountsService/users/otis
+      if [ ! -e "$uf" ]; then
+        printf '[User]\nIcon=/var/lib/AccountsService/icons/otis\n' > "$uf"
+      elif grep -q '^Icon=' "$uf"; then
+        sed -i 's#^Icon=.*#Icon=/var/lib/AccountsService/icons/otis#' "$uf"
+      else
+        printf 'Icon=/var/lib/AccountsService/icons/otis\n' >> "$uf"
+      fi
+    '';
+
     home.extraOptions =
       { config, lib, pkgs, ... }:
       let
@@ -136,7 +152,11 @@ in
                 leftWidgets = [
                   "launcherButton"
                   "workspaceSwitcher"
-                  "focusedWindow"
+                  {
+                    id = "focusedWindow";
+                    enabled = true;
+                    focusedWindowCompactMode = false;
+                  }
                 ];
                 centerWidgets = [
                   "music"
@@ -144,13 +164,24 @@ in
                   "weather"
                 ];
                 rightWidgets = [
-                  "systemTray"
-                  "clipboard"
-                  "cpuUsage"
-                  "memUsage"
-                  "notificationButton"
-                  "battery"
-                  "controlCenterButton"
+                  { id = "systemTray"; enabled = true; }
+                  { id = "clipboard"; enabled = true; }
+                  { id = "memUsage"; enabled = true; }
+                  {
+                    id = "diskUsage";
+                    enabled = true;
+                    mountPath = "/";
+                  }
+                  { id = "notificationButton"; enabled = true; }
+                  { id = "battery"; enabled = true; }
+                  {
+                    id = "controlCenterButton";
+                    enabled = true;
+                    showAudioPercent = false;
+                    showBrightnessIcon = false;
+                    showBrightnessPercent = false;
+                    showMicIcon = false;
+                  }
                 ];
                 spacing = 8;
                 innerPadding = 2;
@@ -169,6 +200,18 @@ in
                 popupGapsAuto = true;
                 popupGapsManual = 4;
               }
+            ];
+
+            # control center quick-toggle widgets.
+            controlCenterWidgets = [
+              { id = "volumeSlider"; enabled = true; width = 50; }
+              { id = "brightnessSlider"; enabled = true; width = 50; }
+              { id = "wifi"; enabled = true; width = 50; }
+              { id = "bluetooth"; enabled = true; width = 50; }
+              { id = "audioOutput"; enabled = true; width = 50; }
+              { id = "audioInput"; enabled = true; width = 50; }
+              { id = "idleInhibitor"; enabled = true; width = 50; }
+              { id = "nightMode"; enabled = true; width = 50; }
             ];
           };
 
