@@ -24,6 +24,16 @@
         opacity = 0.65;
       }
       {
+        # keep code editors opaque — the global translucency tints them.
+        matches = [
+          { app-id = "^dev\\.zed\\.Zed$"; }
+          { app-id = "^code$"; }
+          { app-id = "^Code$"; }
+          { app-id = "^code-url-handler$"; }
+        ];
+        opacity = 1.0;
+      }
+      {
         matches = [
           { app-id = "^zen$"; }
           { app-id = "^zen-browser$"; }
