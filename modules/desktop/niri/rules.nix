@@ -12,7 +12,7 @@
         clip-to-geometry = true;
         # translucency on every window so the global blur (niri/appearance.nix)
         # is clearly visible everywhere.
-        opacity = 0.85;
+        opacity = 0.8;
       }
       {
         # extra glassy for the apps we want frosted.
@@ -21,7 +21,7 @@
           { app-id = "^Spotify$"; }
           { app-id = "^helium$"; }
         ];
-        opacity = 0.72;
+        opacity = 0.65;
       }
       {
         matches = [
