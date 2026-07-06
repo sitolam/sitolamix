@@ -16,8 +16,10 @@ in
         programs.niri = {
           config = lib.mkOptionDefault (
             lib.mkAfter [
-              # noctalia.kdl no longer written (we removed niri from noctalia builtin_ids);
-              # focus-ring colors are set directly via stylix in settings below.
+              # Blur behind every window. Only visible where a window is
+              # translucent (see the opacity window-rules in niri/rules.nix),
+              # e.g. the terminal, spotify, helium. xray = cheap static-wallpaper
+              # blur (frosted-glass-over-wallpaper look).
               (plain "window-rule" [
                 (plain "background-effect" [
                   (leaf "blur" true)
@@ -26,29 +28,10 @@ in
                   (leaf "saturation" 2.4)
                 ])
               ])
-              (plain "layer-rule" [
-                (leaf "match" { namespace = "^noctalia-(bar-[^\"]+|notification|dock|panel)$"; })
-                (plain "background-effect" [
-                  (leaf "blur" true)
-                  (leaf "xray" false)
-                  (leaf "noise" 0.05)
-                  (leaf "saturation" 2.6)
-                ])
-              ])
-              (plain "layer-rule" [
-                (leaf "match" { namespace = "^noctalia-backdrop"; })
-                (leaf "place-within-backdrop" true)
-              ])
-              (plain "layer-rule" [
-                (leaf "match" { namespace = "^(fuzzel|waybar|wofi|swaync)$"; })
-                (plain "background-effect" [
-                  (leaf "blur" true)
-                  (leaf "noise" 0.04)
-                ])
-              ])
+              # stronger global blur (more passes + larger offset = heavier blur).
               (plain "blur" [
-                (leaf "passes" 3)
-                (leaf "offset" 5.0)
+                (leaf "passes" 4)
+                (leaf "offset" 7.0)
                 (leaf "noise" 0.04)
                 (leaf "saturation" 1.8)
               ])

@@ -7,12 +7,12 @@ in
 
   config = lib.mkIf cfg.enable {
     apps.gpu-screen-recorder.enable = true;
+    apps.spotify.enable = true; # spotify via spicetify (themed + extensions)
 
     home.extraOptions =
       { pkgs, ... }:
       {
         home.packages = with pkgs; [
-          spotify
           gimp
           inkscape
           kdePackages.kdenlive
