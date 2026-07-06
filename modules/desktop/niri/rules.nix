@@ -13,6 +13,10 @@
         # translucency on every window so the global blur (niri/appearance.nix)
         # is clearly visible everywhere.
         opacity = 0.8;
+        # niri draws the focus ring/border as a solid rect *behind* the window;
+        # on a translucent window that fills it with the (mauve) ring colour.
+        # Draw it as a hollow ring instead so the blur shows, not the tint.
+        draw-border-with-background = false;
       }
       {
         # extra glassy for the apps we want frosted.
@@ -22,16 +26,6 @@
           { app-id = "^helium$"; }
         ];
         opacity = 0.65;
-      }
-      {
-        # keep code editors opaque — the global translucency tints them.
-        matches = [
-          { app-id = "^dev\\.zed\\.Zed$"; }
-          { app-id = "^code$"; }
-          { app-id = "^Code$"; }
-          { app-id = "^code-url-handler$"; }
-        ];
-        opacity = 1.0;
       }
       {
         matches = [
