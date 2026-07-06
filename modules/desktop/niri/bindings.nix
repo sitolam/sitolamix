@@ -76,9 +76,11 @@
               "spotlight"
               "toggle"
             ]);
+            # ClipboardPlus plugin replaces the built-in clipboard (needs its bar
+            # widget present for the IPC to work — it is, see dms.nix barConfigs).
             "Mod+V" = spawn (dms [
-              "clipboard"
-              "toggle"
+              "clipboardPlus"
+              "togglePanel"
             ]);
             "Mod+Slash" = spawn (dms [
               "keybinds"
@@ -106,8 +108,9 @@
               "lock"
               "lock"
             ]);
+            # fullscreenPowerMenu plugin replaces the built-in power menu
             "Mod+Ctrl+BackSpace" = spawn (dms [
-              "powermenu"
+              "fullscreenPowerMenu"
               "toggle"
             ]);
 

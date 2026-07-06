@@ -84,6 +84,11 @@ in
           takeABreak.enable = true; # hthienloc/dms-take-a-break
           dankBatteryAlerts.enable = true; # AvengeMedia DankBatteryAlerts
         };
+        # write plugin_settings.json marking each enabled plugin active, so they
+        # actually turn on (not just install). NB: makes plugin settings
+        # HM-managed/read-only — set a plugin's options via plugins.<id>.settings
+        # rather than the DMS UI.
+        programs.dank-material-shell.managePluginSettings = true;
 
         # Let DMS manage niri outputs from its settings UI. It writes display
         # config to ~/.config/niri/dms/outputs.kdl; this include mechanism
@@ -219,7 +224,12 @@ in
                 ];
                 rightWidgets = [
                   { id = "systemTray"; enabled = true; }
-                  { id = "clipboard"; enabled = true; }
+                  # plugin widgets (dankbar-widget capability)
+                  { id = "usbManager"; enabled = true; }
+                  { id = "ambientSound"; enabled = true; }
+                  { id = "simpleAudioControl"; enabled = true; }
+                  { id = "clipboardPlus"; enabled = true; } # replaces the built-in clipboard
+                  { id = "aiOverviewControl"; enabled = true; }
                   { id = "memUsage"; enabled = true; }
                   {
                     id = "diskUsage";
@@ -266,6 +276,7 @@ in
               { id = "audioInput"; enabled = true; width = 50; }
               { id = "idleInhibitor"; enabled = true; width = 50; }
               { id = "nightMode"; enabled = true; width = 50; }
+              { id = "takeABreak"; enabled = true; width = 50; } # plugin (control-center)
             ];
           };
 
