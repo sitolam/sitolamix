@@ -148,6 +148,20 @@ in
         # there — no AccountsService plumbing needed.
         home.file.".face".source = ../../assets/avatar.png;
 
+        # The HA plugin keeps its monitored-entity list as plugin *state* (read via
+        # pluginService.loadPluginState), not a setting — so declare the state
+        # file to make the selection reproducible. Read-only: change the list here
+        # rather than in the plugin's GUI editor.
+        home.file.".local/state/DankMaterialShell/plugins/homeAssistantMonitor_state.json".text =
+          builtins.toJSON {
+            entityIds = lib.concatStringsSep ", " [
+              "light.lamp_otis"
+              "sensor.temperature_otis"
+              "sensor.humidity_otis"
+              "sensor.temperature_humidity_sensor_otis_battery"
+            ];
+          };
+
         # DMS only reads its settings at startup, and the systemd user service's
         # unit doesn't change when only settings.json/the theme file change — so
         # nothing restarts it on rebuild. Trigger a restart (via sd-switch) when
