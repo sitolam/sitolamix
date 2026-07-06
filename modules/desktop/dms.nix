@@ -152,8 +152,8 @@ in
                   "battery"
                   "controlCenterButton"
                 ];
-                spacing = 4;
-                innerPadding = 4;
+                spacing = 8;
+                innerPadding = 2;
                 bottomGap = 0;
                 transparency = 0.7;
                 widgetTransparency = 0.7;

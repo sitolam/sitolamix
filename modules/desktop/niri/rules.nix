@@ -10,6 +10,18 @@
           bottom-left = 18.0;
         };
         clip-to-geometry = true;
+        # subtle translucency on every window so the global blur (niri/
+        # appearance.nix) shows through everywhere.
+        opacity = 0.95;
+      }
+      {
+        # more frosted for the apps we want glassy.
+        matches = [
+          { app-id = "^spotify$"; }
+          { app-id = "^Spotify$"; }
+          { app-id = "^helium$"; }
+        ];
+        opacity = 0.9;
       }
       {
         matches = [
@@ -28,6 +40,7 @@
           { app-id = "^net\\.lutris\\.Lutris$"; }
         ];
         variable-refresh-rate = true;
+        opacity = 1.0; # never dim games
       }
       {
         matches = [
