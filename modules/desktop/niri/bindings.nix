@@ -156,15 +156,18 @@
               "playerctl"
               "previous"
             ];
+            # both external monitors (DMS controls one DDC device per call and
+            # has no "all" target). ddc:i2c-5 = HDMI-A-1, ddc:i2c-6 = DP-3 — if
+            # the i2c bus numbers ever shift, update these (ddcutil detect).
             "XF86MonBrightnessUp" = spawn [
-              "brightnessctl"
-              "set"
-              "5%+"
+              "sh"
+              "-c"
+              "dms ipc call brightness increment 5 ddc:i2c-5; dms ipc call brightness increment 5 ddc:i2c-6"
             ];
             "XF86MonBrightnessDown" = spawn [
-              "brightnessctl"
-              "set"
-              "5%-"
+              "sh"
+              "-c"
+              "dms ipc call brightness decrement 5 ddc:i2c-5; dms ipc call brightness decrement 5 ddc:i2c-6"
             ];
 
             # apps
