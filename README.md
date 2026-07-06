@@ -84,6 +84,46 @@ just drybuild       # dry-run build of the current host
 
 Fish also wraps `just` so it works from any cwd (see `modules/apps/fish.nix`).
 
+## Secrets (sops)
+
+Secrets are encrypted with [sops-nix](https://github.com/Mic92/sops-nix) using
+**age**, committed to git as ciphertext, and decrypted at activation to
+`/run/secrets/<name>` (tmpfs — never in the nix store or git in plaintext). The
+config references the decrypted *path*, never the value.
+
+- `modules/system/sops.nix` — imports the sops module, sets the sops file and
+  the decryption key (the machine's SSH host key), and declares each secret.
+- `.sops.yaml` — the age recipients allowed to decrypt (creation rules).
+- `secrets/*.yaml` — the encrypted secret files.
+
+The decryption key is `/etc/ssh/ssh_host_ed25519_key`, converted to age. Get the
+matching **public** key (the recipient for `.sops.yaml`) with:
+
+```sh
+nix run nixpkgs#ssh-to-age < /etc/ssh/ssh_host_ed25519_key.pub
+```
+
+Add / edit a secret (opens `$EDITOR` with the decrypted content, re-encrypts on
+save):
+
+```sh
+nix run nixpkgs#sops -- secrets/ha.yaml
+```
+
+Then declare it and reference the runtime path:
+
+```nix
+# modules/system/sops.nix
+sops.secrets.hass_token = { owner = "otis"; mode = "0400"; };
+
+# consumer, e.g. modules/desktop/dms.nix
+config.sops.secrets.hass_token.path   # => /run/secrets/hass_token
+```
+
+Adding another machine: add its age key to `.sops.yaml` and run
+`sops updatekeys secrets/ha.yaml`. To rotate a secret, edit it as above and
+replace the value — the old ciphertext is overwritten.
+
 ## Attribution
 
 HM + NixOS same-file mechanism (`home.extraOptions` + deferred module) and the
