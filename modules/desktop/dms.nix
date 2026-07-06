@@ -13,6 +13,9 @@ let
   # resolve those slots against the live scheme below so the shell palette comes
   # straight out of the stylix base16 colors. See themes/<name>.nix.
   theme = (import ../../themes { inherit lib; }).get config.theming.stylix.theme;
+
+  # sops-decrypted Home Assistant token path (runtime tmpfs, never in the store).
+  haTokenPath = config.sops.secrets.hass_token.path;
 in
 {
   options.desktop.dms.enable = lib.mkEnableOption "DankMaterialShell (Quickshell bar + panels, blur)";
@@ -73,15 +76,29 @@ in
 
         # DMS plugins from the registry (github:AvengeMedia/dms-plugin-registry).
         programs.dank-material-shell.plugins = {
-          aiOverviewControl.enable = true; # bernardopg/AiOverviewControl
+          aiOverviewControl = {
+            enable = true; # bernardopg/AiOverviewControl
+            settings.providerSelection = "claude"; # only show Claude usage
+          };
           emojiLauncher.enable = true; # devnullvoid/dms-emoji-launcher
-          homeAssistantMonitor.enable = true; # xxyangyoulin/dms-plugin-hass (hyprland-only upstream)
+          homeAssistantMonitor = {
+            enable = true; # xxyangyoulin/dms-plugin-hass (hyprland-only upstream)
+            settings = {
+              hassUrl = "https://ha.laxoi.be";
+              hassTokenPath = haTokenPath; # sops-decrypted token file
+            };
+          };
           fullscreenPowerMenu.enable = true; # JDKamalakar/DMS-Fullscreen_Power_Menu
-          clipboardPlus.enable = true; # Dadangdut33 ClipboardPlus
+          clipboardPlus = {
+            enable = true; # Dadangdut33 ClipboardPlus
+            settings = {
+              showBarWidget = false; # hide the bar icon (Mod+V/IPC still works)
+              hidePanelBackground = true; # let DMS's blur frost the panel
+            };
+          };
           usbManager.enable = true; # NordicsSys/dms-usb-manager
-          simpleAudioControl.enable = true; # Dadangdut33 SimpleAudioControl
+          simpleAudioControl.enable = true; # Dadangdut33 SimpleAudioControl (bar-only)
           ambientSound.enable = true; # hthienloc/dms-ambient-sound
-          takeABreak.enable = true; # hthienloc/dms-take-a-break
           dankBatteryAlerts.enable = true; # AvengeMedia DankBatteryAlerts
         };
         # write plugin_settings.json marking each enabled plugin active, so they
@@ -276,7 +293,6 @@ in
               { id = "audioInput"; enabled = true; width = 50; }
               { id = "idleInhibitor"; enabled = true; width = 50; }
               { id = "nightMode"; enabled = true; width = 50; }
-              { id = "takeABreak"; enabled = true; width = 50; } # plugin (control-center)
             ];
           };
 
