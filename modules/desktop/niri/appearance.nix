@@ -18,12 +18,13 @@ in
             lib.mkAfter [
               # Blur behind every window. Only visible where a window is
               # translucent (see the opacity window-rules in niri/rules.nix),
-              # e.g. the terminal, spotify, helium. xray = cheap static-wallpaper
-              # blur (frosted-glass-over-wallpaper look).
+              # e.g. the terminal, spotify, helium. xray = false so the blur
+              # samples the actual windows *behind* each window (blurred),
+              # not just the wallpaper.
               (plain "window-rule" [
                 (plain "background-effect" [
                   (leaf "blur" true)
-                  (leaf "xray" true)
+                  (leaf "xray" false)
                   (leaf "noise" 0.05)
                   (leaf "saturation" 2.4)
                 ])

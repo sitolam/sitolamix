@@ -24,6 +24,10 @@
         workspace-auto-back-and-forth = true;
       };
 
+      # static workspace that niri-scratchpad-rs stashes windows onto (required
+      # by the tool; see bindings.nix Mod+M/Mod+S and startup.nix daemon).
+      workspaces."stash" = { };
+
       layout = {
         gaps = 20;
         center-focused-column = "never";

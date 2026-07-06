@@ -45,6 +45,19 @@
 
     noctalia.url = "github:noctalia-dev/noctalia-shell";
 
+    # niri scratchpad (Rust). packages.default = the `niri-scratchpad` binary.
+    niri-scratchpad = {
+      url = "github:argosnothing/niri-scratchpad-rs";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    # heyoeyo/niri_tweaks — stdlib-only python IPC scripts (no flake); we run
+    # niri_tile_to_n.py at startup. flake=false => the repo is a plain src path.
+    niri-tweaks = {
+      url = "github:heyoeyo/niri_tweaks";
+      flake = false;
+    };
+
     # DankMaterialShell (Quickshell + Go). Tried on this branch as an
     # alternative to noctalia; drives blur via niri's ext-background-effect.
     dms = {

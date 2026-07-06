@@ -88,7 +88,9 @@
               "notepad"
               "toggle"
             ]);
-            "Mod+S" = spawn (dms [
+            # Mod+S / Mod+M are the scratchpad (see below); control-center and
+            # processlist moved here (control-center is also the bar button).
+            "Mod+Ctrl+S" = spawn (dms [
               "control-center"
               "toggle"
             ]);
@@ -96,10 +98,28 @@
               "notifications"
               "toggle"
             ]);
-            "Mod+M" = spawn (dms [
+            "Mod+Ctrl+M" = spawn (dms [
               "processlist"
               "toggle"
             ]);
+
+            # scratchpad (argosnothing/niri-scratchpad-rs). `create 1` toggles
+            # register 1: it stashes the focused window to the "stash" workspace
+            # and shows it back as a float. Same command on both keys, used as a
+            # pair: Mod+M to minimise, Mod+S to bring it back. --as-float so the
+            # shown scratchpad floats over its workspace.
+            "Mod+M" = spawn [
+              "niri-scratchpad"
+              "create"
+              "1"
+              "--as-float"
+            ];
+            "Mod+S" = spawn [
+              "niri-scratchpad"
+              "create"
+              "1"
+              "--as-float"
+            ];
 
             # session
             "Mod+BackSpace" = spawn (dms [
