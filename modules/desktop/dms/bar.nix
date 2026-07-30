@@ -11,6 +11,13 @@
       qtThemingEnabled = false;
 
       animationSpeed = 2;
+      # animation style (SettingsData.AnimationVariant): 0=Material, 1=Fluent,
+      # 2=Dynamic.
+      animationVariant = 1; # Fluent
+
+      # default app launcher: compact Spotlight style rather than the "full"
+      # app-drawer grid.
+      launcherStyle = "spotlight";
 
       showWorkspaceIndex = true;
       showOccupiedWorkspacesOnly = true;
@@ -102,6 +109,8 @@
           visible = true;
           popupGapsAuto = true;
           popupGapsManual = 4;
+          # reveal a widget's popout on hover (not just on click).
+          hoverPopouts = true;
         }
       ];
 
