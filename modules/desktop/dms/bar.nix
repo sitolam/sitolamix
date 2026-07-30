@@ -83,12 +83,9 @@
             { id = "usbManager"; enabled = true; }
             { id = "homeAssistantMonitor"; enabled = true; } # hyprland-only upstream
             { id = "claudeCodeUsage"; enabled = true; } # moved out of hidden bar, next to HA
-            { id = "memUsage"; enabled = true; }
-            {
-              id = "diskUsage";
-              enabled = true;
-              mountPath = "/";
-            }
+            # unified cpu/ram/disk gauges (systemMonitorPlus plugin) — replaces
+            # the built-in memUsage + diskUsage widgets. Config in plugins.nix.
+            { id = "systemMonitorPlus"; enabled = true; }
             { id = "notificationButton"; enabled = true; }
             { id = "battery"; enabled = true; }
             {
@@ -98,6 +95,7 @@
               showBrightnessIcon = false;
               showBrightnessPercent = false;
               showMicIcon = false;
+              showIdleInhibitorIcon = true; # show the keep-awake icon when active
             }
           ];
           spacing = 8;

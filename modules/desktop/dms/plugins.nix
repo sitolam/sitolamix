@@ -14,6 +14,34 @@ in
         emojiLauncher.enable = true; # devnullvoid/dms-emoji-launcher
         calculator.enable = true; # rochacbruno/DankCalculator — launcher plugin, trigger "=" in spotlight
         dankKDEConnect.enable = true; # AvengeMedia/dms-plugins DankKDEConnect (bar widget; kdeconnect via kde-connect.nix)
+        # unified system monitor (Dadangdut33/dms-plugins) — replaces the
+        # built-in memUsage + diskUsage bar widgets with one widget showing
+        # cpu/ram/disk as gauges.
+        systemMonitorPlus = {
+          enable = true;
+          settings = {
+            # only cpu, ram, disk show (every other resource's <r>Enabled
+            # defaults to false); this also fixes their order.
+            resourceOrder = "cpuUsage,ramUsage,diskPartitionUsage";
+            cpuUsageEnabled = true;
+            ramUsageEnabled = true;
+            diskPartitionUsageEnabled = true;
+            diskPartitionUsageMount = "/"; # root filesystem
+            # gauge (circular speedometer ring) look
+            cpuUsageVisualStyle = "gauge";
+            ramUsageVisualStyle = "gauge";
+            diskPartitionUsageVisualStyle = "gauge";
+            # icon-only: drop the numeric percentage text, keep the gauge + icon.
+            cpuUsageShowText = false;
+            ramUsageShowText = false;
+            diskPartitionUsageShowText = false;
+            # fixed color (UseValueColors=false disables the auto
+            # normal/warning/danger threshold colouring; colour = theme primary).
+            cpuUsageUseValueColors = false;
+            ramUsageUseValueColors = false;
+            diskPartitionUsageUseValueColors = false;
+          };
+        };
         # IPC-only screenshot + screen-record toolbar; opened via keybind
         # (dms ipc call screenCaptureToolbar toggle). Deps: gpu-screen-recorder
         # (media suite), grim/slurp/wl-clipboard (niri), satty (added below).
@@ -23,7 +51,16 @@ in
         # control-center toggles.
         typingSounds = {
           enable = true; # hthienloc/dms-typing-sounds (needs evtest/libinput/ffmpeg + input group)
-          settings.mouseEnabled = true; # also play sounds on mouse clicks
+          settings = {
+            # No sounds by default WITHOUT the plugin showing as disabled: the
+            # "Enable Typing Sounds" toggle is settingKey "enabled", which is
+            # ALSO the key DMS's loader uses to activate the plugin — setting it
+            # false at startup makes DMS never load it (shows disabled in the
+            # browser). So keep it enabled/loaded and just mute it via volume=0.
+            # Raise this (0..100) in Settings to actually hear it.
+            volume = 0;
+            mouseEnabled = true;
+          };
         };
         takeABreak = {
           enable = true; # hthienloc/dms-take-a-break
