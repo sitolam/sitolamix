@@ -54,11 +54,15 @@ in
           #    niri.nix) pins into the overview backdrop (place-within-backdrop).
           blurWallpaperOnOverview = true;
           blurredWallpaperLayer = true;
-          # blur only shows through transparent pixels: stylix.opacity defaults to
-          # fully opaque, so force the shell surfaces translucent enough to see the
-          # blur. (mkForce overrides the stylix opacity target.)
-          popupTransparency = lib.mkForce 0.82;
-          dockTransparency = lib.mkForce 0.82;
+          # blur only shows through transparent pixels (DMS: readableSurface =
+          # withAlpha(surfaceContainer, popupTransparency) — so this is the
+          # surface *alpha*, 1.0 = fully opaque). stylix.opacity defaults these to
+          # fully opaque, which hides the ext-background-effect blur entirely, so
+          # force them well below 1.0 — the lower the alpha, the more see-through
+          # (more of the backdrop shows through the surface tint). 0.3 is glassy;
+          # raise toward 0.5 for more solid/readable.
+          popupTransparency = lib.mkForce 0.3;
+          dockTransparency = lib.mkForce 0.3;
         };
       };
   };

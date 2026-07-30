@@ -29,10 +29,30 @@ in
                   (leaf "saturation" 2.4)
                 ])
               ])
-              # stronger global blur (more passes + larger offset = heavier blur).
+              # DMS's own surfaces (bar, popouts, panels) get their blur from DMS
+              # itself over the ext-background-effect protocol (niri supports it —
+              # the BlurService log confirms), blurring only the card region, not
+              # the whole full-screen surface. So we do NOT enable blur here (that
+              # would frost the whole screen). We only set xray=false so the blur
+              # samples the actual windows *behind* each surface (blurred), not
+              # just the wallpaper — matching the window blur above. Protocol
+              # surfaces don't inherit niri's default xray, hence this rule. A
+              # background-effect with no `blur true` doesn't turn blur on, so
+              # this stays card-only. blurwallpaper is excluded (no protocol blur;
+              # handled by its own place-within-backdrop rule). Blur only *shows*
+              # where surfaces are translucent — see the lowered opacity in
+              # dms/theme.nix and dms/bar.nix.
+              (plain "layer-rule" [
+                (leaf "match" { namespace = "^dms:"; })
+                (leaf "exclude" { namespace = "blurwallpaper"; })
+                (plain "background-effect" [
+                  (leaf "xray" false)
+                ])
+              ])
+              # global blur strength (more passes + larger offset = denser blur).
               (plain "blur" [
-                (leaf "passes" 4)
-                (leaf "offset" 7.0)
+                (leaf "passes" 3)
+                (leaf "offset" 6.0)
                 (leaf "noise" 0.04)
                 (leaf "saturation" 1.8)
               ])
