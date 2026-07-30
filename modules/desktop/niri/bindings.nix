@@ -88,6 +88,19 @@
               "notepad"
               "toggle"
             ]);
+            # dashboard/overview panel (dank dash)
+            "Mod+D" = spawn (dms [
+              "dash"
+              "toggle"
+            ]);
+            # emoji / unicode picker (emojiLauncher plugin, trigger ":e"): open
+            # spotlight pre-filled with the trigger so it lands straight on the
+            # emoji search. Trailing space is intentional (starts the filter).
+            "Mod+Shift+Period" = spawn (dms [
+              "spotlight"
+              "toggleQuery"
+              ":e "
+            ]);
             # Mod+S / Mod+M are the scratchpad (see below); control-center and
             # processlist moved here (control-center is also the bar button).
             "Mod+Ctrl+S" = spawn (dms [
@@ -126,9 +139,17 @@
               "lock"
               "lock"
             ]);
-            # fullscreenPowerMenu plugin replaces the built-in power menu
+            # on-demand lock + suspend (swayidle also locks before sleep, but
+            # this locks explicitly first so we never flash the desktop).
+            "Mod+Shift+BackSpace" = spawn [
+              "sh"
+              "-c"
+              "loginctl lock-session && systemctl suspend"
+            ];
+            # built-in DMS power menu (option shortcuts patched to numbers in
+            # modules/desktop/dms/default.nix)
             "Mod+Ctrl+BackSpace" = spawn (dms [
-              "fullscreenPowerMenu"
+              "powermenu"
               "toggle"
             ]);
 
