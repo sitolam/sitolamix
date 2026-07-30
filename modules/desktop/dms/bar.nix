@@ -96,8 +96,10 @@
           spacing = 8;
           innerPadding = 2;
           bottomGap = 0;
-          transparency = 0.7;
-          widgetTransparency = 0.7;
+          # translucent so the ext-background-effect blur behind the bar/widgets
+          # is visible (fully opaque = no visible blur). Lower = more see-through.
+          transparency = 0.3;
+          widgetTransparency = 0.3;
           squareCorners = false;
           noBackground = false;
           gothCornersEnabled = false;
