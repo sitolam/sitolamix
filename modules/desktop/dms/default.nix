@@ -54,7 +54,28 @@ in
 
           # use the cached nixpkgs builds rather than the flake input building
           # dms-shell + quickshell from source. (dgop already defaults to pkgs.)
-          package = pkgs.dms-shell;
+          #
+          # ...patched so the power menu picks options by NUMBER (the badge shows
+          # the row's position, 1..N top-to-bottom, and pressing that digit picks
+          # it). DMS hard-codes per-action letter shortcuts (R/X/P/L/S/H/D) with
+          # no setting to change them; rather than remap letter->letter (which
+          # scrambles the numbers vs the on-screen order, since the order is just
+          # SettingsData.powerMenuActions), drive the badge + key handling off the
+          # delegate index so it's always sequential regardless of order. The old
+          # letter shortcuts keep working as a bonus. Pinned to the current DMS
+          # layout: a version bump that moves these lines trips --replace-fail and
+          # fails the build loudly, which is the cue to refresh the patch.
+          package = pkgs.dms-shell.overrideAttrs (old: {
+            postFixup =
+              (old.postFixup or "")
+              + ''
+                substituteInPlace $out/share/quickshell/dms/Modals/PowerMenuModal.qml \
+                  --replace-fail 'text: gridButtonRect.actionData.key' 'text: (gridButtonRect.index + 1)' \
+                  --replace-fail 'text: listButtonRect.actionData.key' 'text: (listButtonRect.index + 1)' \
+                  --replace-fail '(event.key === Qt.Key_P && !(event.modifiers & Qt.ControlModifier))) {' '(event.key === Qt.Key_P && !(event.modifiers & Qt.ControlModifier)) || (event.key >= Qt.Key_1 && event.key <= Qt.Key_9 && !(event.modifiers & Qt.ControlModifier))) {' \
+                  --replace-fail 'switch (event.key) {' 'if (event.key >= Qt.Key_1 && event.key <= Qt.Key_9 && !(event.modifiers & Qt.ControlModifier)) { const numIndex = event.key - Qt.Key_1; if (numIndex < visibleActions.length) { startHold(getActionAtIndex(numIndex), numIndex); event.accepted = true; return; } } switch (event.key) {'
+              '';
+          });
           quickshell.package = pkgs.quickshell;
 
           # matugen would regenerate app color files from DMS's palette and fight

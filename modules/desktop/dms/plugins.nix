@@ -22,16 +22,6 @@ in
             hassTokenPath = haTokenPath; # sops-decrypted token file
           };
         };
-        fullscreenPowerMenu = {
-          enable = true; # JDKamalakar/DMS-Fullscreen_Power_Menu
-          # slider labels -> keys; all 0..100 (plugin divides by 100).
-          settings = {
-            menuOpacity = 50; # "Menu Transparency"
-            dimOpacity = 80; # "Background Dim Intensity"
-            primaryTintEnabled = true; # "Primary Color Tint"
-            tintIntensity = 10; # "Tint Intensity"
-          };
-        };
         # collapsible bar group (rdannenbring/widget-group): fold ambient sound,
         # simple audio control and the Claude/AI overview behind one button. The
         # bar widget id is "widgetGroup:<variant.id>" (see bar.nix rightWidgets).
