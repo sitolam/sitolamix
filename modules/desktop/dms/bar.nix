@@ -70,12 +70,19 @@
             "weather"
           ];
           rightWidgets = [
+            # hidden-bar cluster at the left end of the right section: the two
+            # managed widgets, then the hiddenBar trigger. Order matters — for a
+            # right-section trigger the managed widgets sit to its left and slide
+            # out from the trigger (see plugins.nix hiddenBar), so the trigger
+            # stays last in the cluster.
+            { id = "ambientSound"; enabled = true; }
+            { id = "simpleAudioControl"; enabled = true; }
+            { id = "hiddenBar"; enabled = true; }
             { id = "systemTray"; enabled = true; }
+            { id = "dankKDEConnect"; enabled = true; } # AvengeMedia DankKDEConnect
             { id = "usbManager"; enabled = true; }
-            # ambientSound + simpleAudioControl + aiOverviewControl are folded
-            # into this collapsible group button (see plugins.nix widgetGroup).
-            { id = "widgetGroup:media"; enabled = true; }
             { id = "homeAssistantMonitor"; enabled = true; } # hyprland-only upstream
+            { id = "claudeCodeUsage"; enabled = true; } # moved out of hidden bar, next to HA
             { id = "memUsage"; enabled = true; }
             {
               id = "diskUsage";
@@ -126,6 +133,14 @@
         { id = "audioInput"; enabled = true; width = 50; }
         { id = "idleInhibitor"; enabled = true; width = 50; }
         { id = "nightMode"; enabled = true; width = 50; }
+        # battery tile — its detail view is DMS's native power-profile switcher
+        # (performance/balanced/power-saver via power-profiles-daemon, enabled in
+        # ./default.nix). There is no standalone power-profile CC widget.
+        { id = "battery"; enabled = true; width = 50; }
+        # plugin control-center toggles (id = "plugin_<pluginId>"). takeABreak's
+        # tile is intentionally omitted — its pause toggle reaches the daemon via
+        # an unreliable cross-instance lookup, so it's not useful here.
+        { id = "plugin_typingSounds"; enabled = true; width = 50; }
       ];
     };
   };
