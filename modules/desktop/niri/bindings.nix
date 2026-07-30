@@ -283,9 +283,13 @@
             "Mod+Tab" = noArg "focus-workspace-previous";
 
             # screenshots
-            "Mod+Shift+S" = {
-              action.screenshot = [ ];
-            };
+            # screen capture + record toolbar (screenCaptureToolbar plugin);
+            # replaces niri's built-in region UI here. Print/Ctrl+Print/Alt+Print
+            # and the grim region/OCR/color binds below are left as-is.
+            "Mod+Shift+S" = spawn (dms [
+              "screenCaptureToolbar"
+              "toggle"
+            ]);
             "Ctrl+Print" = noArg "screenshot-screen";
             "Alt+Print" = noArg "screenshot-window";
             "Print" = noArg "screenshot";
