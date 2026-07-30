@@ -19,7 +19,20 @@ in
     # load i2c-dev (creates the nodes + i2c group + udev perms) and add the user
     # to the i2c group so the shell can read/write them.
     hardware.i2c.enable = true;
-    users.users.otis.extraGroups = [ "i2c" ];
+    # i2c: DDC brightness (above). input: typingSounds reads /dev/input/event*.
+    users.users.otis.extraGroups = [
+      "i2c"
+      "input"
+    ];
+
+    # screen *recording* for the screenCaptureToolbar plugin. The NixOS module
+    # (not just the package) installs the setcap-wrapped binary gpu-screen-recorder
+    # needs to capture; screenshots themselves use grim/slurp/satty.
+    programs.gpu-screen-recorder.enable = true;
+
+    # backs the power-profile switcher in the battery control-center tile
+    # (see bar.nix controlCenterWidgets). No TLP here, so no conflict.
+    services.power-profiles-daemon.enable = true;
 
     # runtime deps the enabled DMS plugins shell out to (registry ships only the
     # plugin source). nix dedups any already present (mpv/udisks/util-linux/...).
@@ -35,6 +48,10 @@ in
       exfatprogs # usb-manager
       udisks # usb-manager
       util-linux # usb-manager (lsblk)
+      satty # screenCaptureToolbar (annotation editor; grim/slurp/wl-clipboard via niri, gpu-screen-recorder via media suite)
+      evtest # typingSounds (read key events)
+      libinput # typingSounds
+      ffmpeg # typingSounds (sound playback)
     ];
 
     home.extraOptions =
