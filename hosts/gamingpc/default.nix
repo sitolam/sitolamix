@@ -23,6 +23,7 @@
     social.enable = true;
     school.enable = true;
     gaming.enable = true;
+    ai.enable = true;
   };
 
   # Monitors are managed by DMS (settings UI -> ~/.config/niri/dms/outputs.kdl,
