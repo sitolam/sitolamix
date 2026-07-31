@@ -21,5 +21,14 @@ in
       nautilus.enable = true;
       gparted.enable = true;
     };
+
+    # default desktop utilities every host wants (alongside nautilus/gparted).
+    home.extraOptions =
+      { pkgs, ... }:
+      {
+        home.packages = [
+          pkgs.mission-center # GUI system monitor (GNOME-style task manager)
+        ];
+      };
   };
 }

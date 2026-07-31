@@ -1,6 +1,18 @@
 { inputs, ... }:
 {
+  # Unfree in the NixOS + home-manager closures (HM shares this via useGlobalPkgs).
   nixpkgs.config.allowUnfree = true;
+
+  # Unfree in *ad-hoc* CLI usage too — `nix-shell -p`, `nix-build`, `nix-env`, and
+  # flake commands run with `--impure` (e.g. `nix shell --impure nixpkgs#nvtop`,
+  # which pulls unfree CUDA). Without this, those invocations use a nixpkgs with no
+  # config and abort on the unfree/CUDA-EULA gate. The env var covers the legacy
+  # tools outright; the config.nix file is the belt-and-suspenders for anything
+  # that reads it.
+  environment.sessionVariables.NIXPKGS_ALLOW_UNFREE = "1";
+  home.extraOptions.home.file.".config/nixpkgs/config.nix".text = ''
+    { allowUnfree = true; }
+  '';
 
   nix = {
     registry.nixpkgs.flake = inputs.nixpkgs;

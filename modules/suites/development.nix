@@ -21,7 +21,6 @@ in
           distrobox
           scrcpy
           claude-code
-          mission-center # GUI system monitor (GNOME-style task manager)
         ];
       };
   };
