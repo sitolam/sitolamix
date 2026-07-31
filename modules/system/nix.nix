@@ -46,13 +46,29 @@
         "lantian:EeAUQ+W+6r7EtwnmYjeVwx5kOGEBpjlBfPlzGlTNvHc="
       ];
 
-      auto-optimise-store = true;
+      auto-optimise-store = true; # hardlink-dedupe identical store paths (saves disk)
     };
 
-    gc = {
-      automatic = true;
-      dates = "weekly";
-      options = "--delete-older-than 7d";
+    # Garbage collection is handled by `nh clean` below (programs.nh.clean), which
+    # is generation-aware. Running nix.gc *and* nh clean is redundant, so the
+    # built-in timer stays off.
+    gc.automatic = false;
+  };
+
+  # nh = the nice `nix os switch` wrapper (already used by the `rebuild`/`update`
+  # fish aliases). Its clean timer supersedes nix.gc: it keeps a minimum number
+  # of generations regardless of age, so a rebuild spree can't leave you with
+  # zero rollback targets, while still reclaiming disk aggressively.
+  programs.nh = {
+    enable = true; # installs nh (replaces the systemPackages entry)
+    flake = "/home/otis/sitolamix"; # lets `nh os switch` run with no path arg
+
+    clean = {
+      enable = true;
+      dates = "daily"; # run often — this box is tight on storage
+      # keep the 3 newest generations no matter what, plus anything from the last
+      # 4 days. Tighten `--keep`/`--keep-since` further to reclaim more.
+      extraArgs = "--keep 3 --keep-since 4d";
     };
   };
 }
