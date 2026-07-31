@@ -38,6 +38,8 @@ in
 
         home.packages = with pkgs; [
           dust
+          ncdu # interactive TUI disk-usage browser (complements dust)
+          micro # simple modeless terminal editor
           ripgrep
           fd
           jq

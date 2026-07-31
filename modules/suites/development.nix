@@ -17,12 +17,11 @@ in
           k9s
           kubectl
           lazydocker
-          dbeaver-bin
-          bruno
           opentofu
           distrobox
           scrcpy
           claude-code
+          mission-center # GUI system monitor (GNOME-style task manager)
         ];
       };
   };
