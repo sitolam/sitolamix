@@ -123,6 +123,18 @@ Fish also wraps `just` so it works from any cwd (see `modules/apps/fish.nix`).
 > After a rebuild that touches DankMaterialShell plugins or settings, run
 > `dms restart` so the shell reloads them.
 
+## 🔑 GitHub auth
+
+Pushing uses HTTPS with the **GitHub CLI** as the credential helper — no token in
+the remote URL, nothing auth-related committed to the repo. On a new machine:
+
+```sh
+gh auth login   # GitHub.com → HTTPS → login via browser
+```
+
+`gh` stores the token in `~/.config/gh/` (user-only, outside the flake) and wires
+itself in as git's credential helper, so `git push` just works afterwards.
+
 ## 🔐 Secrets (sops)
 
 <details>
