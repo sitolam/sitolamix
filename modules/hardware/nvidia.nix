@@ -1,4 +1,9 @@
-{ config, lib, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 let
   cfg = config.hardware.nvidia;
 in
@@ -7,6 +12,10 @@ in
 
   config = lib.mkIf cfg.enable {
     services.xserver.videoDrivers = [ "nvidia" ];
+
+    # GPU monitor (NVIDIA-only build — no AMD/Intel backends). Pulls unfree
+    # nvml; allowUnfree is set in modules/system/nix.nix.
+    environment.systemPackages = [ pkgs.nvtopPackages.nvidia ];
 
     hardware.nvidia = {
       modesetting.enable = true;
