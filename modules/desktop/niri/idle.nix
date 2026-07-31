@@ -51,14 +51,11 @@
             }
           ];
 
-          events = [
-            # Lock before suspend/hibernate so we never resume to an unlocked
-            # screen (redundant if already locked by the 6-min timer — harmless).
-            {
-              event = "before-sleep";
-              command = "${loginctl} lock-session";
-            }
-          ];
+          # Lock before suspend/hibernate so we never resume to an unlocked
+          # screen (redundant if already locked by the 6-min timer — harmless).
+          # New HM format: attrset keyed by event name (was a list of
+          # { event; command; } — deprecated).
+          events.before-sleep = "${loginctl} lock-session";
         };
       };
   };
