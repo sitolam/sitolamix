@@ -70,14 +70,10 @@
             "weather"
           ];
           rightWidgets = [
-            # hidden-bar cluster at the left end of the right section: the two
-            # managed widgets, then the hiddenBar trigger. Order matters — for a
-            # right-section trigger the managed widgets sit to its left and slide
-            # out from the trigger (see plugins.nix hiddenBar), so the trigger
-            # stays last in the cluster.
+            # ambient-sound widget (bar-only plugin — no control-center variant,
+            # so it can't be moved there; it stays a normal bar widget). The
+            # hidden-bar collapser and the simple-audio-control mixer were removed.
             { id = "ambientSound"; enabled = true; }
-            { id = "simpleAudioControl"; enabled = true; }
-            { id = "hiddenBar"; enabled = true; }
             { id = "systemTray"; enabled = true; }
             { id = "dankKDEConnect"; enabled = true; } # AvengeMedia DankKDEConnect
             { id = "usbManager"; enabled = true; }
@@ -87,7 +83,8 @@
             # the built-in memUsage + diskUsage widgets. Config in plugins.nix.
             { id = "systemMonitorPlus"; enabled = true; }
             { id = "notificationButton"; enabled = true; }
-            { id = "battery"; enabled = true; }
+            # battery/power widget removed from the bar — power lives only in the
+            # control center now (the battery tile has the power-profile switcher).
             {
               id = "controlCenterButton";
               enabled = true;

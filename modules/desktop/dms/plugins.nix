@@ -10,7 +10,11 @@ in
       # the registry homeModule (imported in ./default.nix) provides the pinned
       # src for each, we just enable + configure.
       programs.dank-material-shell.plugins = {
-        claudeCodeUsage.enable = true; # titeya/dms-claudecode (needs jq+curl, both in systemPackages)
+        claudeCodeUsage = {
+          enable = true; # titeya/dms-claudecode (needs jq+curl, both in systemPackages)
+          # how often to fetch usage data, in minutes (SliderSetting range 2..15).
+          settings.refreshInterval = 2;
+        };
         emojiLauncher.enable = true; # devnullvoid/dms-emoji-launcher
         calculator.enable = true; # rochacbruno/DankCalculator — launcher plugin, trigger "=" in spotlight
         dankKDEConnect.enable = true; # AvengeMedia/dms-plugins DankKDEConnect (bar widget; kdeconnect via kde-connect.nix)
@@ -79,32 +83,8 @@ in
             hassTokenPath = haTokenPath; # sops-decrypted token file
           };
         };
-        # bartender-style bar collapser (hthienloc/dms-hidden-bar): the
-        # "hiddenBar" trigger widget (see bar.nix rightWidgets) hides the three
-        # media/AI widgets sitting next to it and reveals them on hover. Widgets
-        # are managed by id within the trigger's own bar section. NB: DMS must be
-        # restarted (`dms restart` / relogin) after adding/moving the managed
-        # widgets before the plugin picks them up.
-        hiddenBar = {
-          enable = true;
-          settings = {
-            # whitelist = hide ONLY these ids (blacklist/auto would hide more).
-            # (claudeCodeUsage moved out next to the HA widget; typingSounds and
-            # takeABreak aren't bar widgets so they can't be hidden here.)
-            widgetSelectionMode = "whitelist";
-            widgetWhitelist = [
-              "ambientSound"
-              "simpleAudioControl"
-            ];
-            # click to expand (no hover reveal), then auto-collapse after the
-            # inactivity delay. Right-click pins to prevent auto-collapse.
-            autoExpand = false;
-            autoCollapse = true;
-          };
-        };
         usbManager.enable = true; # NordicsSys/dms-usb-manager
-        simpleAudioControl.enable = true; # Dadangdut33 SimpleAudioControl (bar-only)
-        ambientSound.enable = true; # hthienloc/dms-ambient-sound
+        ambientSound.enable = true; # hthienloc/dms-ambient-sound (bar widget — no control-center variant)
         dankBatteryAlerts.enable = true; # AvengeMedia DankBatteryAlerts
       };
 
