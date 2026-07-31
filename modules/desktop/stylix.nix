@@ -23,6 +23,10 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    # stylix drives the cursor via home.pointerCursor; newer HM wants the
+    # generation flag set explicitly instead of inferred from the theme name.
+    home.extraOptions.home.pointerCursor.enable = true;
+
     stylix = {
       enable = true;
 
