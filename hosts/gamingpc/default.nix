@@ -13,6 +13,13 @@
   # hardware
   hardware.nvidia.enable = true;
 
+  # cloud mounts — the remotes themselves are created with `rclone config`
+  # (see README → Cloud mounts), only *which* ones to mount lives here.
+  services.rclone = {
+    enable = true;
+    remotes.gdrive_personal = { };
+  };
+
   # feature suites
   suites = {
     core.enable = true;

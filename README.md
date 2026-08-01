@@ -67,7 +67,7 @@ modules/
   system/              always-on baseline (base, nix, locale, users, boot, sops …)
   hardware/            audio / bluetooth / graphics baseline; nvidia gated
   desktop/             niri, dms, stylix, xdg (gated on the desktop suite)
-  services/            kde-connect, docker … (gated)
+  services/            kde-connect, docker, rclone … (gated)
   apps/                one file per app, each `apps.<name>.enable`
   suites/              groups that flip a batch of enables (core, desktop, dev …)
 ```
@@ -173,6 +173,91 @@ config.sops.secrets.hass_token.path   # => /run/secrets/hass_token
 Adding another machine: add its age key to `.sops.yaml` and run
 `sops updatekeys secrets/ha.yaml`. To rotate a secret, edit it as above and
 replace the value — the old ciphertext is overwritten.
+
+</details>
+
+## ☁️ Cloud mounts (rclone)
+
+<details>
+<summary>Google Drive — and any other rclone remote — mounted at <code>~/Cloud/&lt;remote&gt;</code> by one systemd <b>user</b> service per remote. <em>Which</em> remotes to mount is declared in Nix; the accounts themselves are set up with <code>rclone config</code>, so no OAuth token ever touches the repo.</summary>
+
+<br>
+
+`modules/services/rclone.nix` turns every entry of `services.rclone.remotes`
+into its own `rclone-<name>.service`:
+
+```nix
+# hosts/gamingpc/default.nix
+services.rclone = {
+  enable = true;
+  remotes.gdrive_personal = { };   # mounts gdrive_personal: at ~/Cloud/gdrive_personal
+};
+```
+
+### Adding a Google Drive
+
+1. **Make your own OAuth client id** (recommended — the id built into rclone is
+   shared by every rclone user on earth and heavily rate-limited):
+   [rclone.org → making your own client id](https://rclone.org/drive/#making-your-own-client-id).
+
+2. **Authenticate.** Interactive, once per machine — this is the part that
+   *cannot* be declarative:
+
+   ```sh
+   rclone config
+   ```
+
+   `n` (new remote) → name it (e.g. `gdrive_personal`) → storage `drive` →
+   paste `client_id` + `client_secret` → scope `1` (full access) → leave
+   root_folder_id / service_account_file empty → `n` (no advanced config) →
+   `y` to open a browser and sign in → `n` (not a shared drive) → `q`.
+   Full walkthrough: [rclone.org/drive](https://rclone.org/drive/).
+
+3. **Declare it** under `services.rclone.remotes` in `hosts/<host>/default.nix`,
+   using the same name, then `just rebuild`.
+
+The mount comes up during the rebuild and at every login afterwards. `rclone
+listremotes` shows the names rclone knows about — they must match the
+attribute names.
+
+### Everyday use
+
+| Command | |
+|---|---|
+| `rclone-mounts` | status of every mount (`status` is the default subcommand) |
+| `rclone-mounts restart` | remount everything — `reload-rclone` still works too |
+| `rclone-mounts start` / `stop` | … one-way |
+| `rclone-mounts logs` | follow the journal of all mounts |
+
+### Options
+
+| Option | Default | |
+|---|---|---|
+| `services.rclone.mountBase` | `%h/Cloud` | parent directory of every mount |
+| `services.rclone.configFile` | `%h/.config/rclone/rclone.conf` | |
+| `services.rclone.flags` | see below | flags applied to every mount |
+| `…remotes.<name>.remote` | `<name>:` | set to `<name>:Sub/Dir` to mount a subfolder |
+| `…remotes.<name>.mountPoint` | `<mountBase>/<name>` | |
+| `…remotes.<name>.extraFlags` | `[ ]` | flags for this remote only, e.g. `[ "--read-only" ]` |
+
+The default flags worth knowing: `--vfs-cache-mode=full` means files are cached
+on disk, so editing in place behaves like a local disk (capped at 5G / 24h), and
+`--dir-cache-time=1000h` is paired with `--poll-interval=15s` — Drive supports
+change polling, so an effectively infinite directory cache still notices changes
+made from your phone or the web UI within seconds.
+
+### Troubleshooting
+
+| Symptom | Fix |
+|---|---|
+| `Failed to configure token … expired` | `rclone config reconnect <name>:` |
+| Unit inactive, mount point empty | `rclone-mounts logs` — usually the name doesn't match `rclone listremotes` |
+| `Transport endpoint is not connected` | leftover from a crash; `rclone-mounts restart` clears it (the unit unmounts stale mount points before starting) |
+| Nothing started at all | the unit is *skipped* while `~/.config/rclone/rclone.conf` doesn't exist — run `rclone config` first |
+
+> [!IMPORTANT]
+> `~/.config/rclone/rclone.conf` holds live OAuth refresh tokens. It stays in
+> `$HOME` at mode `600` and must never be committed — this repo is public.
 
 </details>
 
