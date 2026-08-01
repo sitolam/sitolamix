@@ -15,6 +15,7 @@ in
           zotero
           onlyoffice-desktopeditors
           typst
+          tinymist # Typst language server (LSP for editors)
         ];
       };
   };
