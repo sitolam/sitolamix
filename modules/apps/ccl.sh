@@ -16,6 +16,7 @@ ROUTER_PORT="${CCL_ROUTER_PORT:-4141}"
 ROUTER_URL="http://127.0.0.1:${ROUTER_PORT}"
 CONFIG_DIR="${HOME}/.claude-code-router"
 CONFIG="${CONFIG_DIR}/config.json"
+OWNED="${CONFIG_DIR}/.ccl-owned"
 # Not read until the router lifecycle lands (a later task).
 # shellcheck disable=SC2034
 STATE_DIR="${XDG_CACHE_HOME:-${HOME}/.cache}/ccl"
@@ -152,17 +153,24 @@ pick_model() {
 }
 
 write_config() {
-  local content="$1" tmp
+  local content="$1"
   mkdir -p "$CONFIG_DIR"
-  # Preserve a config we did not write, exactly once. After the first run the file
-  # is ccl-owned and rewritten on every launch, so re-backing it up would be noise.
-  if [[ -f "$CONFIG" && ! -f "${CONFIG}.pre-ccl" ]]; then
+  # A config's mere existence doesn't say who wrote it — ccl's own previous output
+  # looks identical to a foreign file. The marker is the only reliable signal: its
+  # absence means this config predates ccl, so back it up before overwriting it.
+  if [[ -f "$CONFIG" && ! -f "$OWNED" ]]; then
     cp "$CONFIG" "${CONFIG}.pre-ccl"
     printf 'ccl: backed up your existing router config to %s.pre-ccl\n' "$CONFIG" >&2
   fi
+  # `tmp` is deliberately not `local`: if a later command fails under errexit, the
+  # EXIT trap below still needs to see it, but errexit unwinds this function's local
+  # scope before running the trap, which would otherwise fail with "unbound variable".
   tmp="$(mktemp "${CONFIG_DIR}/.config.json.XXXXXX")"
+  trap 'rm -f "$tmp"' EXIT
   printf '%s\n' "$content" > "$tmp"
   mv -f "$tmp" "$CONFIG"
+  trap - EXIT
+  touch "$OWNED"
 }
 
 main() {
