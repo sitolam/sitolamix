@@ -3,9 +3,13 @@ let
   cfg = config.suites.ai;
 in
 {
-  options.suites.ai.enable = lib.mkEnableOption "local AI apps (LM Studio)";
+  options.suites.ai.enable = lib.mkEnableOption "local AI apps (LM Studio, ccl)";
 
   config = lib.mkIf cfg.enable {
+    # ccl launches Claude Code against a model LM Studio is serving; it is useless
+    # without LM Studio, so it ships with this suite rather than with development.
+    apps.ccl.enable = true;
+
     home.extraOptions =
       { pkgs, ... }:
       {
