@@ -10,15 +10,10 @@
 
 LMSTUDIO_URL="${CCL_LMSTUDIO_URL:-http://127.0.0.1:1234}"
 ROUTER_PORT="${CCL_ROUTER_PORT:-4141}"
-# Not read until the router lifecycle lands (a later task); shellcheck can't see that
-# from this file alone.
-# shellcheck disable=SC2034
 ROUTER_URL="http://127.0.0.1:${ROUTER_PORT}"
 CONFIG_DIR="${HOME}/.claude-code-router"
 CONFIG="${CONFIG_DIR}/config.json"
 OWNED="${CONFIG_DIR}/.ccl-owned"
-# Not read until the router lifecycle lands (a later task).
-# shellcheck disable=SC2034
 STATE_DIR="${XDG_CACHE_HOME:-${HOME}/.cache}/ccl"
 MIN_CONTEXT=32768
 
@@ -173,14 +168,53 @@ write_config() {
   touch "$OWNED"
 }
 
+router_healthy() {
+  curl -fsS --max-time 2 "${ROUTER_URL}/health" >/dev/null 2>&1
+}
+
+# The router reads its config once at startup, so a config change means a restart.
+# Hashing lets us skip that restart on the common path of relaunching the same model.
+ensure_router() {
+  local hash_file="${STATE_DIR}/active-config.sha256" want have=""
+  want="$(sha256sum < "$CONFIG" | cut -d' ' -f1)"
+  if [[ -f "$hash_file" ]]; then
+    have="$(cat "$hash_file")"
+  fi
+
+  if [[ "$want" == "$have" ]] && router_healthy; then
+    return 0
+  fi
+
+  ccr stop >/dev/null 2>&1 || true
+  # `ccr start` runs the server in the foreground rather than daemonizing itself, so
+  # it must be backgrounded here or the poll loop below would never run.
+  ccr start >/dev/null 2>&1 &
+
+  for _ in $(seq 1 30); do
+    if router_healthy; then
+      mkdir -p "$STATE_DIR"
+      printf '%s\n' "$want" > "$hash_file"
+      return 0
+    fi
+    sleep 0.5
+  done
+
+  printf 'ccl: the router never became healthy at %s (waited 15s)\n' "$ROUTER_URL" >&2
+  printf 'ccl: last 20 lines of the router log:\n' >&2
+  tail -qn 20 "${CONFIG_DIR}"/*.log 2>/dev/null >&2 || printf '  (no log file found)\n' >&2
+  exit 1
+}
+
 main() {
   local mode="launch" model=""
+  local -a claude_args=()
 
   while (( $# )); do
     case "$1" in
       -h|--help) usage; exit 0 ;;
       --list) mode="list"; shift ;;
       --print-config) mode="print-config"; shift ;;
+      --) shift; claude_args=("$@"); break ;;
       -*) die "unknown flag: $1 (use -- to pass flags through to claude)" ;;
       *)
         if [[ -n "$model" ]]; then
@@ -226,8 +260,10 @@ main() {
 
   warn_small_context "$ctx"
   write_config "$config"
+  ensure_router
 
-  die "router lifecycle is not implemented yet"
+  printf 'ccl: %s via the router on %s\n' "$model" "$ROUTER_URL" >&2
+  exec ccr code "${claude_args[@]}"
 }
 
 main "$@"

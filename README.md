@@ -261,6 +261,54 @@ made from your phone or the web UI within seconds.
 
 </details>
 
+## 🤖 Local models (ccl)
+
+`ccl` runs Claude Code against a model served by LM Studio instead of Anthropic's
+API. LM Studio speaks the OpenAI API and Claude Code speaks Anthropic's, so
+[claude-code-router](https://github.com/musistudio/claude-code-router) sits between
+them and translates. `ccl` picks the model, configures the router, starts it, and
+hands off.
+
+Enabled by `suites.ai.enable`.
+
+### Everyday use
+
+```
+ccl                            pick a model interactively, then launch
+ccl <model-id>                 launch with a specific model
+ccl --list                     list selectable models and exit
+ccl --print-config <model-id>  print the router config without writing it
+ccl <model-id> -- --version    pass everything after -- to claude
+```
+
+Start LM Studio and load a model first — `ccl` only lists what LM Studio reports.
+
+### Options
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `CCL_LMSTUDIO_URL` | `http://127.0.0.1:1234` | LM Studio base URL |
+| `CCL_ROUTER_PORT` | `4141` | Port the router listens on |
+
+`ccl` owns `~/.claude-code-router/config.json` and rewrites it on every launch. A
+config it did not write is preserved once as `config.json.pre-ccl`.
+
+### Troubleshooting
+
+**"LM Studio is not answering"** — LM Studio's local server is off. Developer tab →
+Status: Running.
+
+**Context warning at launch** — the model was loaded with too small a context window.
+Claude Code's system prompt and tool definitions alone exceed a few thousand tokens.
+Raise "Context Length" in the model's settings in LM Studio and reload it.
+
+**"the router never became healthy"** — something else holds port 4141, or the router
+rejected the config. The message includes the tail of the router's log.
+
+**Malformed tool calls, or the session derails** — expected with small quantised
+models. Claude Code leans hard on well-formed tool calls; a 3-bit quant will not
+always produce them. This is the model, not `ccl`.
+
 ## 📎 Attribution
 
 The HM + NixOS same-file mechanism (`home.extraOptions` + deferred module) and
