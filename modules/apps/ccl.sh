@@ -80,14 +80,69 @@ list_models() {
   printf '%s\n' "$rows" | column -t -s $'\t' -o '  '
 }
 
+validate_model() {
+  local json="$1" id="$2" ok
+  ok="$(printf '%s' "$json" | jq -r --arg id "$id" '
+    [ .data[] | select(.type != "embeddings") | .id ] | index($id) != null
+  ')"
+  if [[ "$ok" != "true" ]]; then
+    printf 'ccl: no selectable model with id %s\n' "$id" >&2
+    printf 'ccl: available:\n' >&2
+    candidates "$json" | cut -f1 | sed 's/^/  /' >&2
+    exit 1
+  fi
+}
+
+# A loaded model reports the context it was actually loaded with, which is what
+# constrains the session. Fall back to the model's ceiling when it is not loaded.
+effective_ctx() {
+  printf '%s' "$1" | jq -r --arg id "$2" '
+    .data[] | select(.id == $id) | (.loaded_context_length // .max_context_length)
+  '
+}
+
+gen_config() {
+  local model="$1" ctx="$2"
+  jq -n \
+    --arg model "$model" \
+    --arg url "${LMSTUDIO_URL}/v1/chat/completions" \
+    --argjson port "$ROUTER_PORT" \
+    --argjson threshold "$(( ctx * 60 / 100 ))" \
+    '{
+      HOST: "127.0.0.1",
+      PORT: $port,
+      Providers: [ {
+        name: "lmstudio",
+        api_base_url: $url,
+        api_key: "lm-studio",
+        models: [ $model ]
+      } ],
+      Router: {
+        default: "lmstudio,\($model)",
+        background: "lmstudio,\($model)",
+        think: "lmstudio,\($model)",
+        longContext: "lmstudio,\($model)",
+        longContextThreshold: $threshold
+      }
+    }'
+}
+
 main() {
-  local mode="launch"
+  local mode="launch" model=""
 
   while (( $# )); do
     case "$1" in
       -h|--help) usage; exit 0 ;;
       --list) mode="list"; shift ;;
-      *) die "unknown argument: $1" ;;
+      --print-config) mode="print-config"; shift ;;
+      -*) die "unknown flag: $1 (use -- to pass flags through to claude)" ;;
+      *)
+        if [[ -n "$model" ]]; then
+          die "more than one model id given: $model, $1"
+        fi
+        model="$1"
+        shift
+        ;;
     esac
   done
 
@@ -96,6 +151,21 @@ main() {
 
   if [[ "$mode" == "list" ]]; then
     list_models "$json"
+    exit 0
+  fi
+
+  if [[ "$mode" == "print-config" && -z "$model" ]]; then
+    die "--print-config needs a model id (see: ccl --list)"
+  fi
+
+  validate_model "$json" "$model"
+
+  local ctx config
+  ctx="$(effective_ctx "$json" "$model")"
+  config="$(gen_config "$model" "$ctx")"
+
+  if [[ "$mode" == "print-config" ]]; then
+    printf '%s\n' "$config"
     exit 0
   fi
 
