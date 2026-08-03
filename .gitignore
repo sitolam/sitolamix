@@ -3,3 +3,4 @@ result-*
 /*.qcow2
 .direnv
 backup.txt
+.superpowers/

@@ -754,9 +754,11 @@ Expected: after ~15s, the "never became healthy" message plus log tail, exit 1. 
 
 - [ ] **Step 8: Document it in `README.md`**
 
-Add this section after the `## ☁️ Cloud mounts (rclone)` section, matching its structure:
+Add this section after the `## ☁️ Cloud mounts (rclone)` section, matching its
+structure. **The outer fence below is four backticks so the inner three-backtick
+blocks survive; write only the inner content into the README.**
 
-```markdown
+````markdown
 ## 🤖 Local models (ccl)
 
 `ccl` runs Claude Code against a model served by LM Studio instead of Anthropic's
@@ -804,7 +806,7 @@ rejected the config. The message includes the tail of the router's log.
 **Malformed tool calls, or the session derails** — expected with small quantised
 models. Claude Code leans hard on well-formed tool calls; a 3-bit quant will not
 always produce them. This is the model, not `ccl`.
-```
+````
 
 - [ ] **Step 9: Commit**
 
