@@ -15,8 +15,6 @@ ROUTER_PORT="${CCL_ROUTER_PORT:-4141}"
 # shellcheck disable=SC2034
 ROUTER_URL="http://127.0.0.1:${ROUTER_PORT}"
 CONFIG_DIR="${HOME}/.claude-code-router"
-# Not read until config generation lands (a later task).
-# shellcheck disable=SC2034
 CONFIG="${CONFIG_DIR}/config.json"
 # Not read until the router lifecycle lands (a later task).
 # shellcheck disable=SC2034
@@ -142,6 +140,31 @@ ccl: WARNING — this model's context is ${ctx} tokens, below the ${MIN_CONTEXT}
 EOF
 }
 
+# The id is column 1 so the selection can be parsed with awk regardless of how
+# `column` padded the rest. fzf exits non-zero when the user presses Esc; the
+# caller distinguishes that from a real failure by checking for empty output.
+pick_model() {
+  candidates "$1" \
+    | column -t -s $'\t' -o '  ' \
+    | fzf --height=40% --reverse --no-multi \
+          --header='Select an LM Studio model for Claude Code' \
+    | awk '{ print $1 }'
+}
+
+write_config() {
+  local content="$1" tmp
+  mkdir -p "$CONFIG_DIR"
+  # Preserve a config we did not write, exactly once. After the first run the file
+  # is ccl-owned and rewritten on every launch, so re-backing it up would be noise.
+  if [[ -f "$CONFIG" && ! -f "${CONFIG}.pre-ccl" ]]; then
+    cp "$CONFIG" "${CONFIG}.pre-ccl"
+    printf 'ccl: backed up your existing router config to %s.pre-ccl\n' "$CONFIG" >&2
+  fi
+  tmp="$(mktemp "${CONFIG_DIR}/.config.json.XXXXXX")"
+  printf '%s\n' "$content" > "$tmp"
+  mv -f "$tmp" "$CONFIG"
+}
+
 main() {
   local mode="launch" model=""
 
@@ -173,6 +196,15 @@ main() {
     die "--print-config needs a model id (see: ccl --list)"
   fi
 
+  # `pick_model` runs in a command substitution, so an `exit` inside it would only
+  # end the subshell. Detect cancellation by the empty result instead.
+  if [[ -z "$model" ]]; then
+    model="$(pick_model "$json")" || true
+    if [[ -z "$model" ]]; then
+      exit 0
+    fi
+  fi
+
   validate_model "$json" "$model"
 
   local ctx config
@@ -185,8 +217,9 @@ main() {
   fi
 
   warn_small_context "$ctx"
+  write_config "$config"
 
-  die "interactive launch is not implemented yet"
+  die "router lifecycle is not implemented yet"
 }
 
 main "$@"
