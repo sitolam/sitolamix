@@ -15,7 +15,8 @@ in
             curl
             jq
             fzf
-            util-linux # column
+            util-linux # column, setsid
+            coreutils # sha256sum, seq, ...
             claude-code
             claude-code-router
           ];

@@ -263,11 +263,10 @@ made from your phone or the web UI within seconds.
 
 ## 🤖 Local models (ccl)
 
-`ccl` runs Claude Code against a model served by LM Studio instead of Anthropic's
-API. LM Studio speaks the OpenAI API and Claude Code speaks Anthropic's, so
-[claude-code-router](https://github.com/musistudio/claude-code-router) sits between
-them and translates. `ccl` picks the model, configures the router, starts it, and
-hands off.
+<details>
+<summary><code>ccl</code> runs Claude Code against a model served by LM Studio instead of Anthropic's API — LM Studio speaks the OpenAI API, Claude Code speaks Anthropic's, and <a href="https://github.com/musistudio/claude-code-router">claude-code-router</a> sits between them and translates. <code>ccl</code> picks the model, configures the router, starts it, and hands off.</summary>
+
+<br>
 
 Enabled by `suites.ai.enable`.
 
@@ -282,6 +281,11 @@ ccl <model-id> -- --version    pass everything after -- to claude
 ```
 
 Start LM Studio and load a model first — `ccl` only lists what LM Studio reports.
+
+The router runs detached from `ccl` and from your shell: once started it keeps
+serving in the background, surviving Ctrl-C, closing the terminal, and quitting
+Claude Code. Relaunching `ccl` with the same model reuses it instantly; a different
+model restarts it. It only stops when you run `ccr stop`, or at logout.
 
 ### Options
 
@@ -308,6 +312,8 @@ rejected the config. The message includes the tail of the router's log.
 **Malformed tool calls, or the session derails** — expected with small quantised
 models. Claude Code leans hard on well-formed tool calls; a 3-bit quant will not
 always produce them. This is the model, not `ccl`.
+
+</details>
 
 ## 📎 Attribution
 

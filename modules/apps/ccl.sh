@@ -186,13 +186,30 @@ ensure_router() {
   fi
 
   ccr stop >/dev/null 2>&1 || true
-  # `ccr start` runs the server in the foreground rather than daemonizing itself, so
-  # it must be backgrounded here or the poll loop below would never run.
-  ccr start >/dev/null 2>&1 &
+  # `ccr stop` sends SIGTERM and returns immediately; it does not wait for the old
+  # router to finish its graceful drain. Starting the new one before the old one has
+  # released the port risks either an EADDRINUSE on the new process, or worse: the
+  # first health check below being answered by the dying old router, which would make
+  # us record the new config's hash against a router that isn't actually serving it.
+  for _ in $(seq 1 20); do
+    if ! router_healthy; then
+      break
+    fi
+    sleep 0.25
+  done
+
+  # `ccr start` runs the server in the foreground rather than daemonizing itself, and
+  # backgrounding it with a bare `&` would still leave it in ccl's process group and
+  # session, so it would receive Ctrl-C/SIGHUP along with everything else in the
+  # terminal's foreground group. `setsid` gives it its own session so it detaches
+  # fully and outlives this shell, the same as ccr's own restart/code/ui subcommands.
+  setsid ccr start </dev/null >/dev/null 2>&1 &
 
   for _ in $(seq 1 30); do
     if router_healthy; then
       mkdir -p "$STATE_DIR"
+      # This records the hash of the config ccl just wrote, not necessarily what a
+      # router started by hand outside ccl is actually serving.
       printf '%s\n' "$want" > "$hash_file"
       return 0
     fi
@@ -201,7 +218,11 @@ ensure_router() {
 
   printf 'ccl: the router never became healthy at %s (waited 15s)\n' "$ROUTER_URL" >&2
   printf 'ccl: last 20 lines of the router log:\n' >&2
-  tail -qn 20 "${CONFIG_DIR}"/*.log 2>/dev/null >&2 || printf '  (no log file found)\n' >&2
+  # Redirection order matters: `>&2` first sends tail's real output to our stderr,
+  # then `2>/dev/null` only silences tail's own error messages (e.g. no files
+  # matched) so they don't clobber that real output. Swapped, the log content itself
+  # would vanish into /dev/null along with tail's errors.
+  tail -qn 20 "${CONFIG_DIR}"/logs/*.log >&2 2>/dev/null || printf '  (no log file found)\n' >&2
   exit 1
 }
 
