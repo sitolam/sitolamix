@@ -21,8 +21,6 @@ CONFIG="${CONFIG_DIR}/config.json"
 # Not read until the router lifecycle lands (a later task).
 # shellcheck disable=SC2034
 STATE_DIR="${XDG_CACHE_HOME:-${HOME}/.cache}/ccl"
-# Not read until the context guard lands (a later task).
-# shellcheck disable=SC2034
 MIN_CONTEXT=32768
 
 die() {
@@ -127,6 +125,23 @@ gen_config() {
     }'
 }
 
+# Claude Code's system prompt and tool definitions run to many thousands of tokens
+# before the user types anything, so a small context fails on the very first
+# request. Warn loudly but do not block — the user may know something we do not.
+warn_small_context() {
+  local ctx="$1"
+  if (( ctx >= MIN_CONTEXT )); then
+    return 0
+  fi
+  cat >&2 <<EOF
+ccl: WARNING — this model's context is ${ctx} tokens, below the ${MIN_CONTEXT} ccl expects.
+     Claude Code's system prompt and tool definitions alone will exceed it, so the
+     session will most likely fail on the first request.
+     Fix: in LM Studio, open the model's settings, raise "Context Length", reload it.
+     Continuing anyway.
+EOF
+}
+
 main() {
   local mode="launch" model=""
 
@@ -168,6 +183,8 @@ main() {
     printf '%s\n' "$config"
     exit 0
   fi
+
+  warn_small_context "$ctx"
 
   die "interactive launch is not implemented yet"
 }
