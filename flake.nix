@@ -79,6 +79,18 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # sitolam/dms-mouthguard — DMS plugin, still local-only (no remote yet), so
+    # it is pinned to the working checkout rather than the registry. A path
+    # input is the only way to reference it: pure evaluation rejects a bare
+    # absolute path in a module. Two consequences while it stays local:
+    #   * every other clone of this (public) repo fails to evaluate;
+    #   * edits over there need `nix flake update dms-mouthguard` to be picked up.
+    # Swap this for `github:sitolam/dms-mouthguard` once it is pushed.
+    dms-mouthguard = {
+      url = "git+file:///home/otis/Documents/dms-mouthguard?ref=feat/plugin-implementation";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     sops-nix = {
       url = "github:Mic92/sops-nix";
       inputs.nixpkgs.follows = "nixpkgs";

@@ -77,6 +77,9 @@
             { id = "systemTray"; enabled = true; }
             { id = "dankKDEConnect"; enabled = true; } # AvengeMedia DankKDEConnect
             { id = "usbManager"; enabled = true; }
+            # webcam mouth-closure tracker (local plugin, see plugins.nix).
+            # left click = popout, middle = start/stop, right = mute alerts.
+            { id = "mouthGuard"; enabled = true; }
             { id = "homeAssistantMonitor"; enabled = true; } # hyprland-only upstream
             { id = "claudeCodeUsage"; enabled = true; } # moved out of hidden bar, next to HA
             # unified cpu/ram/disk gauges (systemMonitorPlus plugin) — replaces

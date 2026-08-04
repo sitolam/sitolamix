@@ -90,6 +90,27 @@
         "type": "github"
       }
     },
+    "dms-mouthguard": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1785772310,
+        "narHash": "sha256-fsT8Egii3NyVjcbutApwcJKwNNS5+MYtnD9Yg7Ms7+c=",
+        "ref": "feat/plugin-implementation",
+        "rev": "655917ccf5545236467f0d18c673d309296c6844",
+        "revCount": 38,
+        "type": "git",
+        "url": "file:///home/otis/Documents/dms-mouthguard"
+      },
+      "original": {
+        "ref": "feat/plugin-implementation",
+        "type": "git",
+        "url": "file:///home/otis/Documents/dms-mouthguard"
+      }
+    },
     "dms-plugin-registry": {
       "inputs": {
         "nixpkgs": [
@@ -597,6 +618,7 @@
     "root": {
       "inputs": {
         "dms": "dms",
+        "dms-mouthguard": "dms-mouthguard",
         "dms-plugin-registry": "dms-plugin-registry",
         "flake-parts": "flake-parts",
         "helium": "helium",

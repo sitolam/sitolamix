@@ -1,7 +1,31 @@
-{ config, lib, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  inputs,
+  ...
+}:
 let
   # sops-decrypted Home Assistant token path (runtime tmpfs, never in the store).
   haTokenPath = config.sops.secrets.hass_token.path;
+
+  # ── MouthGuard ────────────────────────────────────────────────────────────
+  # sitolam/dms-mouthguard is not in dms-plugin-registry (it's a local project,
+  # see the flake input), so instead of just flipping `enable` we hand the same
+  # plugins.<id> option a `src` we assemble here.
+  #
+  # StartupCheck.qml and MouthGuardDaemon.qml both resolve the detector as
+  # "<pluginDir>/result/bin/mouthguard-detector" — the artifact of running
+  # `nix build .#detector` *inside* the plugin directory. Under any Nix install
+  # the plugin directory is a read-only store path, so that build can never
+  # happen there; pre-create the symlink those two files look for instead,
+  # pointing at the very package that `nix build .#detector` would have made.
+  mouthGuardPlugin = pkgs.runCommand "dms-plugin-mouthguard" { } ''
+    mkdir -p $out
+    cp -r ${inputs.dms-mouthguard}/. $out/
+    chmod -R u+w $out
+    ln -s ${inputs.dms-mouthguard.packages.${pkgs.stdenv.hostPlatform.system}.detector} $out/result
+  '';
 in
 {
   config = lib.mkIf config.desktop.dms.enable {
@@ -82,6 +106,13 @@ in
             hassUrl = "https://ha.laxoi.be";
             hassTokenPath = haTokenPath; # sops-decrypted token file
           };
+        };
+        # local project (see the `let` block) — webcam mouth-closure tracker.
+        # Needs the `video` group (users.nix) and QtMultimedia on the QML path
+        # (default.nix) for its SoundEffect alerts.
+        mouthGuard = {
+          enable = true;
+          src = mouthGuardPlugin;
         };
         usbManager.enable = true; # NordicsSys/dms-usb-manager
         ambientSound.enable = true; # hthienloc/dms-ambient-sound (bar widget — no control-center variant)
