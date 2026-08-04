@@ -278,6 +278,7 @@ ccl <model-id>                 launch with a specific model
 ccl --list                     list selectable models and exit
 ccl --print-config <model-id>  print the router config without writing it
 ccl <model-id> -- --version    pass everything after -- to claude
+ccl -h                         usage summary
 ```
 
 Start LM Studio and load a model first — `ccl` only lists what LM Studio reports.
@@ -308,6 +309,15 @@ Raise "Context Length" in the model's settings in LM Studio and reload it.
 
 **"the router never became healthy"** — something else holds port 4141, or the router
 rejected the config. The message includes the tail of the router's log.
+
+**Picked a `○ not-loaded` model and Claude Code hangs** — LM Studio loads it on the
+first request, which can take minutes for a large model. `ccl` says so at launch;
+wait it out, or load the model in LM Studio before starting.
+
+**A not-loaded model still ran out of context** — for those, `ccl` can only see the
+model's ceiling (`max_context_length`), not the context LM Studio will actually load
+it with, so the context warning can stay silent and the session fail anyway. Load the
+model in LM Studio first and `ccl --list` will show its real context.
 
 **Malformed tool calls, or the session derails** — expected with small quantised
 models. Claude Code leans hard on well-formed tool calls; a 3-bit quant will not

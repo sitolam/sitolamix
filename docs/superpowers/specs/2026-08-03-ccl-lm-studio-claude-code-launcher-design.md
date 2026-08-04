@@ -29,8 +29,10 @@ ccl ─→ LM Studio /api/v0/models      discover
     ─→ fzf                           choose
     ─→ ~/.claude-code-router/config.json
     ─→ ccr start :4141               ensure proxy
-    └─→ exec ccr code ─→ claude
-                          │ ANTHROPIC_BASE_URL=http://127.0.0.1:4141
+    └─→ exec ccr code ─→ claude --settings /tmp/claude-code-router/ccr-settings-<hash>.json
+                          │ (ccr 2.0 writes the base URL into that settings
+                          │  file's `env` block; it does not export
+                          │  ANTHROPIC_BASE_URL into claude's environment)
                           ▼
                         ccr  /v1/messages ─→ /v1/chat/completions
                           ▼
