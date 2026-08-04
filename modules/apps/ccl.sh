@@ -204,11 +204,11 @@ dump_router_logs() {
   # `ccr` rotates with maxFiles:3, and the older two belong to earlier runs that
   # started fine. Dumping all of them would bury this failure under their output.
   for f in "${CONFIG_DIR}"/logs/*.log; do
-    if [[ -s "$f" ]] && [[ -z "$newest" || "$f" -nt "$newest" ]]; then
+    if [[ -f "$f" ]] && [[ -z "$newest" || "$f" -nt "$newest" ]]; then
       newest="$f"
     fi
   done
-  if [[ -n "$newest" ]]; then
+  if [[ -n "$newest" && -s "$newest" ]]; then
     logs+=("$newest")
   fi
 
@@ -270,6 +270,7 @@ ensure_router() {
   setsid ccr start </dev/null >"${STATE_DIR}/router-start.log" 2>&1 &
   router_pid=$!
 
+  local reason="waited 15s"
   for _ in $(seq 1 30); do
     if router_healthy; then
       # This records the hash of the config ccl just wrote, not necessarily what a
@@ -281,12 +282,13 @@ ensure_router() {
     # for a process that is already gone helps nobody. The health check comes first so
     # that a router which came up and was reaped in the same tick still counts as up.
     if ! kill -0 "$router_pid" 2>/dev/null; then
+      reason="the router process exited during startup"
       break
     fi
     sleep 0.5
   done
 
-  printf 'ccl: the router never became healthy at %s (waited 15s)\n' "$ROUTER_URL" >&2
+  printf 'ccl: the router never became healthy at %s (%s)\n' "$ROUTER_URL" "$reason" >&2
   dump_router_logs
   exit 1
 }
