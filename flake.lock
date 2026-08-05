@@ -68,6 +68,43 @@
         "type": "github"
       }
     },
+    "dank-greeter": {
+      "inputs": {
+        "dank-qml-common": "dank-qml-common",
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1785444417,
+        "narHash": "sha256-9hxIB6McRAsHGlsy4HZIv5FJpfKwlpeuVmPntxj4J8I=",
+        "owner": "AvengeMedia",
+        "repo": "dank-greeter",
+        "rev": "f353eafdee856a2e1c6ce87ce551304e8a6ed404",
+        "type": "github"
+      },
+      "original": {
+        "owner": "AvengeMedia",
+        "repo": "dank-greeter",
+        "type": "github"
+      }
+    },
+    "dank-qml-common": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1784433462,
+        "narHash": "sha256-8MdKtu/tSYrCenhtmgYW+lcv9JhGPTE3BnSE6WuqO1U=",
+        "owner": "AvengeMedia",
+        "repo": "dank-qml-common",
+        "rev": "8d36f668d73e7a4391ea9ead3939c5de137aa1f0",
+        "type": "github"
+      },
+      "original": {
+        "owner": "AvengeMedia",
+        "repo": "dank-qml-common",
+        "type": "github"
+      }
+    },
     "dms": {
       "inputs": {
         "flake-compat": "flake-compat",
@@ -617,6 +654,7 @@
     },
     "root": {
       "inputs": {
+        "dank-greeter": "dank-greeter",
         "dms": "dms",
         "dms-mouthguard": "dms-mouthguard",
         "dms-plugin-registry": "dms-plugin-registry",

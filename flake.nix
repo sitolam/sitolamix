@@ -62,6 +62,14 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # AvengeMedia/dank-greeter — the greetd login screen that matches the DMS
+    # lock screen. The flake's own nixpkgs only feeds its `packages` output; the
+    # NixOS module builds dms-greeter from the importing config's pkgs.
+    dank-greeter = {
+      url = "github:AvengeMedia/dank-greeter";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     zen-browser = {
       url = "github:0xc000022070/zen-browser-flake";
       inputs.nixpkgs.follows = "nixpkgs";

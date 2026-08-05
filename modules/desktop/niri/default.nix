@@ -36,7 +36,8 @@ in
       inputs.niri-scratchpad.packages.${pkgs.stdenv.hostPlatform.system}.default
     ];
 
-    # login manager lives in modules/desktop/greetd.nix (greetd + ReGreet)
+    # login manager lives in modules/desktop/greetd.nix (greetd + DMS Greeter,
+    # which launches its own niri using programs.niri.package above)
 
     # xdg-portals for wayland
     xdg.portal = {
