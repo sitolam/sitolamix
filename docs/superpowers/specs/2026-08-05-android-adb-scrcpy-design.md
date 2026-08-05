@@ -61,11 +61,13 @@ on re-pairing.
 
 ### System config
 
-- `programs.adb.enable = true` — puts `adb`/`fastboot` in the system PATH,
-  installs the udev rules, and creates the `adbusers` group.
-- `otis` gains the `adbusers` group. Group membership lives in
-  `modules/system/users.nix` alongside every other group, so that one line is
-  added there rather than merged in from this module.
+- `environment.systemPackages = [ pkgs.android-tools ]` — `adb`/`fastboot` in
+  the system PATH.
+
+  Originally specified as `programs.adb.enable = true`. That option no longer
+  exists on this nixpkgs: systemd 258 applies the USB uaccess rules by itself,
+  so the module was removed along with its `adbusers` group. There is
+  consequently **no group to join** and `modules/system/users.nix` is untouched.
 - Home packages: `scrcpy`, `libnotify` (`notify-send` is **not** currently
   installed anywhere — the watcher needs it).
 - No firewall change: `adb connect` is outbound only.
@@ -84,6 +86,15 @@ and adds:
 3. **Detached launch** via `systemd-run --user --collect --unit=scrcpy-screen`,
    so the mirror outlives its parent — terminal, notification handler, or
    keybind — and a watcher restart cannot take it down.
+
+   With a `setsid` fallback when the transient unit cannot be created. Not
+   defensive programming for its own sake: during implementation every
+   `StartTransientUnit` call on this machine failed, because `/run/user/1000`
+   was 100% full (a dead quickshell instance had left a 1.6 GB `log.log` there)
+   and the user manager could not write the unit file. The same fallback covers
+   the watcher's notification launch, and the watcher unit sets
+   `KillMode = "process"` so that when the fallback is in play a watcher restart
+   does not kill the mirror along with the poll loop.
 
 The name `screen` shadows GNU screen. That is intentional and carried over from
 the old config; GNU screen is not installed here (tmux is, via
@@ -147,8 +158,10 @@ already suppressed by the state check.
 Both live in `android.nix`, guarded by `config.desktop.niri.enable`, so
 disabling the module removes them cleanly:
 
-- **Window rule** matching `app-id = "^scrcpy$"` (to be confirmed against
-  `niri msg windows` with a mirror open): `open-floating = true`,
+- **Window rule** matching `app-id = "scrcpy"`, deliberately unanchored: with a
+  mirror open, `niri msg windows` reports the app-id as **`.scrcpy-wrapped`**,
+  because nixpkgs wraps the binary and SDL takes the id from `argv[0]`
+  (`SDL_APP_ID` does not override it — tested). Then `open-floating = true`,
   `default-window-height.fixed = 900` with the width left to scrcpy so the
   phone's aspect ratio is preserved, and `opacity = 1.0`. The opacity matters —
   `modules/desktop/niri/rules.nix` makes *every* window 0.8 translucent for the

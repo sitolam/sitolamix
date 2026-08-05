@@ -8,6 +8,7 @@ in
   config = lib.mkIf cfg.enable {
     apps.vscode.enable = true;
     apps.zed.enable = true;
+    apps.android.enable = true;
     services.docker.enable = true;
 
     home.extraOptions =
@@ -19,7 +20,6 @@ in
           lazydocker
           opentofu
           distrobox
-          scrcpy
           claude-code
         ];
       };
