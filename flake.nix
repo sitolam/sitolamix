@@ -18,6 +18,12 @@
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
 
+    # Escape hatch, not a second base: the current stable release, surfaced as
+    # `pkgs.stable.<name>` by modules/system/nixpkgs-stable.nix. Deliberately
+    # does NOT follow nixpkgs — following it would defeat the entire point.
+    # Nothing uses it by default; see that module for when to reach for it.
+    nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-26.05";
+
     flake-parts = {
       url = "github:hercules-ci/flake-parts";
       inputs.nixpkgs-lib.follows = "nixpkgs";
