@@ -9,7 +9,20 @@ let
   cfg = config.desktop.dms;
 in
 {
-  options.desktop.dms.enable = lib.mkEnableOption "DankMaterialShell (Quickshell bar + panels, blur)";
+  options.desktop.dms = {
+    enable = lib.mkEnableOption "DankMaterialShell (Quickshell bar + panels, blur)";
+
+    initialWallpaper = lib.mkOption {
+      type = lib.types.str;
+      default = "${../../../assets/wallpaper.jpg}";
+      description = ''
+        Wallpaper written into session.json when it is first seeded. Only ever
+        applies on a fresh seed — afterwards the wallpaper is DMS's to change.
+        Its *directory* also becomes the folder DMS cycles through, so point it
+        inside a collection to get that for free (see ../wallpapers.nix).
+      '';
+    };
+  };
 
   # The rest of the module is split across ./theme.nix, ./bar.nix, ./plugins.nix
   # and ./niri.nix (all gated on desktop.dms.enable; their home.extraOptions
@@ -146,8 +159,10 @@ in
               nightModeTemperature = 5000;
               nightModeHighTemperature = 6500;
 
-              # starting wallpaper; picking one in DMS overwrites this file.
-              wallpaperPath = "${../../../assets/wallpaper.jpg}";
+              # Starting wallpaper; picking another in DMS overwrites this file.
+              # Its directory is also the folder DMS cycles through, so this is
+              # how the wallpaper collection gets selected declaratively.
+              wallpaperPath = cfg.initialWallpaper;
             };
           in
           lib.hm.dag.entryAfter [ "writeBoundary" ] ''
