@@ -55,15 +55,7 @@ in
     ];
 
     home.extraOptions =
-      # `lib` is taken explicitly so it is home-manager's (which carries
-      # lib.hm.dag, used by the session-seeding activation below) rather than the
-      # NixOS lib this file closes over.
-      {
-        config,
-        lib,
-        pkgs,
-        ...
-      }:
+      { config, pkgs, ... }:
       {
         imports = [
           inputs.dms.homeModules.dank-material-shell
@@ -91,13 +83,15 @@ in
           # layout: a version bump that moves these lines trips --replace-fail and
           # fails the build loudly, which is the cue to refresh the patch.
           package = pkgs.dms-shell.overrideAttrs (old: {
-            postFixup = (old.postFixup or "") + ''
-              substituteInPlace $out/share/quickshell/dms/Modals/PowerMenuModal.qml \
-                --replace-fail 'text: gridButtonRect.actionData.key' 'text: (gridButtonRect.index + 1)' \
-                --replace-fail 'text: listButtonRect.actionData.key' 'text: (listButtonRect.index + 1)' \
-                --replace-fail '(event.key === Qt.Key_P && !(event.modifiers & Qt.ControlModifier))) {' '(event.key === Qt.Key_P && !(event.modifiers & Qt.ControlModifier)) || (event.key >= Qt.Key_1 && event.key <= Qt.Key_9 && !(event.modifiers & Qt.ControlModifier))) {' \
-                --replace-fail 'switch (event.key) {' 'if (event.key >= Qt.Key_1 && event.key <= Qt.Key_9 && !(event.modifiers & Qt.ControlModifier)) { const numIndex = event.key - Qt.Key_1; if (numIndex < visibleActions.length) { startHold(getActionAtIndex(numIndex), numIndex); event.accepted = true; return; } } switch (event.key) {'
-            '';
+            postFixup =
+              (old.postFixup or "")
+              + ''
+                substituteInPlace $out/share/quickshell/dms/Modals/PowerMenuModal.qml \
+                  --replace-fail 'text: gridButtonRect.actionData.key' 'text: (gridButtonRect.index + 1)' \
+                  --replace-fail 'text: listButtonRect.actionData.key' 'text: (listButtonRect.index + 1)' \
+                  --replace-fail '(event.key === Qt.Key_P && !(event.modifiers & Qt.ControlModifier))) {' '(event.key === Qt.Key_P && !(event.modifiers & Qt.ControlModifier)) || (event.key >= Qt.Key_1 && event.key <= Qt.Key_9 && !(event.modifiers & Qt.ControlModifier))) {' \
+                  --replace-fail 'switch (event.key) {' 'if (event.key >= Qt.Key_1 && event.key <= Qt.Key_9 && !(event.modifiers & Qt.ControlModifier)) { const numIndex = event.key - Qt.Key_1; if (numIndex < visibleActions.length) { startHold(getActionAtIndex(numIndex), numIndex); event.accepted = true; return; } } switch (event.key) {'
+              '';
           });
           quickshell.package = pkgs.quickshell;
 
@@ -105,17 +99,19 @@ in
           # stylix; keep stylix authoritative for every app but DMS's own shell.
           enableDynamicTheming = false;
 
-          # session.json is deliberately NOT declared. The DMS home module writes
-          # it as a read-only store symlink whenever `session != {}`
-          # (`xdg.stateFile ... = lib.mkIf (cfg.session != {})`), and a read-only
-          # session.json means DMS cannot save a wallpaper you pick in its own
-          # UI. Wallpaper is runtime state, so the whole file has to be runtime
-          # state — the module offers no per-key ownership.
-          #
-          # Weather and night mode used to live here; they are seeded once
-          # instead (see the activation script below) and are afterwards yours to
-          # change in the DMS settings UI.
-          session = { };
+          # session.json — night mode (auto, IP-located). stylix sets the
+          # wallpaper keys here too; these merge with those.
+          session = {
+            weatherLocation = "Eeklo, 9900";
+            weatherCoordinates = "51.2,3.6";
+
+            nightModeEnabled = true;
+            nightModeAutoEnabled = true;
+            nightModeAutoMode = "location";
+            nightModeUseIPLocation = true;
+            nightModeTemperature = 5000;
+            nightModeHighTemperature = 6500;
+          };
         };
 
         # DMS only reads its settings at startup, and the systemd user service's
@@ -126,39 +122,6 @@ in
         systemd.user.services.dms.Unit.X-Restart-Triggers = [
           config.xdg.configFile."DankMaterialShell/settings.json".source
         ];
-
-        # Seed session.json once, then never touch it again — it is DMS's to
-        # write (wallpaper, and the settings below once you change them in the
-        # UI). Runs when the file is missing *or* still a store symlink, which is
-        # what a generation built before session.json was unmanaged left behind;
-        # without the -L case the stale read-only symlink would survive and DMS
-        # would still be unable to save a wallpaper.
-        home.activation.seedDmsSession =
-          let
-            seed = (pkgs.formats.json { }).generate "dms-session-seed.json" {
-              weatherLocation = "Eeklo, 9900";
-              weatherCoordinates = "51.2,3.6";
-
-              nightModeEnabled = true;
-              nightModeAutoEnabled = true;
-              nightModeAutoMode = "location";
-              nightModeUseIPLocation = true;
-              nightModeTemperature = 5000;
-              nightModeHighTemperature = 6500;
-
-              # starting wallpaper; changing it in DMS overwrites this file.
-              wallpaperPath = "${../../../assets/wallpaper.jpg}";
-            };
-          in
-          lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-            state="$HOME/.local/state/DankMaterialShell/session.json"
-            if [ ! -e "$state" ] || [ -L "$state" ]; then
-              run mkdir -p "$(dirname "$state")"
-              run rm -f "$state"
-              # install, not cp: store files are read-only and DMS must write it.
-              run install -m 644 ${seed} "$state"
-            fi
-          '';
 
         # Some plugins import Qt QML modules quickshell doesn't bundle:
         #   QtWebSockets — homeAssistantMonitor
