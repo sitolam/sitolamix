@@ -30,7 +30,12 @@ in
     stylix = {
       enable = true;
 
-      image = theme.wallpaper;
+      # No `image`: the wallpaper is runtime state owned by DMS, not a property
+      # of the colour scheme (see modules/desktop/dms/default.nix). Setting it
+      # here would make stylix's dank-material-shell target write wallpaperPath
+      # into session.json, which forces that file to be a read-only store
+      # symlink — and then DMS cannot save a wallpaper you pick in its own UI.
+      # The option is `null or path`, so leaving it unset is supported.
       base16Scheme = "${pkgs.base16-schemes}/share/themes/${theme.themeName}.yaml";
       polarity = theme.polarity;
       override = lib.mkIf (theme.override != null) theme.override;
