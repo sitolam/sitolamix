@@ -26,9 +26,15 @@ let
   # off, unpaired or the name is unavailable, we simply fall back to cfg.host.
   phoneAddr = pkgs.writeShellApplication {
     name = "android-phone-addr";
+    # Every one of these scripts runs from a systemd *user service*, whose PATH
+    # is NixOS's service default — coreutils, findutils, gnugrep, gnused,
+    # systemd, and nothing else. Notably no bash and no util-linux. So each
+    # runtime command has to be declared here rather than assumed from the
+    # ambient PATH of an interactive shell.
     runtimeInputs = [
-      pkgs.systemd
+      pkgs.systemd # busctl
       pkgs.jq
+      pkgs.gnugrep
     ];
     text = ''
       prop() { # <object-path> <property>
@@ -65,6 +71,13 @@ let
     runtimeInputs = [
       pkgs.android-tools
       phoneAddr
+      # bash is for the /dev/tcp probe below and coreutils for its `timeout`.
+      # Both absent from the systemd service PATH: without them the probe exited
+      # 127 every cycle, which the `if !` read as "port closed", so the watcher
+      # decided the phone was unreachable forever and never called adb connect.
+      pkgs.bash
+      pkgs.coreutils
+      pkgs.gnugrep
     ];
     text = ''
       target=$(android-phone-addr)
@@ -97,6 +110,7 @@ let
     name = "android-notify-connected";
     runtimeInputs = [
       pkgs.libnotify
+      pkgs.coreutils # timeout
       screen
     ];
     text = ''
@@ -123,6 +137,7 @@ let
       pkgs.jq
       pkgs.libnotify
       pkgs.systemd
+      pkgs.util-linux # setsid, for the fallback launch
       config.programs.niri.package
       connect
     ];
@@ -171,7 +186,8 @@ let
     name = "android-adb-watch";
     runtimeInputs = [
       pkgs.android-tools
-      pkgs.systemd
+      pkgs.systemd # systemd-run
+      pkgs.coreutils # sleep
       connect
       phoneAddr
       notify
