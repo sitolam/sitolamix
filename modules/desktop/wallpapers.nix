@@ -40,14 +40,56 @@ let
 in
 {
   config = lib.mkIf config.desktop.dms.enable {
-    # `home.file` with a directory source symlinks the store path — it does not
-    # copy. ~/Pictures/Wallpapers is a pointer costing no disk; it exists only so
-    # DMS's file browser has a stable, navigable path (the store path changes
-    # with every input update, and DMS keeps its last-browsed directory in its
-    # cache rather than its settings, so it cannot be preselected).
-    home.extraOptions.home.file."Pictures/Wallpapers".source = collection;
-
     # Consumed by the session.json seeding in ./dms/default.nix.
     desktop.dms.initialWallpaper = "${collection}/${chosen}";
+
+    home.extraOptions =
+      {
+        config,
+        lib,
+        pkgs,
+        ...
+      }:
+      {
+        # `home.file` with a directory source symlinks the store path — it does
+        # not copy. ~/Pictures/Wallpapers is a pointer costing no disk; it exists
+        # only so DMS's browser has a *stable* path, since the store path changes
+        # with every input update.
+        home.file."Pictures/Wallpapers".source = collection;
+
+        # Open DMS's wallpaper browser there on a fresh machine. DMS keeps the
+        # last browsed directory in its *cache* (Common/CacheData.qml ->
+        # cache.json) rather than in settings, so it cannot be a declared
+        # setting — but the cache can be seeded, exactly like session.json.
+        #
+        # Only written when cache.json is absent, i.e. before DMS has ever run.
+        # DMS holds this file in memory and rewrites it wholesale when you browse
+        # elsewhere, so editing it underneath a running shell would just be
+        # undone — and would fight a folder you had deliberately picked.
+        home.activation.seedDmsWallpaperFolder =
+          let
+            folder = "${config.home.homeDirectory}/Pictures/Wallpapers";
+            seed = (pkgs.formats.json { }).generate "dms-cache-seed.json" {
+              wallpaperLastPath = folder;
+              profileLastPath = "";
+              fileBrowserSettings.wallpaper = {
+                lastPath = folder;
+                viewMode = "grid";
+                sortBy = "name";
+                sortAscending = true;
+                iconSizeIndex = 1;
+                showSidebar = true;
+              };
+              configVersion = 2; # CacheData.qml cacheConfigVersion
+            };
+          in
+          lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+            cache="$HOME/.cache/DankMaterialShell/cache.json"
+            if [ ! -e "$cache" ]; then
+              run mkdir -p "$(dirname "$cache")"
+              run install -m 644 ${seed} "$cache"
+            fi
+          '';
+      };
   };
 }
