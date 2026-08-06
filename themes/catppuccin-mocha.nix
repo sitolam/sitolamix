@@ -4,8 +4,6 @@
   themeName = "catppuccin-mocha";
   polarity = "dark";
 
-  wallpaper = ../assets/wallpaper.jpg;
-
   # stylix.override (base16 slot tweaks), or null for none.
   override = null;
 

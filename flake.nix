@@ -102,6 +102,14 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # orangci/walls-catppuccin-mocha — a plain repo of wallpaper images, linked
+    # into ~/Pictures/Wallpapers by modules/desktop/wallpapers.nix so DMS can
+    # browse them. flake=false: it is images, not a flake.
+    wallpapers = {
+      url = "github:orangci/walls-catppuccin-mocha";
+      flake = false;
+    };
+
     sops-nix = {
       url = "github:Mic92/sops-nix";
       inputs.nixpkgs.follows = "nixpkgs";

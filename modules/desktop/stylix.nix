@@ -30,7 +30,12 @@ in
     stylix = {
       enable = true;
 
-      image = theme.wallpaper;
+      # No `image`. Setting it makes stylix's dank-material-shell target write
+      # wallpaperPath into programs.dank-material-shell.session, and any non-empty
+      # session makes the DMS home module write session.json as a read-only store
+      # symlink — which is precisely what stops DMS saving a wallpaper you pick in
+      # its own UI (see modules/desktop/dms/default.nix). The wallpaper is runtime
+      # state now; the option is `null or path`, so leaving it unset is supported.
       base16Scheme = "${pkgs.base16-schemes}/share/themes/${theme.themeName}.yaml";
       polarity = theme.polarity;
       override = lib.mkIf (theme.override != null) theme.override;
