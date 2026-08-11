@@ -21,6 +21,9 @@ in
           opentofu
           distrobox
           claude-code
+          # Claude Code shells out to node/npx for MCP servers and JS tooling,
+          # and the package itself doesn't pull a runtime in.
+          nodejs
         ];
       };
   };
