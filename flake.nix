@@ -110,6 +110,16 @@
       flake = false;
     };
 
+    # nmcbride/claude-desktop-nix — repacks Anthropic's official Linux .deb
+    # (the app is not in nixpkgs and does not self-update on Linux, so the
+    # version rides on this input's lock entry). Small third-party repo: read
+    # the diff when updating. We consume `overlays.default`, not `packages`,
+    # so it builds against our nixpkgs.
+    claude-desktop = {
+      url = "github:nmcbride/claude-desktop-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     sops-nix = {
       url = "github:Mic92/sops-nix";
       inputs.nixpkgs.follows = "nixpkgs";

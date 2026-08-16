@@ -3,12 +3,15 @@ let
   cfg = config.suites.ai;
 in
 {
-  options.suites.ai.enable = lib.mkEnableOption "local AI apps (LM Studio, ccl)";
+  options.suites.ai.enable = lib.mkEnableOption "AI apps (LM Studio, ccl, Claude Desktop)";
 
   config = lib.mkIf cfg.enable {
     # ccl launches Claude Code against a model LM Studio is serving; it is useless
     # without LM Studio, so it ships with this suite rather than with development.
     apps.ccl.enable = true;
+
+    # GUI for the same Claude Code engine as the `claude` CLI (plus Chat/Cowork).
+    apps.claude-desktop.enable = true;
 
     home.extraOptions =
       { pkgs, ... }:

@@ -68,6 +68,26 @@
         "type": "github"
       }
     },
+    "claude-desktop": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1786691558,
+        "narHash": "sha256-J91uCr1qm2mEtdGI965yHrhX53Qxklq+uqSCV7cVuPU=",
+        "owner": "nmcbride",
+        "repo": "claude-desktop-nix",
+        "rev": "8f4458269c5b09d0d59a673925b82f2abd9eff65",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nmcbride",
+        "repo": "claude-desktop-nix",
+        "type": "github"
+      }
+    },
     "dank-greeter": {
       "inputs": {
         "dank-qml-common": "dank-qml-common",
@@ -669,6 +689,7 @@
     },
     "root": {
       "inputs": {
+        "claude-desktop": "claude-desktop",
         "dank-greeter": "dank-greeter",
         "dms": "dms",
         "dms-mouthguard": "dms-mouthguard",
