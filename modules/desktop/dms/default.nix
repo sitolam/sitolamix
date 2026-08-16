@@ -180,14 +180,31 @@ in
         #   QtMultimedia — mouthGuard (SoundEffect alert sounds)
         # Add them to the shell's QML path (the quickshell wrapper *prefixes*
         # NIXPKGS_QT6_QML_IMPORT_PATH, so this value survives).
-        systemd.user.services.dms.Service.Environment = [
-          "NIXPKGS_QT6_QML_IMPORT_PATH=${
-            lib.concatMapStringsSep ":" (p: "${p}/lib/qt-6/qml") [
-              pkgs.qt6.qtwebsockets
-              pkgs.qt6.qtmultimedia
-            ]
-          }"
-        ];
+        systemd.user.services.dms.Service = {
+          Environment = [
+            "NIXPKGS_QT6_QML_IMPORT_PATH=${
+              lib.concatMapStringsSep ":" (p: "${p}/lib/qt-6/qml") [
+                pkgs.qt6.qtwebsockets
+                pkgs.qt6.qtmultimedia
+              ]
+            }"
+          ];
+
+          # systemd's default soft limit is 1024 fds, and the shell settles at
+          # ~1010 right after startup — 572 of them eventfds that no longer
+          # correspond to anything: `pw-dump` attributes zero graph objects to
+          # the quickshell process, so these are PipeWire streams that were set
+          # up and torn down without their fds coming back.
+          # The next stream then fails to allocate and quickshell dies inside
+          # pw_stream_connect:
+          #   ERROR: eventfd failed: "Too many open files"
+          #    WARN: pw_stream_connect failed "Too many open files"
+          #   #4 pw_stream_connect  #10 QRtAudioEngine  #11 QSoundEffect
+          # (SIGSEGV, four restarts in five minutes on 2026-08-16). PipeWire
+          # clients are expected to need far more than 1024; raise it to the
+          # limit systemd already allows as the hard cap.
+          LimitNOFILE = 65536;
+        };
 
         # DMS reads the profile image from the AccountsService user icon, which
         # defaults to ~/.face (confirmed via busctl). So just put the avatar
