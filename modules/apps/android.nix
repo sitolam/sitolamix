@@ -157,7 +157,7 @@ let
         exit 1
       fi
 
-      mirror=(scrcpy --shortcut-mod=lctrl --show-touches)
+      mirror=(scrcpy --shortcut-mod=lctrl --keep-active)
 
       # A transient unit, so the mirror is owned by the user manager rather than
       # by whatever started it: closing the terminal, restarting the watcher or
