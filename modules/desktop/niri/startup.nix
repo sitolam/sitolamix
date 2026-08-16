@@ -7,11 +7,21 @@
 }:
 let
   scratchpad = inputs.niri-scratchpad.packages.${pkgs.stdenv.hostPlatform.system}.default;
+  xwayland-satellite =
+    inputs.niri.packages.${pkgs.stdenv.hostPlatform.system}.xwayland-satellite-unstable;
 in
 {
   config = lib.mkIf config.desktop.niri.enable {
+    # X11 apps (onlyoffice-desktopeditors and friends) need an X server. niri's
+    # built-in integration starts xwayland-satellite itself and — unlike a bare
+    # spawn-at-startup — exports DISPLAY to everything niri spawns, so launchers
+    # and terminals inherit it too.
+    home.extraOptions.programs.niri.settings.xwayland-satellite = {
+      enable = true;
+      path = lib.getExe xwayland-satellite;
+    };
+
     home.extraOptions.programs.niri.settings.spawn-at-startup = [
-      { command = [ "xwayland-satellite" ]; }
       { command = [ "kdeconnectd" ]; }
       {
         command = [
