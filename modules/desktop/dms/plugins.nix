@@ -20,15 +20,56 @@ let
   # the plugin directory is a read-only store path, so that build can never
   # happen there; pre-create the symlink those two files look for instead,
   # pointing at the very package that `nix build .#detector` would have made.
+  #
+  # That package is assembled here rather than taken from the plugin flake's
+  # `packages` output: the flake builds it from a bare nixpkgs instance we
+  # cannot add overlays to (same trap as niri, see ../niri/default.nix), and it
+  # needs the dlib pin below. Keep these deps in sync with `pythonEnv` in
+  # dms-mouthguard's flake.nix.
+  mouthGuardPython = pkgs.python3.withPackages (
+    ps: with ps; [
+      dlib
+      opencv4
+      numpy
+      face-recognition-models
+    ]
+  );
+
+  # detector.py imports mouthguard_core, which sits next to it in the plugin
+  # source root — so run it in place, sys.path[0] resolves the import.
+  mouthGuardDetector = pkgs.writeShellScriptBin "mouthguard-detector" ''
+    exec ${mouthGuardPython}/bin/python3 ${inputs.dms-mouthguard}/detector.py "$@"
+  '';
+
   mouthGuardPlugin = pkgs.runCommand "dms-plugin-mouthguard" { } ''
     mkdir -p $out
     cp -r ${inputs.dms-mouthguard}/. $out/
     chmod -R u+w $out
-    ln -s ${inputs.dms-mouthguard.packages.${pkgs.stdenv.hostPlatform.system}.detector} $out/result
+    ln -s ${mouthGuardDetector} $out/result
   '';
 in
 {
   config = lib.mkIf config.desktop.dms.enable {
+    # nixpkgs bumped dlib 20.0 -> 20.0.1 (2026-08-18) without refreshing
+    # python3Packages.dlib: build-cores.patch no longer applies, and 20.0.1's
+    # setup.py dropped the `--set` build flag the nix expression feeds it, so
+    # the python binding fails to build on unstable. Pin the src back to 20.0 —
+    # what stable ships, and what the binary cache already has. Only mouthGuard
+    # pulls dlib in. Drop once nixpkgs fixes python3Packages.dlib.
+    nixpkgs.overlays = [
+      (_final: prev: {
+        dlib = prev.dlib.overrideAttrs (_: rec {
+          version = "20.0";
+          src = prev.fetchFromGitHub {
+            owner = "davisking";
+            repo = "dlib";
+            tag = "v${version}";
+            sha256 = "sha256-VTX7s0p2AzlvPUsSMXwZiij+UY9g2y+a1YIge9bi0sw=";
+          };
+        });
+      })
+    ];
+
     home.extraOptions = {
       # DMS plugins from the registry (github:AvengeMedia/dms-plugin-registry);
       # the registry homeModule (imported in ./default.nix) provides the pinned
@@ -130,14 +171,15 @@ in
       # to make the selection reproducible. Read-only: change the list here rather
       # than in the plugin's GUI editor.
       home.file.".local/state/DankMaterialShell/plugins/homeAssistantMonitor_state.json".text =
-        builtins.toJSON {
-          entityIds = lib.concatStringsSep ", " [
-            "light.lamp_otis"
-            "sensor.temperature_otis"
-            "sensor.humidity_otis"
-            "sensor.temperature_humidity_sensor_otis_battery"
-          ];
-        };
+        builtins.toJSON
+          {
+            entityIds = lib.concatStringsSep ", " [
+              "light.lamp_otis"
+              "sensor.temperature_otis"
+              "sensor.humidity_otis"
+              "sensor.temperature_humidity_sensor_otis_battery"
+            ];
+          };
     };
   };
 }
