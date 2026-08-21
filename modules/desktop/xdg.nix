@@ -18,6 +18,12 @@ in
       xdg.userDirs = {
         enable = true;
         createDirectories = true;
+        # home-manager flipped this default to false for stateVersion >= 26.05
+        # and warns until it is set explicitly. Pinned to the legacy `true` we
+        # already run on: it exports XDG_DOCUMENTS_DIR & co into the session, so
+        # apps launched from niri (not just ones that read user-dirs.dirs) still
+        # resolve the folders.
+        setSessionVariables = true;
       };
 
       # Default applications. NB: makes ~/.config/mimeapps.list HM-managed
