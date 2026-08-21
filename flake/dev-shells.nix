@@ -9,7 +9,7 @@
           nh
           nvd
           just
-          nixfmt-rfc-style
+          nixfmt
           deadnix
           statix
           nil
