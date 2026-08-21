@@ -103,7 +103,7 @@
           bottomGap = 0;
           # translucent so the ext-background-effect blur behind the bar/widgets
           # is visible (fully opaque = no visible blur). Lower = more see-through.
-          transparency = 0.3;
+          transparency = 0.7;
           widgetTransparency = 0.3;
           squareCorners = false;
           noBackground = false;
@@ -116,8 +116,10 @@
           visible = true;
           popupGapsAuto = true;
           popupGapsManual = 4;
-          # reveal a widget's popout on hover (not just on click).
+          # reveal a widget's popout on hover (not just on click), near-instantly
+          # (ms before the popout opens; DMS defaults to 150).
           hoverPopouts = true;
+          hoverPopoutDelay = 50;
         }
       ];
 
