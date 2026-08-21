@@ -47,6 +47,15 @@ in
     # (see bar.nix controlCenterWidgets). No TLP here, so no conflict.
     services.power-profiles-daemon.enable = true;
 
+    # the profile picture. DMS asks AccountsService for the user's IconFile
+    # (PortalService.getUserProfileImage -> freedesktop.accounts.getUserIconFile)
+    # and shows nothing at all when the bus name is missing, which is what a
+    # blank avatar looks like. Nothing else here pulls accounts-daemon in — it
+    # used to arrive with ReGreet, and went away with it — so enable it
+    # explicitly. accountsservice reports ~/.face as the icon when the user has
+    # no /var/lib/AccountsService entry, and that file is written below.
+    services.accounts-daemon.enable = true;
+
     # runtime deps the enabled DMS plugins shell out to (registry ships only the
     # plugin source). nix dedups any already present (mpv/udisks/util-linux/...).
     environment.systemPackages = with pkgs; [
@@ -208,7 +217,7 @@ in
 
         # DMS reads the profile image from the AccountsService user icon, which
         # defaults to ~/.face (confirmed via busctl). So just put the avatar
-        # there — no AccountsService plumbing needed.
+        # there — the daemon that serves it is enabled above.
         home.file.".face".source = ../../../assets/avatar.png;
       };
   };
