@@ -50,6 +50,15 @@ in
           zip
           wget
           curl
+
+          # terminal eye candy — no config, so they sit here with the rest
+          lavat # ASCII lava lamp: -g truecolor gradient, -G gravity, -p party
+          pipes-rs # the pipes screensaver, rust rewrite of pipes.sh
+          cmatrix # `cmatrix -ab` — the green rain
+          cbonsai # `cbonsai -l` — grows a bonsai, live
+          asciiquarium # fish tank
+          peaclock # clock/timer/stopwatch, styled from a config file
+          tty-clock # `tty-clock -c -C 5` — big centred digits
         ];
       };
   };

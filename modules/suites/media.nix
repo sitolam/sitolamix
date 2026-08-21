@@ -42,6 +42,14 @@ in
           loupe
           obs-studio
           noisetorch
+
+          # cliamp: Winamp 2.x redrawn as a TUI music player (playlists,
+          # visualiser modes, themes, Lua plugins, Spotify/Qobuz). Its own
+          # `cliamp upgrade` cannot work on a read-only store — bump nixpkgs.
+          cliamp
+          # cava: audio visualiser. DMS already pulls it in for the bar widget,
+          # declared here so it does not depend on someone else's module.
+          cava
         ];
       };
   };

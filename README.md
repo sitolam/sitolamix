@@ -116,8 +116,9 @@ Defined in `modules/desktop/niri/bindings.nix`.
 
 ## 🕹 Terminal toys
 
-Because a tiling desktop deserves something silly in the empty column
-(`modules/apps/toys.nix`, on with `suites.core`):
+Because a tiling desktop deserves something in the empty column. The
+animations and clocks ride along with the CLI tools in `modules/apps/cli.nix`;
+`cliamp` and `cava` are media apps, so they live in `suites.media`:
 
 | | |
 |---|---|

@@ -17,7 +17,6 @@ in
       yazi.enable = true;
       fastfetch.enable = true;
       nitch.enable = true;
-      toys.enable = true;
       cli.enable = true;
       nautilus.enable = true;
       gparted.enable = true;
