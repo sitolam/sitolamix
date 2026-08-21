@@ -68,13 +68,15 @@
         programs.niri.settings.binds = lib.mkMerge [
           {
             # DankMaterialShell panels (dms ipc)
+            # omarchy-style root menu (dankMenu plugin, see ../dms/plugins.nix):
+            # one key to every command, with its own search and app list. This
+            # replaces DMS's spotlight as the general launcher — spotlight is
+            # still reachable for its trigger-based plugins, see Mod+Shift+Period.
+            # The `dms` helper above already prepends `ipc call`.
             "Mod+Space" = spawn (dms [
-              "spotlight"
+              "dankMenu"
               "toggle"
-            ]);
-            "Mod+Ctrl+Return" = spawn (dms [
-              "spotlight"
-              "toggle"
+              "root"
             ]);
             "Mod+V" = spawn (dms [
               "clipboard"

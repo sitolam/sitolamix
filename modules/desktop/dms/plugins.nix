@@ -41,6 +41,17 @@ let
     exec ${mouthGuardPython}/bin/python3 ${inputs.dms-mouthguard}/detector.py "$@"
   '';
 
+  # ── dankMenu (DEVELOPMENT) ────────────────────────────────────────────────
+  # A store path that is *itself* a symlink to the working checkout — what
+  # home-manager's lib.file.mkOutOfStoreSymlink builds, inlined because that
+  # helper lives in the home-manager module scope and this file writes into
+  # home.extraOptions from the NixOS side. The point is that the plugin DMS
+  # loads is the live directory, so `dms ipc call plugins reload dankMenu`
+  # picks up edits without a rebuild.
+  dankMenuDevSrc = pkgs.runCommandLocal "dms-plugin-dankmenu-dev" { } ''
+    ln -s /home/otis/Documents/dms-plugins/plugins/dankmenu $out
+  '';
+
   mouthGuardPlugin = pkgs.runCommand "dms-plugin-mouthguard" { } ''
     mkdir -p $out
     cp -r ${inputs.dms-mouthguard}/. $out/
@@ -154,6 +165,17 @@ in
         mouthGuard = {
           enable = true;
           src = mouthGuardPlugin;
+        };
+        # DEVELOPMENT: dankMenu points at the live checkout via an
+        # out-of-store symlink, so edits show up on `dms ipc call plugins
+        # reload dankMenu` without a rebuild. It has to be declared here
+        # rather than enabled in the DMS GUI because managePluginSettings
+        # makes plugin_settings.json a read-only store symlink, and that file
+        # is what the loader reads `enabled` from.
+        # Replaced by the flake input + generated tree once the plugin lands.
+        dankMenu = {
+          enable = true;
+          src = dankMenuDevSrc;
         };
         usbManager.enable = true; # NordicsSys/dms-usb-manager
         ambientSound.enable = true; # hthienloc/dms-ambient-sound (bar widget — no control-center variant)
