@@ -42,9 +42,93 @@ A single-user NixOS configuration built on three ideas:
 | **Browser** | helium |
 | **Idle / lock** | swayidle → lock · DPMS · suspend (pauses while media plays) |
 | **Theming** | [stylix](https://github.com/nix-community/stylix) — fixed `catppuccin-mocha` base16; every themable app follows |
-| **Greeter** | stylix-themed [ReGreet](https://github.com/rharish101/ReGreet) |
+| **Greeter** | [dank-greeter](https://github.com/AvengeMedia/dank-greeter) — greetd + DMS's own login screen, drawn per-output by the same niri build as the session, wearing a copy of the desktop's theme |
+| **Keyboard** | [kanata](https://github.com/jtroo/kanata) home-row mods, system-wide |
+| **Fonts** | Nerd Fonts + the Microsoft sets (corefonts, vista-fonts) so foreign documents keep their metrics |
 | **Boot** | GRUB EFI + [catppuccin-grub](https://github.com/catppuccin/grub) |
 | **Kernel** | linux-zen |
+
+## ✨ Party tricks
+
+Things this config does that a stock desktop does not:
+
+- 🦷 **Mouth guard** — a webcam watches whether your mouth stays closed and nags
+  from the bar when it doesn't ([`dms-mouthguard`](https://github.com/sitolam/dms-mouthguard),
+  dlib + OpenCV, built straight from the flake input).
+- ⌨️ **Home-row mods** — kanata turns `asdf`/`jkl;` into modifiers on hold, caps
+  into Esc on tap, and holding `v` into a vim arrow layer — all of it below the
+  compositor, so every app obeys.
+- 🗃 **Scratchpad** — `Mod+M` stashes the focused window away, `Mod+S` floats it
+  back (`niri-scratchpad`).
+- 💡 **DDC brightness** — the brightness keys drive the *external* monitors over
+  i2c, one `dms ipc` call per panel.
+- 🤖 **Claude Code, two ways** — a bar widget that tracks API usage, and `ccl`,
+  which points Claude Code at a model running locally in LM Studio.
+- 🎧 **Bar full of plugins** — typing sounds, take-a-break, ambient sound, USB
+  manager, KDE Connect, Home Assistant, emoji launcher, calculator.
+- 🔒 **Lock before sleep** — swayidle locks, then suspends, and pauses the whole
+  chain while media is playing.
+
+## ⌨️ Keybinds
+
+<details>
+<summary><code>Mod</code> is Super. <code>Mod+Slash</code> opens DMS's own searchable cheat sheet — this is the short version.</summary>
+
+<br>
+
+| Shell | |
+|---|---|
+| `Mod+Space` | Spotlight launcher (`Mod+Ctrl+Return` too) |
+| `Mod+D` | dashboard / dank dash |
+| `Mod+V` · `Mod+P` · `Mod+N` | clipboard · notepad · notifications |
+| `Mod+Ctrl+S` · `Mod+Ctrl+M` | control center · process list |
+| `Mod+Shift+Period` | emoji picker |
+| `Mod+Shift+T` · `Mod+Shift+W` · `Mod+Alt+N` | theme · wallpaper · night mode |
+
+| Windows | |
+|---|---|
+| `Mod+←/→` · `Mod+↑/↓` | focus column · focus window in column |
+| `Mod+Ctrl+←/→/↑/↓` | move it |
+| `Mod+Q` · `Mod+F` · `Mod+Shift+F` | close · maximise column · fullscreen |
+| `Mod+W` · `Mod+A` · `Mod+C` | float · tabbed column · center column |
+| `Mod+[` / `Mod+]` | consume / expel a window sideways |
+| `Mod+R` · `Mod+-` / `Mod+=` | preset widths · resize by 10% |
+| `Mod+O` · `Mod+Tab` | overview · previous workspace |
+| `Mod+M` / `Mod+S` | scratchpad: stash / bring back |
+
+| Apps & capture | |
+|---|---|
+| `Mod+T` · `Mod+B` · `Mod+E` | ghostty · helium · files |
+| `Mod+Shift+G` · `Mod+Shift+M` | lazygit · btop, in a terminal |
+| `Mod+Shift+S` · `Print` | capture toolbar · full screenshot |
+| `Mod+Print` · `Mod+Shift+O` · `Mod+Shift+C` | region → clipboard · region **OCR** → clipboard · colour pick |
+
+| Session | |
+|---|---|
+| `Mod+BackSpace` | lock |
+| `Mod+Shift+BackSpace` | lock + suspend |
+| `Mod+Ctrl+BackSpace` | power menu |
+| `Mod+Shift+P` | monitors off |
+
+Defined in `modules/desktop/niri/bindings.nix`.
+
+</details>
+
+## 🕹 Terminal toys
+
+Because a tiling desktop deserves something silly in the empty column
+(`modules/apps/toys.nix`, on with `suites.core`):
+
+| | |
+|---|---|
+| `cava` | audio visualiser — the same one the bar's widget uses |
+| `lavat -g -c FF6AC1 -k 6AC1FF -G` | lava lamp: truecolor gradient, metaballs that rise and fall. `-p p1` for party mode |
+| `pipes-rs` | the pipes screensaver, endlessly plumbing |
+| `peaclock` | clock / timer / stopwatch, styled from its own config |
+| `tty-clock -c -C 5` | the classic centred big-digit clock |
+| `cbonsai -l` | grows a bonsai, live |
+| `cmatrix -ab` | the green rain |
+| `asciiquarium` | fish tank |
 
 ## 🖥 Hosts
 
@@ -81,7 +165,7 @@ Each feature declares `options.<ns>.<name>.enable` and gates its config with
 # hosts/gamingpc/default.nix
 suites = {
   core.enable = true;         # shell + CLI programs
-  desktop.enable = true;      # niri + dms + stylix + greeter
+  desktop.enable = true;      # niri + dms + stylix + greetd/dank-greeter
   development.enable = true;   # vscode, docker, tooling
   media.enable = true;
   gaming.enable = true;
