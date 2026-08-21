@@ -9,7 +9,12 @@ in
 {
   config = lib.mkIf config.desktop.dms.enable {
     home.extraOptions =
-      { config, lib, pkgs, ... }:
+      {
+        config,
+        lib,
+        pkgs,
+        ...
+      }:
       let
         # resolve the theme's M3-token -> base16-slot map into actual hex from
         # the active stylix scheme (config.lib.stylix.colors), then hand DMS a

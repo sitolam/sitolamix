@@ -147,26 +147,6 @@
         "type": "github"
       }
     },
-    "dms-mouthguard": {
-      "inputs": {
-        "nixpkgs": [
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1785959828,
-        "narHash": "sha256-leogUfZNyEBIsfeGQUs691T7OUJaYUTLo6zIdV5/lDU=",
-        "owner": "sitolam",
-        "repo": "dms-mouthguard",
-        "rev": "a64a35c03fc9efb3504d98f193c716d3d49d25ec",
-        "type": "github"
-      },
-      "original": {
-        "owner": "sitolam",
-        "repo": "dms-mouthguard",
-        "type": "github"
-      }
-    },
     "dms-plugin-registry": {
       "inputs": {
         "nixpkgs": [
@@ -184,6 +164,26 @@
       "original": {
         "owner": "AvengeMedia",
         "repo": "dms-plugin-registry",
+        "type": "github"
+      }
+    },
+    "dms-plugins": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1787351211,
+        "narHash": "sha256-/G8taJOaLTCWgfwMbOJn4HZ7D/HY2YePRvgziiVdu5g=",
+        "owner": "sitolam",
+        "repo": "dms-plugins",
+        "rev": "046b582d18e7a41f7188fd65d70209a69a36aca2",
+        "type": "github"
+      },
+      "original": {
+        "owner": "sitolam",
+        "repo": "dms-plugins",
         "type": "github"
       }
     },
@@ -692,8 +692,8 @@
         "claude-desktop": "claude-desktop",
         "dank-greeter": "dank-greeter",
         "dms": "dms",
-        "dms-mouthguard": "dms-mouthguard",
         "dms-plugin-registry": "dms-plugin-registry",
+        "dms-plugins": "dms-plugins",
         "flake-parts": "flake-parts",
         "helium": "helium",
         "home-manager": "home-manager",

@@ -93,12 +93,13 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # sitolam/dms-mouthguard — DMS plugin, not in dms-plugin-registry, so it is
-    # pinned as its own input. Tracks the repo's default branch; local edits
-    # over in the working checkout are picked up only once they are pushed and
-    # `nix flake update dms-mouthguard` is run.
-    dms-mouthguard = {
-      url = "github:sitolam/dms-mouthguard";
+    # sitolam/dms-plugins — home-grown DMS plugins (mouthGuard, dankMenu), none
+    # of them in dms-plugin-registry, so the repo is pinned as its own input.
+    # Tracks the repo's default branch; local edits over in the working checkout
+    # are picked up only once they are pushed and `nix flake update dms-plugins`
+    # is run.
+    dms-plugins = {
+      url = "github:sitolam/dms-plugins";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 

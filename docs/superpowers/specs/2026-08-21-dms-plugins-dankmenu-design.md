@@ -1,7 +1,7 @@
 # dms-plugins monorepo and dankMenu, an omarchy-menu for DMS
 
 **Date:** 2026-08-21
-**Status:** draft, awaiting review
+**Status:** implemented
 
 ## Problem
 

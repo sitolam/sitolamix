@@ -35,7 +35,7 @@ A single-user NixOS configuration built on three ideas:
 |---|---|
 | **Compositor** | [niri](https://github.com/YaLTeR/niri) — scrollable-tiling Wayland |
 | **Shell / bar** | [DankMaterialShell](https://github.com/AvengeMedia/DankMaterialShell) (Quickshell) — bar, control center, notifications, lock screen, blur, plugins |
-| **Launcher** | DMS Spotlight (`Mod+Space`) |
+| **Launcher** | [dankMenu](https://github.com/sitolam/dms-plugins/tree/main/plugins/dankmenu) (`Mod+Space`) — omarchy-style root menu: one key to every command, with its own search and app list |
 | **Terminal** | [ghostty](https://ghostty.org/) |
 | **Login shell** | fish + [starship](https://starship.rs/) |
 | **Files** | GNOME Files (nautilus) |
@@ -53,8 +53,14 @@ A single-user NixOS configuration built on three ideas:
 Things this config does that a stock desktop does not:
 
 - 🦷 **Mouth guard** — a webcam watches whether your mouth stays closed and nags
-  from the bar when it doesn't ([`dms-mouthguard`](https://github.com/sitolam/dms-mouthguard),
+  from the bar when it doesn't ([`dms-plugins/mouthguard`](https://github.com/sitolam/dms-plugins/tree/main/plugins/mouthguard),
   dlib + OpenCV, built straight from the flake input).
+- 🗂️ **One key to everything** — `Mod+Space` opens an omarchy-style root menu:
+  drill in with `Enter`, out with `Esc`, or just type and it searches every
+  command in the tree *and* every installed app
+  ([`dms-plugins/dankmenu`](https://github.com/sitolam/dms-plugins/tree/main/plugins/dankmenu)).
+  Its tree is generated from this flake, so `Update ▸ Rebuild` runs against this
+  very checkout.
 - ⌨️ **Home-row mods** — kanata turns `asdf`/`jkl;` into modifiers on hold, caps
   into Esc on tap, and holding `v` into a vim arrow layer — all of it below the
   compositor, so every app obeys.
@@ -78,7 +84,7 @@ Things this config does that a stock desktop does not:
 
 | Shell | |
 |---|---|
-| `Mod+Space` | Spotlight launcher (`Mod+Ctrl+Return` too) |
+| `Mod+Space` | dankMenu — root menu, drill in with `Enter`, out with `Esc`, type to search everything below |
 | `Mod+D` | dashboard / dank dash |
 | `Mod+V` · `Mod+P` · `Mod+N` | clipboard · notepad · notifications |
 | `Mod+Ctrl+S` · `Mod+Ctrl+M` | control center · process list |

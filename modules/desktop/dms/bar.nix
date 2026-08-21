@@ -73,19 +73,46 @@
             # ambient-sound widget (bar-only plugin — no control-center variant,
             # so it can't be moved there; it stays a normal bar widget). The
             # hidden-bar collapser and the simple-audio-control mixer were removed.
-            { id = "ambientSound"; enabled = true; }
-            { id = "systemTray"; enabled = true; }
-            { id = "dankKDEConnect"; enabled = true; } # AvengeMedia DankKDEConnect
-            { id = "usbManager"; enabled = true; }
+            {
+              id = "ambientSound";
+              enabled = true;
+            }
+            {
+              id = "systemTray";
+              enabled = true;
+            }
+            {
+              id = "dankKDEConnect";
+              enabled = true;
+            } # AvengeMedia DankKDEConnect
+            {
+              id = "usbManager";
+              enabled = true;
+            }
             # webcam mouth-closure tracker (local plugin, see plugins.nix).
             # left click = popout, middle = start/stop, right = mute alerts.
-            { id = "mouthGuard"; enabled = true; }
-            { id = "homeAssistantMonitor"; enabled = true; } # hyprland-only upstream
-            { id = "claudeCodeUsage"; enabled = true; } # moved out of hidden bar, next to HA
+            {
+              id = "mouthGuard";
+              enabled = true;
+            }
+            {
+              id = "homeAssistantMonitor";
+              enabled = true;
+            } # hyprland-only upstream
+            {
+              id = "claudeCodeUsage";
+              enabled = true;
+            } # moved out of hidden bar, next to HA
             # unified cpu/ram/disk gauges (systemMonitorPlus plugin) — replaces
             # the built-in memUsage + diskUsage widgets. Config in plugins.nix.
-            { id = "systemMonitorPlus"; enabled = true; }
-            { id = "notificationButton"; enabled = true; }
+            {
+              id = "systemMonitorPlus";
+              enabled = true;
+            }
+            {
+              id = "notificationButton";
+              enabled = true;
+            }
             # battery/power widget removed from the bar — power lives only in the
             # control center now (the battery tile has the power-profile switcher).
             {
@@ -125,22 +152,62 @@
 
       # control center quick-toggle widgets.
       controlCenterWidgets = [
-        { id = "volumeSlider"; enabled = true; width = 50; }
-        { id = "brightnessSlider"; enabled = true; width = 50; }
-        { id = "wifi"; enabled = true; width = 50; }
-        { id = "bluetooth"; enabled = true; width = 50; }
-        { id = "audioOutput"; enabled = true; width = 50; }
-        { id = "audioInput"; enabled = true; width = 50; }
-        { id = "idleInhibitor"; enabled = true; width = 50; }
-        { id = "nightMode"; enabled = true; width = 50; }
+        {
+          id = "volumeSlider";
+          enabled = true;
+          width = 50;
+        }
+        {
+          id = "brightnessSlider";
+          enabled = true;
+          width = 50;
+        }
+        {
+          id = "wifi";
+          enabled = true;
+          width = 50;
+        }
+        {
+          id = "bluetooth";
+          enabled = true;
+          width = 50;
+        }
+        {
+          id = "audioOutput";
+          enabled = true;
+          width = 50;
+        }
+        {
+          id = "audioInput";
+          enabled = true;
+          width = 50;
+        }
+        {
+          id = "idleInhibitor";
+          enabled = true;
+          width = 50;
+        }
+        {
+          id = "nightMode";
+          enabled = true;
+          width = 50;
+        }
         # battery tile — its detail view is DMS's native power-profile switcher
         # (performance/balanced/power-saver via power-profiles-daemon, enabled in
         # ./default.nix). There is no standalone power-profile CC widget.
-        { id = "battery"; enabled = true; width = 50; }
+        {
+          id = "battery";
+          enabled = true;
+          width = 50;
+        }
         # plugin control-center toggles (id = "plugin_<pluginId>"). takeABreak's
         # tile is intentionally omitted — its pause toggle reaches the daemon via
         # an unreliable cross-instance lookup, so it's not useful here.
-        { id = "plugin_typingSounds"; enabled = true; width = 50; }
+        {
+          id = "plugin_typingSounds";
+          enabled = true;
+          width = 50;
+        }
       ];
     };
   };
