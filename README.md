@@ -129,6 +129,7 @@ Because a tiling desktop deserves something silly in the empty column
 | `cbonsai -l` | grows a bonsai, live |
 | `cmatrix -ab` | the green rain |
 | `asciiquarium` | fish tank |
+| `cliamp` | Winamp 2.x as a TUI — playlists, visualiser modes, themes, Lua plugins, Spotify/Qobuz |
 
 ## 🖥 Hosts
 

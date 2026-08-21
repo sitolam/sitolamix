@@ -17,6 +17,10 @@ in
           cbonsai # `cbonsai -l` — grows a bonsai, live
           cmatrix # `cmatrix -ab` — the green rain
           asciiquarium # `asciiquarium` — fish tank
+          # `cliamp` — Winamp 2.x redrawn as a TUI music player: playlists,
+          # visualiser modes, themes, Lua plugins, Spotify/Qobuz. Its own
+          # `cliamp upgrade` cannot work here (read-only store) — bump nixpkgs.
+          cliamp
 
           # audio visualiser. DMS already pulls cava in for the bar's visualiser
           # widget, so it is on PATH either way — declared here so it survives
