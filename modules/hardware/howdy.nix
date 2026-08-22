@@ -79,7 +79,7 @@ in
         # the same sequential stack as the password. Filed upstream:
         # https://github.com/AvengeMedia/DankMaterialShell/issues/3146
         # requesting a concurrent context like fprint's.
-        timeout = 2;
+        timeout = 1;
       };
     };
 
