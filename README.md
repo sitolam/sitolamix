@@ -14,6 +14,14 @@ enable-switch, side by side.
 
 </div>
 
+<div align="center">
+
+![the desktop](assets/screenshots/desktop.png)
+
+<em>niri + DankMaterialShell — floating terminal toys, blur, one catppuccin palette everywhere</em>
+
+</div>
+
 ---
 
 ## Overview
@@ -61,6 +69,8 @@ Things this config does that a stock desktop does not:
   ([`dms-plugins/dankmenu`](https://github.com/sitolam/dms-plugins/tree/main/plugins/dankmenu)).
   Its tree is generated from this flake, so `Update ▸ Rebuild` runs against this
   very checkout.
+
+  <img src="assets/screenshots/dankmenu.png" alt="dankMenu" width="600">
 - ⌨️ **Home-row mods** — kanata turns `asdf`/`jkl;` into modifiers on hold, caps
   into Esc on tap, and holding `v` into a vim arrow layer — all of it below the
   compositor, so every app obeys.

@@ -174,11 +174,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1787385206,
-        "narHash": "sha256-ZUmVtEHllYFLhWwfpVIQfUmKT6c5mgJxNDfe7ZkbA/0=",
+        "lastModified": 1787386326,
+        "narHash": "sha256-l0as4bUje/oegNmwUAP+zkkntMs2YQgiIaGOP1WEXgk=",
         "owner": "sitolam",
         "repo": "dms-plugins",
-        "rev": "c9b02dbbb67fb5f5db2f1070f659d064c0131437",
+        "rev": "edbcd0ece033c372859cba5cea4f3b2d18ee89c1",
         "type": "github"
       },
       "original": {
