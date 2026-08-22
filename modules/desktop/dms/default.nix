@@ -32,10 +32,9 @@ in
     # load i2c-dev (creates the nodes + i2c group + udev perms) and add the user
     # to the i2c group so the shell can read/write them.
     hardware.i2c.enable = true;
-    # i2c: DDC brightness (above). input: typingSounds reads /dev/input/event*.
+    # i2c: DDC brightness (above).
     users.users.otis.extraGroups = [
       "i2c"
-      "input"
     ];
 
     # screen *recording* for the screenCaptureToolbar plugin. The NixOS module
@@ -77,9 +76,7 @@ in
       udisks # usb-manager
       util-linux # usb-manager (lsblk)
       satty # screenCaptureToolbar (annotation editor; grim/slurp/wl-clipboard via niri, gpu-screen-recorder via media suite)
-      evtest # typingSounds (read key events)
-      libinput # typingSounds
-      ffmpeg # typingSounds (sound playback)
+      wl-mirror # niriDS (mirror profile)
     ];
 
     home.extraOptions =

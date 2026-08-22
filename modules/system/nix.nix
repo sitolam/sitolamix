@@ -23,6 +23,13 @@
         "flakes"
       ];
 
+      # flake.nix's nixConfig (extra-substituters/extra-trusted-public-keys)
+      # otherwise gets ignored with a warning on every rebuild unless the
+      # invocation passes --accept-flake-config. Safe here: those two lists
+      # are a subset of substituters/trusted-public-keys below, already
+      # trusted system-wide.
+      accept-flake-config = true;
+
       trusted-users = [
         "root"
         "otis"

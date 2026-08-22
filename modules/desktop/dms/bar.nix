@@ -205,7 +205,7 @@
         # tile is intentionally omitted — its pause toggle reaches the daemon via
         # an unreliable cross-instance lookup, so it's not useful here.
         {
-          id = "plugin_typingSounds";
+          id = "plugin_niriDS";
           enabled = true;
           width = 50;
         }

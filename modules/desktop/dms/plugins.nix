@@ -424,22 +424,10 @@ in
         # (dms ipc call screenCaptureToolbar toggle). Deps: gpu-screen-recorder
         # (media suite), grim/slurp/wl-clipboard (niri), satty (added below).
         screenCaptureToolbar.enable = true; # JDKamalakar/DMS-ScreenCapture_Toolbar
-        # control-center plugins (no bar widget, so NOT hideable by the hidden
-        # bar): typing sounds daemon + a break reminder. They surface as
-        # control-center toggles.
-        typingSounds = {
-          enable = true; # hthienloc/dms-typing-sounds (needs evtest/libinput/ffmpeg + input group)
-          settings = {
-            # No sounds by default WITHOUT the plugin showing as disabled: the
-            # "Enable Typing Sounds" toggle is settingKey "enabled", which is
-            # ALSO the key DMS's loader uses to activate the plugin — setting it
-            # false at startup makes DMS never load it (shows disabled in the
-            # browser). So keep it enabled/loaded and just mute it via volume=0.
-            # Raise this (0..100) in Settings to actually hear it.
-            volume = 0;
-            mouseEnabled = true;
-          };
-        };
+        # control-center plugin (no bar widget, so NOT hideable by the hidden
+        # bar): a break reminder, surfaces as a control-center toggle.
+        # niriDS below is its own bar-widget control-center tile instead.
+        niriDS.enable = true; # hthienloc/dms-niri-display-settings (needs wl-mirror), in dms-plugin-registry
         takeABreak = {
           enable = true; # hthienloc/dms-take-a-break
           # overlay = the fullscreen break screen dim; preWarning = the toast
