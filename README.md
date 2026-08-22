@@ -22,6 +22,37 @@ enable-switch, side by side.
 
 </div>
 
+<details>
+<summary><strong>More screenshots</strong> — the menu, the panels, the cheat sheet</summary>
+
+<br>
+
+<div align="center">
+
+**`Mod+Space` — dankMenu**, the root menu: type to search every command *and* every app
+
+![dankMenu](assets/screenshots/dankmenu.png)
+
+**`Mod+D` — dank dash**: clock, weather, calendar, session and resource gauges in one panel
+
+![dank dash](assets/screenshots/dash.png)
+
+**`Mod+Ctrl+S` — control center**: network, bluetooth, audio, brightness and the plugin toggles
+
+![control center](assets/screenshots/control.png)
+
+**`Mod+Slash` — the keybind cheat sheet**, generated from the niri config itself
+
+![keybinds](assets/screenshots/keybinds.png)
+
+**`Mod+Ctrl+M` — system monitor**: processes, performance, disks
+
+![system monitor](assets/screenshots/sysmon.png)
+
+</div>
+
+</details>
+
 ---
 
 ## Overview
