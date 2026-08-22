@@ -435,8 +435,9 @@ chmod 600 /mnt/etc/ssh/ssh_host_ed25519_key
 
 NixOS preserves an existing host key rather than replacing it, so this is the
 key the installed system will decrypt with — sshd adopts it instead of making
-its own. **Back it up**: lose it and the encrypted secrets are unrecoverable
-from that machine.
+its own. **Back it up** to a USB stick or a password manager — not to the other
+machine, which would put both machines' keys on one disk for no benefit. Lose it
+and the encrypted secrets are unrecoverable from the new machine.
 
 Now turn it into an age recipient:
 
@@ -444,6 +445,35 @@ Now turn it into an age recipient:
 nix run nixpkgs#ssh-to-age < /mnt/etc/ssh/ssh_host_ed25519_key.pub
 # age1... — copy this
 ```
+
+### Which key is which — nothing gets copied between machines
+
+This is the part that reads as confusing. There are **two** host keys, one per
+machine, and neither ever moves:
+
+| Key | Lives on | Travels? |
+| --- | --- | --- |
+| `gamingpc`'s `/etc/ssh/ssh_host_ed25519_key` | gamingpc, since its own install | Never |
+| `the new machine`'s `/mnt/etc/ssh/ssh_host_ed25519_key` | the new machine (`/mnt/...` while you are in the installer) | Never |
+
+The only thing that crosses the room is the `age1…` **recipient string** — the
+public half, derived from the `.pub` file. Public is fine on paper, in git,
+anywhere.
+
+So why does `gamingpc`'s own private key come into it? Because adding a
+recipient is two operations, not one:
+
+1. **decrypt** `secrets/ha.yaml` — which needs a key that is *already* a
+   recipient, i.e. gamingpc's
+2. re-encrypt the result to both recipients
+
+Step 1 is where it fails if sops cannot find gamingpc's key. That failure is
+about the *old* key, not the new one, even though the error appears right after
+sops has offered to add the new recipient — which is what makes it look like
+the new key is at fault.
+
+Adding someone to a shared safe: you need *your* key to open it and *their*
+address to add them. Neither key changes hands.
 
 **On a machine that can already decrypt** (your existing install — do this
 before wiping it, or from any other machine already listed), add that recipient
@@ -481,9 +511,10 @@ nix run nixpkgs#sops -- -d secrets/ha.yaml >/dev/null; and echo OK   # decrypts?
 Don't run `sops` under `sudo` instead — it works, but rewrites the file as
 root inside your checkout.
 
-```sh
+```fish
 nix run nixpkgs#sops -- updatekeys secrets/ha.yaml
-set -e SOPS_AGE_KEY
+set -e SOPS_AGE_KEY     # drop the key from this shell again
+
 git commit -am "chore(sops): add myhost as a recipient"
 git push
 ```

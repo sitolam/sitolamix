@@ -284,8 +284,10 @@ NixOS preserves an existing host key rather than replacing it, so sshd adopts
 this one.
 
 > [!WARNING]
-> Back up `/mnt/etc/ssh/ssh_host_ed25519_key`. Lose it and this machine can
-> never decrypt `secrets/*.yaml` again.
+> Back up `/mnt/etc/ssh/ssh_host_ed25519_key` — to a USB stick or a password
+> manager, **not** to `gamingpc`. Copying it there would put both machines' keys
+> on one disk and buy you nothing. Lose it and omnibook can never decrypt
+> `secrets/*.yaml` again.
 
 Print the age recipient:
 
@@ -302,9 +304,39 @@ which needs no experimental features:
 nix-shell -p ssh-to-age --run 'ssh-to-age < /mnt/etc/ssh/ssh_host_ed25519_key.pub'
 ```
 
+### Which key is which — nothing gets copied between machines
+
+This is the part that reads as confusing. There are **two** host keys, one per
+machine, and neither ever moves:
+
+| Key | Lives on | Travels? |
+| --- | --- | --- |
+| `gamingpc`'s `/etc/ssh/ssh_host_ed25519_key` | gamingpc, since its own install | Never |
+| ``omnibook``'s `/mnt/etc/ssh/ssh_host_ed25519_key` | the laptop | Never |
+
+The only thing that crosses the room is the `age1…` **recipient string** — the
+public half, derived from the `.pub` file. Public is fine on paper, in git,
+anywhere.
+
+So why does `gamingpc`'s own private key come into it? Because adding a
+recipient is two operations, not one:
+
+1. **decrypt** `secrets/ha.yaml` — which needs a key that is *already* a
+   recipient, i.e. gamingpc's
+2. re-encrypt the result to both recipients
+
+Step 1 is where it fails if sops cannot find gamingpc's key. That failure is
+about the *old* key, not the new one, even though the error appears right after
+sops has offered to add the new recipient — which is what makes it look like
+the new key is at fault.
+
+Adding someone to a shared safe: you need *your* key to open it and *their*
+address to add them. Neither key changes hands.
+
 ### Now on `gamingpc`
 
 It is the only current recipient, so it is the only machine that can re-encrypt.
+Everything in this section runs on gamingpc, against files already on gamingpc.
 
 Add the key to `.sops.yaml`:
 
