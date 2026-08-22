@@ -31,6 +31,11 @@
   # it (see README → Face unlock).
   hardware.howdy.enable = true;
 
+  # 2880x1800 panel at niri output scale 1.75 (see `niri msg outputs`) makes
+  # the shared 7px default (modules/desktop/stylix.nix) nearly invisible —
+  # that size is logical/unscaled, so it doesn't grow with output scale.
+  stylix.cursor.size = 16;
+
   # feature suites
   suites = {
     core.enable = true;

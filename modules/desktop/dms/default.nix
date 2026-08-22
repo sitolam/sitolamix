@@ -47,6 +47,12 @@ in
     # (see bar.nix controlCenterWidgets). No TLP here, so no conflict.
     services.power-profiles-daemon.enable = true;
 
+    # DMS reads battery presence/charge/AC-online state over UPower's DBus
+    # API, not by polling /sys/class/power_supply itself. Without this the
+    # battery tile has nothing to query, which is why it showed no battery
+    # and defaulted to "plugged in".
+    services.upower.enable = true;
+
     # the profile picture. DMS asks AccountsService for the user's IconFile
     # (PortalService.getUserProfileImage -> freedesktop.accounts.getUserIconFile)
     # and shows nothing at all when the bus name is missing, which is what a

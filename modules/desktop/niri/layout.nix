@@ -9,7 +9,12 @@
           options = "compose:ralt";
         };
         touchpad = {
-          natural-scroll = true;
+          # false = traditional scroll direction (content moves opposite the
+          # fingers). true is the "natural"/touch-screen-like inversion that
+          # felt backwards on omnibook.
+          natural-scroll = false;
+          # default is 1.0; 0.5 was still way too fast on the omnibook trackpad.
+          scroll-factor = 0.25;
           tap = true;
           tap-button-map = "left-right-middle";
           middle-emulation = true;

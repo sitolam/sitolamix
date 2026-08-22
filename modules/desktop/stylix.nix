@@ -43,7 +43,11 @@ in
       cursor = {
         name = "Bibata-Modern-Classic";
         package = pkgs.bibata-cursors;
-        size = 7;
+        # mkDefault: omnibook's HiDPI panel overrides this to something
+        # bigger (see hosts/omnibook/default.nix) — 7 reads as a near-invisible
+        # dot at its scale. Size is logical/unscaled, same as niri's own
+        # cursor.xcursor-size, so it doesn't auto-adjust for output scale.
+        size = lib.mkDefault 7;
       };
 
       fonts = {
