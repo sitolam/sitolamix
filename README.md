@@ -293,10 +293,14 @@ swapon /dev/disk/by-label/NIXSWAP
 
 ### 3. Give your machine a host
 
+The flake lives in your home directory, not `/etc/nixos` — clone it straight to
+where it will live after boot, so nothing has to be moved later:
+
 ```sh
 nix-shell -p git
-git clone https://github.com/sitolam/sitolamix /mnt/etc/nixos
-cd /mnt/etc/nixos
+mkdir -p /mnt/home/otis
+git clone https://github.com/sitolam/sitolamix /mnt/home/otis/sitolamix
+cd /mnt/home/otis/sitolamix
 
 mkdir -p hosts/myhost
 nixos-generate-config --root /mnt --show-hardware-config > hosts/myhost/hardware.nix
@@ -313,24 +317,94 @@ If you labelled your partitions as above, you can replace the generated
 `hosts/gamingpc/hardware.nix` — the generated UUIDs work fine too, they're just
 tied to that one disk.
 
-### 4. Deal with secrets *before* installing
+### 4. Re-key the secrets *before* installing
 
-`modules/system/sops.nix` decrypts `secrets/ha.yaml` using **this machine's SSH
-host key**. Your new machine's key is not a recipient, so the build will fail on
-a fresh install. Pick one:
+`modules/system/sops.nix` decrypts `secrets/ha.yaml` with **this machine's SSH
+host key**, converted to age. A new machine has a different key, so it is not a
+recipient and the build fails. You have to add it as one.
 
-- **Drop it** (what most forks want): delete `modules/system/sops.nix` and
-  `secrets/`, then remove the `homeAssistantMonitor` plugin block and the
-  `haTokenPath` binding from `modules/desktop/dms/plugins.nix`. Both must go —
-  `plugins.nix` reads `config.sops.secrets.hass_token.path`, so removing only
-  the module breaks evaluation.
-- **Re-key it** with your own secrets: see [Secrets (sops)](#-secrets-sops)
-  below, and replace `secrets/ha.yaml` with your own encrypted file.
+There is an ordering trap: the host key normally doesn't exist until the system
+runs, but you need it *before* installing. And nothing in this config enables
+`services.openssh`, so nothing will ever generate one for you. Both problems go
+away if you just create the key yourself, in the installer:
+
+```sh
+mkdir -p /mnt/etc/ssh
+ssh-keygen -t ed25519 -N "" -C "myhost" -f /mnt/etc/ssh/ssh_host_ed25519_key
+chmod 600 /mnt/etc/ssh/ssh_host_ed25519_key
+```
+
+NixOS keeps an existing host key rather than replacing it, so this is the key
+the installed system will decrypt with. **Back it up** — lose it and the
+encrypted secrets are unrecoverable from that machine.
+
+Now turn it into an age recipient:
+
+```sh
+nix run nixpkgs#ssh-to-age < /mnt/etc/ssh/ssh_host_ed25519_key.pub
+# age1... — copy this
+```
+
+**On a machine that can already decrypt** (your existing install — do this
+before wiping it, or from any other machine already listed), add that recipient
+to `.sops.yaml`:
+
+```yaml
+keys:
+  - &gamingpc age1lag4wn9wz90qmfkwcgq55sg56htag4hpfnkxj4ur0mm0txwr4yeq7xpsrr
+  - &myhost   age1...            # the key you just printed
+creation_rules:
+  - path_regex: secrets/[^/]+\.yaml$
+    key_groups:
+      - age:
+          - *gamingpc
+          - *myhost
+```
+
+`.sops.yaml` only governs *new* files, so re-encrypt the existing one to the new
+recipient list and push:
+
+```sh
+nix run nixpkgs#sops -- updatekeys secrets/ha.yaml
+git commit -am "chore(sops): add myhost as a recipient"
+git push
+```
+
+Then back in the installer, pull that commit into the clone:
+
+```sh
+cd /mnt/home/otis/sitolamix && git pull
+```
+
+Both machines can now decrypt, and the install will succeed.
+
+<details>
+<summary><strong>No machine that can decrypt?</strong> (forking, or the old key is gone)</summary>
+
+<br>
+
+Then the existing ciphertext is unreadable to you — nobody can re-key a secret
+they cannot read. Start your own:
+
+```sh
+# .sops.yaml: replace the gamingpc key with your own recipient, then
+rm secrets/ha.yaml
+nix run nixpkgs#sops -- secrets/ha.yaml     # opens $EDITOR, writes fresh ciphertext
+```
+
+Put a `hass_token:` key in it to match what `modules/system/sops.nix` declares.
+If you have no Home Assistant at all, delete `modules/system/sops.nix` **and**
+the `homeAssistantMonitor` block plus the `haTokenPath` binding in
+`modules/desktop/dms/plugins.nix` — both, because `plugins.nix` reads
+`config.sops.secrets.hass_token.path` and removing only the module breaks
+evaluation.
+
+</details>
 
 ### 5. Install
 
 ```sh
-nixos-install --flake /mnt/etc/nixos#myhost
+nixos-install --flake /mnt/home/otis/sitolamix#myhost
 ```
 
 This builds the whole system, so expect a long first run and a lot of
@@ -349,10 +423,17 @@ gh auth login              # so `git push` works — see GitHub auth below
 rclone config              # only if you kept services.rclone
 ```
 
-Move the checkout somewhere you own (`~/sitolamix` is what the dankMenu
-`Update ▸ Rebuild` rows assume — see `flakeDir` in
-`modules/desktop/dms/plugins.nix`), then `just rebuild` from there onwards.
-Monitors are configured in DMS's settings UI, not in the flake.
+The checkout is already at `~/sitolamix`, which is what the dankMenu
+`Update ▸ Rebuild` rows assume (`flakeDir` in
+`modules/desktop/dms/plugins.nix`). It was cloned as root, so take ownership
+once:
+
+```sh
+sudo chown -R otis:users ~/sitolamix
+```
+
+From then on it is `just rebuild` from that directory. Monitors are configured
+in DMS's settings UI, not in the flake.
 
 ### Just trying it out?
 
