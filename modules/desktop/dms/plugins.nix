@@ -21,25 +21,18 @@ let
   # happen there; pre-create the symlink those two files look for instead,
   # pointing at the very package that `nix build .#detector` would have made.
   #
-  # That package is assembled here rather than taken from dms-plugins'
-  # `packages.mouthguard-detector`: that flake builds from its own nixpkgs
-  # instance, which this config cannot add overlays to (same trap as niri, see
-  # ../niri/default.nix). Keep these deps in sync with `pythonEnv` in
-  # dms-plugins' flake.nix, which carries the same dlib pin for the same reason.
-  mouthGuardPython = pkgs.python3.withPackages (
-    ps: with ps; [
-      dlib
-      opencv4
-      numpy
-      face-recognition-models
-    ]
-  );
-
-  # detector.py imports mouthguard_core, which sits next to it in the plugin
-  # source root — so run it in place, sys.path[0] resolves the import.
-  mouthGuardDetector = pkgs.writeShellScriptBin "mouthguard-detector" ''
-    exec ${mouthGuardPython}/bin/python3 ${inputs.dms-plugins}/plugins/mouthguard/detector.py "$@"
-  '';
+  # That is now dms-plugins' own `packages.mouthguard-detector`, rather than a
+  # hand-assembled copy of its python environment. The copy existed because
+  # that flake builds from its own nixpkgs instance, which this config cannot
+  # add overlays to (same trap as niri, see ../niri/default.nix), and the dlib
+  # pin below had to reach the detector. Since the detector moved from dlib to
+  # MediaPipe Face Mesh on OpenVINO it needs no overlay — and it now carries
+  # things this config would otherwise have to reproduce exactly: the two
+  # pinned MediaPipe model files, and the NPU runtime (Intel's NPU graph
+  # compiler, which nixpkgs does not package, placed where OpenVINO looks for
+  # it). Duplicating that here would be the same trap in reverse.
+  mouthGuardDetector =
+    inputs.dms-plugins.packages.${pkgs.stdenv.hostPlatform.system}.mouthguard-detector;
 
   # ── dankMenu ──────────────────────────────────────────────────────────────
   # The menu tree, generated here rather than taken from the plugin's own
@@ -363,8 +356,10 @@ in
     # python3Packages.dlib: build-cores.patch no longer applies, and 20.0.1's
     # setup.py dropped the `--set` build flag the nix expression feeds it, so
     # the python binding fails to build on unstable. Pin the src back to 20.0 —
-    # what stable ships, and what the binary cache already has. Only mouthGuard
-    # pulls dlib in. Drop once nixpkgs fixes python3Packages.dlib.
+    # what stable ships, and what the binary cache already has. howdy is the
+    # only consumer left (its passthru.pythonDeps lists dlib); mouthGuard used
+    # to be the other one and no longer touches dlib at all. Drop once nixpkgs
+    # fixes python3Packages.dlib.
     nixpkgs.overlays = [
       (_final: prev: {
         dlib = prev.dlib.overrideAttrs (_: rec {
