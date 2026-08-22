@@ -152,6 +152,23 @@ If Wi-Fi is missing entirely, that is the Intel firmware gap — use the wired
 fallback and carry on. It will work on the installed system, which has
 `hardware.enableRedistributableFirmware = true`.
 
+### Enable flakes in the installer
+
+The NixOS ISO ships with `nix-command` and `flakes` **off**. Without this, the
+`nix run` in Part 6 and `nixos-install --flake` in Part 7 both fail with
+*"experimental Nix feature 'nix-command' is disabled"*.
+
+```sh
+export NIX_CONFIG="experimental-features = nix-command flakes"
+```
+
+This lives in the current shell only. Open another tty, or re-run `sudo -i`,
+and you have to set it again — which is what it looks like when a command that
+worked ten minutes ago suddenly doesn't.
+
+Per-command alternative, if you prefer:
+`nix --extra-experimental-features "nix-command flakes" run …`
+
 Confirm the disk is visible before going further:
 
 ```sh
@@ -275,6 +292,14 @@ Print the age recipient:
 ```sh
 nix run nixpkgs#ssh-to-age < /mnt/etc/ssh/ssh_host_ed25519_key.pub
 # age1... — write this down, you are about to walk it across the room
+```
+
+"experimental Nix feature 'nix-command' is disabled" means the `NIX_CONFIG`
+export from Part 3 is not set in this shell. Either set it, or use the old CLI,
+which needs no experimental features:
+
+```sh
+nix-shell -p ssh-to-age --run 'ssh-to-age < /mnt/etc/ssh/ssh_host_ed25519_key.pub'
 ```
 
 ### Now on `gamingpc`

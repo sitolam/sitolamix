@@ -503,6 +503,13 @@ evaluation.
 
 ### 5. Install
 
+The installer ISO ships with flakes disabled, so enable them for this shell
+first — this covers `nixos-install --flake` and any `nix run` in step 4:
+
+```sh
+export NIX_CONFIG="experimental-features = nix-command flakes"
+```
+
 ```sh
 nixos-install --flake /mnt/home/otis/sitolamix#myhost   # or #omnibook
 ```
