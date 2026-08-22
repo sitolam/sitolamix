@@ -25,6 +25,12 @@
     vaapiDriver = "intel-media-driver";
   };
 
+  # 5th-gen NPU (NPU4). ivpu kernel driver upstreamed in Linux 6.13 (zen here
+  # is 7.1.8), and pkgs.intel-npu-driver 1.35.0 has carried Panther Lake
+  # userspace/firmware support since 1.28.0 — nixpkgs just never enabled this
+  # module for us. /dev/accel/accel0 is the resulting device node.
+  hardware.cpu.intel.npu.enable = true;
+
   # Face unlock on the IR camera. Convenience, not a second factor — read the
   # security note at the top of modules/hardware/howdy.nix. The IR device node
   # is machine-specific; set `hardware.howdy.device` here once you have found
