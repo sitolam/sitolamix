@@ -197,7 +197,7 @@ flake/                 flake-parts modules (systems builder, devshell, formatter
 hosts/<name>/          per-host: default.nix (suite toggles) + hardware.nix
 modules/
   hm.nix               home-manager bridge — the `home.extraOptions` mechanism
-  system/              always-on baseline (base, nix, locale, users, boot, sops …)
+  system/              always-on baseline (base, nix, locale, users, boot, sops, openssh …)
   hardware/            audio / bluetooth / graphics baseline; nvidia gated
   desktop/             niri, dms, stylix, xdg (gated on the desktop suite)
   services/            kde-connect, docker, rclone … (gated)
@@ -323,10 +323,10 @@ tied to that one disk.
 host key**, converted to age. A new machine has a different key, so it is not a
 recipient and the build fails. You have to add it as one.
 
-There is an ordering trap: the host key normally doesn't exist until the system
-runs, but you need it *before* installing. And nothing in this config enables
-`services.openssh`, so nothing will ever generate one for you. Both problems go
-away if you just create the key yourself, in the installer:
+There is an ordering trap: the installed system generates its host key on first
+boot (`modules/system/openssh.nix`), but you need that key *before* installing,
+to add it as a recipient. It goes away if you create the key yourself, in the
+installer:
 
 ```sh
 mkdir -p /mnt/etc/ssh
@@ -334,9 +334,10 @@ ssh-keygen -t ed25519 -N "" -C "myhost" -f /mnt/etc/ssh/ssh_host_ed25519_key
 chmod 600 /mnt/etc/ssh/ssh_host_ed25519_key
 ```
 
-NixOS keeps an existing host key rather than replacing it, so this is the key
-the installed system will decrypt with. **Back it up** — lose it and the
-encrypted secrets are unrecoverable from that machine.
+NixOS preserves an existing host key rather than replacing it, so this is the
+key the installed system will decrypt with — sshd adopts it instead of making
+its own. **Back it up**: lose it and the encrypted secrets are unrecoverable
+from that machine.
 
 Now turn it into an age recipient:
 
@@ -488,8 +489,10 @@ itself in as git's credential helper, so `git push` just works afterwards.
 - `.sops.yaml` — the age recipients allowed to decrypt (creation rules).
 - `secrets/*.yaml` — the encrypted secret files.
 
-The decryption key is `/etc/ssh/ssh_host_ed25519_key`, converted to age. Get the
-matching **public** key (the recipient for `.sops.yaml`) with:
+The decryption key is `/etc/ssh/ssh_host_ed25519_key`, converted to age — which
+is why `modules/system/openssh.nix` is part of the always-on baseline rather
+than a suite: sshd is what creates and preserves that key. Get the matching
+**public** key (the recipient for `.sops.yaml`) with:
 
 ```sh
 nix run nixpkgs#ssh-to-age < /etc/ssh/ssh_host_ed25519_key.pub
