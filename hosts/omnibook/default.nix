@@ -43,6 +43,13 @@
   # that size is logical/unscaled, so it doesn't grow with output scale.
   stylix.cursor.size = 16;
 
+  # cloud mounts — the remotes themselves are created with `rclone config`
+  # (see README → Cloud mounts), only *which* ones to mount lives here.
+  services.rclone = {
+    enable = true;
+    remotes.gdrive_personal = { };
+  };
+
   # feature suites
   suites = {
     core.enable = true;
