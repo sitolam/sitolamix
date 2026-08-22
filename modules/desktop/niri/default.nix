@@ -58,6 +58,9 @@ in
     # tools for the region-screenshot / OCR / color-pick keybinds, plus:
     #  - python3: runs the niri_tile_to_n.py auto-tiler (see startup.nix)
     #  - niri-scratchpad: the Mod+M/Mod+S scratchpad binary (see bindings.nix)
+    #  - playerctl: XF86AudioPlay/Next/Prev binds (see bindings.nix). Nothing
+    #    else in this flake pulls it in — it was missing entirely until those
+    #    binds were caught silently no-op'ing (127, command not found).
     environment.systemPackages = with pkgs; [
       grim
       slurp
@@ -65,6 +68,7 @@ in
       tesseract
       hyprpicker
       python3
+      playerctl
       inputs.niri-scratchpad.packages.${pkgs.stdenv.hostPlatform.system}.default
     ];
 

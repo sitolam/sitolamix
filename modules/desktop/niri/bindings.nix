@@ -103,6 +103,15 @@
               "toggleQuery"
               ":e "
             ]);
+            # F2's icon on this keyboard: a plain literal F-key (confirmed via
+            # evtest as KEY_F2), not a dedicated media/XF86 key like F6-F11 —
+            # so it's Mod+F2 rather than bare F2, to avoid shadowing F2 in
+            # every app that binds it directly (rename, suspend-card, etc).
+            "Mod+F2" = spawn (dms [
+              "spotlight"
+              "toggleQuery"
+              ":e "
+            ]);
             # Mod+S / Mod+M are the scratchpad (see below); control-center and
             # processlist moved here (control-center is also the bar button).
             "Mod+Ctrl+S" = spawn (dms [
@@ -169,23 +178,36 @@
               "toggle"
             ]);
 
-            # media / volume
+            # media / volume — wpctl (wireplumber), not pactl: this system has
+            # no pulseaudio-utils installed at all, so every pactl invocation
+            # here silently failed (127, command not found) until caught live.
+            # wpctl ships with pipewire/wireplumber (audio.nix), so no new
+            # package is needed.
             "XF86AudioRaiseVolume" = spawn [
-              "pactl"
-              "set-sink-volume"
-              "@DEFAULT_SINK@"
-              "+5%"
+              "wpctl"
+              "set-volume"
+              "@DEFAULT_AUDIO_SINK@"
+              "5%+"
             ];
             "XF86AudioLowerVolume" = spawn [
-              "pactl"
-              "set-sink-volume"
-              "@DEFAULT_SINK@"
-              "-5%"
+              "wpctl"
+              "set-volume"
+              "@DEFAULT_AUDIO_SINK@"
+              "5%-"
             ];
             "XF86AudioMute" = spawn [
-              "pactl"
-              "set-sink-mute"
-              "@DEFAULT_SINK@"
+              "wpctl"
+              "set-mute"
+              "@DEFAULT_AUDIO_SINK@"
+              "toggle"
+            ];
+            # F9's icon on this keyboard (mic-mute) — raw scancode confirmed via
+            # evtest as KEY_MICMUTE, which xkeyboard-config's evdev "inet" rules
+            # map to this keysym.
+            "XF86AudioMicMute" = spawn [
+              "wpctl"
+              "set-mute"
+              "@DEFAULT_AUDIO_SOURCE@"
               "toggle"
             ];
             "XF86AudioPlay" = spawn [
@@ -241,6 +263,13 @@
             # window ops
             "Mod+Q" = noArg "close-window";
             "Mod+O" = {
+              repeat = false;
+              action.toggle-overview = [ ];
+            };
+            # F11's icon on this keyboard (blank/unlabeled) — raw scancode
+            # confirmed via evtest as KEY_PROG2 -> XF86Launch2. Free key, so it
+            # gets the same action as Mod+O.
+            "XF86Launch2" = {
               repeat = false;
               action.toggle-overview = [ ];
             };
