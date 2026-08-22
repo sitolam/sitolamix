@@ -122,6 +122,7 @@
               showBrightnessIcon = false;
               showBrightnessPercent = false;
               showMicIcon = false;
+              showBatteryIcon = true;
               showIdleInhibitorIcon = true; # show the keep-awake icon when active
             }
           ];
