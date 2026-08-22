@@ -86,7 +86,15 @@ in
     # Enrolled face models land here (the package's `user_models_dir` meson
     # option). Nothing in the upstream NixOS module creates the directory, so
     # `howdy add` on a fresh machine has nowhere to write.
-    systemd.tmpfiles.rules = [ "d /var/lib/howdy/models 0700 root root -" ];
+    #
+    # 0711, not 0700: `login`/`greetd`/`sudo` authenticate as root, so 0700
+    # would work for those, but DMS's lock screen runs the PAM check
+    # in-process as the logged-in user (no root elevation) — with 0700 it
+    # can't even open the directory, howdy fails instantly with no scan
+    # attempt, and every unlock silently falls through to the password
+    # prompt. 0711 allows traversal to a known filename (what pam_howdy
+    # needs) without directory listing; the .dat files land 0644 already.
+    systemd.tmpfiles.rules = [ "d /var/lib/howdy/models 0711 root root -" ];
 
     # v4l-utils: `v4l2-ctl --list-devices`, to find the IR node in the first
     # place. howdy itself is installed by its own module.
