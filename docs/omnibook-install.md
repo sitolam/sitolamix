@@ -320,11 +320,30 @@ creation_rules:
           - *omnibook
 ```
 
-`.sops.yaml` only governs *new* files, so re-encrypt the existing one and push:
+`.sops.yaml` only governs *new* files, so re-encrypt the existing one and push.
 
-```sh
+Two things to know before running it: `sops` searches only *user* key
+locations (`~/.ssh/`, `~/.config/sops/age/keys.txt`, and a handful of env
+vars), so it will **not** find the SSH **host** key this repo actually
+encrypts to — you get *"Failed to get the data key required to decrypt the
+SOPS file"*. And `/etc/ssh/ssh_host_ed25519_key` is root-only, so it has to be
+handed over deliberately. In fish:
+
+```fish
+sudo -v    # prime sudo, so it doesn't prompt from inside the substitution
+set -x SOPS_AGE_KEY (sudo cat /etc/ssh/ssh_host_ed25519_key | nix run nixpkgs#ssh-to-age -- -private-key)
+
+nix run nixpkgs#sops -- -d secrets/ha.yaml >/dev/null; and echo OK   # decrypts? writes nothing
+```
+
+Don't run `sops` under `sudo` instead — it works, but rewrites the file as
+root inside your checkout.
+
+```fish
 cd ~/sitolamix
 nix run nixpkgs#sops -- updatekeys secrets/ha.yaml
+set -e SOPS_AGE_KEY
+
 git commit -am "chore(sops): add omnibook as a recipient"
 git push
 ```
@@ -473,6 +492,7 @@ directory to remove them.
 | No `nvme0n1` in `lsblk` | Still in Intel RST mode — Part 2 |
 | Installer will not boot | Secure Boot still on — Part 2 |
 | Build fails on `sops` / `hass_token` | Part 6 skipped, or the `git pull` after it |
+| `updatekeys` says "Failed to get the data key" | `SOPS_AGE_KEY` not set — sops cannot see `/etc/ssh/ssh_host_ed25519_key` by itself |
 | Passphrase rejected on first boot, correct on the installer | Keyboard layout — the initrd prompt is US-QWERTY |
 | Hibernate writes then cold-boots | `boot.resumeDevice` unset. It is set in `hardware.nix`; check `cat /proc/cmdline` for `resume=/dev/vg0/swap` |
 | No Wi-Fi after install | `dmesg \| grep iwlwifi`; tether over USB in the meantime |

@@ -462,10 +462,28 @@ creation_rules:
 ```
 
 `.sops.yaml` only governs *new* files, so re-encrypt the existing one to the new
-recipient list and push:
+recipient list and push.
+
+Two things to know before running it: `sops` searches only *user* key
+locations (`~/.ssh/`, `~/.config/sops/age/keys.txt`, and a handful of env
+vars), so it will **not** find the SSH **host** key this repo actually
+encrypts to — you get *"Failed to get the data key required to decrypt the
+SOPS file"*. And `/etc/ssh/ssh_host_ed25519_key` is root-only, so it has to be
+handed over deliberately. In fish:
+
+```fish
+sudo -v    # prime sudo, so it doesn't prompt from inside the substitution
+set -x SOPS_AGE_KEY (sudo cat /etc/ssh/ssh_host_ed25519_key | nix run nixpkgs#ssh-to-age -- -private-key)
+
+nix run nixpkgs#sops -- -d secrets/ha.yaml >/dev/null; and echo OK   # decrypts? writes nothing
+```
+
+Don't run `sops` under `sudo` instead — it works, but rewrites the file as
+root inside your checkout.
 
 ```sh
 nix run nixpkgs#sops -- updatekeys secrets/ha.yaml
+set -e SOPS_AGE_KEY
 git commit -am "chore(sops): add myhost as a recipient"
 git push
 ```
@@ -624,7 +642,9 @@ config.sops.secrets.hass_token.path   # => /run/secrets/hass_token
 ```
 
 Adding another machine: add its age key to `.sops.yaml` and run
-`sops updatekeys secrets/ha.yaml`. To rotate a secret, edit it as above and
+`sops updatekeys secrets/ha.yaml` — with `SOPS_AGE_KEY` set from this machine's
+host key, as in the install section, since sops does not look at
+`/etc/ssh/` on its own. To rotate a secret, edit it as above and
 replace the value — the old ciphertext is overwritten.
 
 </details>
