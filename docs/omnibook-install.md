@@ -468,6 +468,18 @@ sudo howdy -U otis test        # opens a preview; check it is the IR one
 ls -l /dev/v4l/by-path/        # get the stable path
 ```
 
+> [!NOTE]
+> Plain `sudo howdy ... test` can fail with `Authorization required, but no
+> authorization protocol specified` / `Can't initialize GTK backend` — `sudo`
+> resets the environment, so the preview window's OpenCV/GTK backend loses
+> `WAYLAND_DISPLAY` and `XDG_RUNTIME_DIR`, falls back to X11, and hits
+> XWayland with no auth cookie (there's no `~/.Xauthority` under niri). Forward
+> them explicitly and force the Wayland backend instead:
+>
+> ```sh
+> sudo XDG_RUNTIME_DIR=/run/user/1000 WAYLAND_DISPLAY=$WAYLAND_DISPLAY GDK_BACKEND=wayland howdy -U otis test
+> ```
+
 ### 2. Point the config at it
 
 `/etc/howdy/config.ini` is a read-only symlink into the nix store, so
@@ -486,6 +498,10 @@ when another camera is plugged in, and a howdy pointed at the wrong node just
 fails every scan. Then `just rebuild`.
 
 ### 3. Enrol
+
+`add` and `list`/`remove` don't open a preview window, so they aren't
+affected by the sudo/GTK issue above — only `test` needs the env-var
+workaround.
 
 ```sh
 sudo howdy -U otis add        # repeat: glasses on, glasses off, dim room
