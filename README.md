@@ -241,6 +241,133 @@ It's a `deferredModule`, so every file's contribution merges into
 }
 ```
 
+## 💾 Install
+
+> [!WARNING]
+> This is a personal config, not a distro. It hardcodes the username **`otis`**
+> (21 references across 9 files — `grep -rn otis modules/`), and
+> `hosts/gamingpc/hardware.nix` describes one specific machine: NVMe, AMD CPU,
+> NVIDIA GPU. Installing it unchanged gives you *my* machine's assumptions.
+> Fork it, or at minimum give your machine its own host directory.
+
+### 1. Boot the installer
+
+Any recent [NixOS ISO](https://nixos.org/download/) (graphical or minimal).
+Get networking up — `nmtui` on the minimal image — and become root: `sudo -i`.
+
+### 2. Partition, and **label the partitions**
+
+The labels are the whole trick: `hardware.nix` mounts
+`/dev/disk/by-label/NIXROOT` rather than a UUID, so the same file works on any
+disk that uses these three names.
+
+| label | mount | filesystem |
+| --- | --- | --- |
+| `NIXBOOT` | `/boot` | fat32, ESP, ~1 GiB |
+| `NIXSWAP` | swap | swap, ~RAM-sized if you want hibernate |
+| `NIXROOT` | `/` | ext4, the rest |
+
+GParted works if you prefer clicking — just set those three labels. On the CLI,
+for a disk at `/dev/nvme0n1` (**this erases it**):
+
+```sh
+parted /dev/nvme0n1 -- mklabel gpt
+parted /dev/nvme0n1 -- mkpart ESP fat32 1MiB 1GiB
+parted /dev/nvme0n1 -- set 1 esp on
+parted /dev/nvme0n1 -- mkpart swap linux-swap 1GiB 17GiB
+parted /dev/nvme0n1 -- mkpart root ext4 17GiB 100%
+
+mkfs.fat -F32 -n NIXBOOT /dev/nvme0n1p1
+mkswap        -L NIXSWAP /dev/nvme0n1p2
+mkfs.ext4     -L NIXROOT /dev/nvme0n1p3
+```
+
+Mount them:
+
+```sh
+mount /dev/disk/by-label/NIXROOT /mnt
+mkdir -p /mnt/boot
+mount -o umask=077 /dev/disk/by-label/NIXBOOT /mnt/boot
+swapon /dev/disk/by-label/NIXSWAP
+```
+
+### 3. Give your machine a host
+
+```sh
+nix-shell -p git
+git clone https://github.com/sitolam/sitolamix /mnt/etc/nixos
+cd /mnt/etc/nixos
+
+mkdir -p hosts/myhost
+nixos-generate-config --root /mnt --show-hardware-config > hosts/myhost/hardware.nix
+cp hosts/gamingpc/default.nix hosts/myhost/default.nix
+```
+
+Then edit `hosts/myhost/default.nix`: set `networking.hostName = "myhost"`,
+drop `hardware.nvidia.enable` if you have no NVIDIA card, drop the `rclone`
+block, and turn off any suites you don't want. Hosts are auto-discovered, so
+creating the directory is all the registration there is.
+
+If you labelled your partitions as above, you can replace the generated
+`fileSystems` blocks in `hosts/myhost/hardware.nix` with the by-label ones from
+`hosts/gamingpc/hardware.nix` — the generated UUIDs work fine too, they're just
+tied to that one disk.
+
+### 4. Deal with secrets *before* installing
+
+`modules/system/sops.nix` decrypts `secrets/ha.yaml` using **this machine's SSH
+host key**. Your new machine's key is not a recipient, so the build will fail on
+a fresh install. Pick one:
+
+- **Drop it** (what most forks want): delete `modules/system/sops.nix` and
+  `secrets/`, then remove the `homeAssistantMonitor` plugin block and the
+  `haTokenPath` binding from `modules/desktop/dms/plugins.nix`. Both must go —
+  `plugins.nix` reads `config.sops.secrets.hass_token.path`, so removing only
+  the module breaks evaluation.
+- **Re-key it** with your own secrets: see [Secrets (sops)](#-secrets-sops)
+  below, and replace `secrets/ha.yaml` with your own encrypted file.
+
+### 5. Install
+
+```sh
+nixos-install --flake /mnt/etc/nixos#myhost
+```
+
+This builds the whole system, so expect a long first run and a lot of
+downloading. Set a password for the user before rebooting, or greetd will have
+nothing to let you in with:
+
+```sh
+nixos-enter --root /mnt -c 'passwd otis'
+reboot
+```
+
+### 6. After first boot
+
+```sh
+gh auth login              # so `git push` works — see GitHub auth below
+rclone config              # only if you kept services.rclone
+```
+
+Move the checkout somewhere you own (`~/sitolamix` is what the dankMenu
+`Update ▸ Rebuild` rows assume — see `flakeDir` in
+`modules/desktop/dms/plugins.nix`), then `just rebuild` from there onwards.
+Monitors are configured in DMS's settings UI, not in the flake.
+
+### Just trying it out?
+
+You don't have to install anything to look at it. Build the system closure on
+any NixOS machine:
+
+```sh
+nix build github:sitolam/sitolamix#nixosConfigurations.gamingpc.config.system.build.toplevel
+```
+
+Or cherry-pick: the modules are self-contained enough that copying
+`modules/desktop/dms/` or a single `modules/apps/*.nix` into your own config
+usually works with only the `home.extraOptions` bridge (`modules/hm.nix`) to
+port along with it.
+
 ## 🔧 Rebuild
 
 ```sh
