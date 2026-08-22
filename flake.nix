@@ -121,6 +121,54 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # ── Claude Code plugins ───────────────────────────────────────────────
+    # modules/apps/claude-code.nix wires these into ~/.claude/plugins itself
+    # rather than letting Claude clone and self-update them, so the plugin set
+    # is pinned by flake.lock like everything else. All flake=false: they are
+    # plugin/marketplace trees, not flakes. Bump with `nix flake update <name>`.
+    #
+    # Marketplaces — each holds a .claude-plugin/marketplace.json listing the
+    # plugins it offers and where in the tree each one lives.
+    claude-marketplace-official = {
+      url = "github:anthropics/claude-plugins-official";
+      flake = false;
+    };
+
+    claude-marketplace-caveman = {
+      url = "github:JuliusBrussee/caveman";
+      flake = false;
+    };
+
+    claude-marketplace-skills = {
+      url = "github:alirezarezvani/claude-skills";
+      flake = false;
+    };
+
+    claude-marketplace-flutter = {
+      url = "github:cleydson/flutter-claude-code";
+      flake = false;
+    };
+
+    claude-marketplace-ui-ux = {
+      url = "github:nextlevelbuilder/ui-ux-pro-max-skill";
+      flake = false;
+    };
+
+    # Two plugins the official marketplace only *points* at: their manifest
+    # entries are `{"source":"url", ...}` rows naming another repo, so the
+    # marketplace tree above does not contain them and they need their own
+    # pins. Upstream pins a sha in marketplace.json; flake.lock is ours, so
+    # these track the repos' default branches instead.
+    claude-plugin-superpowers = {
+      url = "github:obra/superpowers";
+      flake = false;
+    };
+
+    claude-plugin-figma = {
+      url = "github:figma/mcp-server-guide";
+      flake = false;
+    };
+
     sops-nix = {
       url = "github:Mic92/sops-nix";
       inputs.nixpkgs.follows = "nixpkgs";

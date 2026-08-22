@@ -88,6 +88,118 @@
         "type": "github"
       }
     },
+    "claude-marketplace-caveman": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1787282775,
+        "narHash": "sha256-FagkzOnjW9tqeaAK8NX1X8REsjWRRMqfrvhByEtrAXM=",
+        "owner": "JuliusBrussee",
+        "repo": "caveman",
+        "rev": "2f49f0e1a352aa810e70056b7930aeb0b3d219b4",
+        "type": "github"
+      },
+      "original": {
+        "owner": "JuliusBrussee",
+        "repo": "caveman",
+        "type": "github"
+      }
+    },
+    "claude-marketplace-flutter": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1772606430,
+        "narHash": "sha256-4D4+vR/nb0oWn+H58NYqbKo4cd0Uiai58o0S5uEjVaI=",
+        "owner": "cleydson",
+        "repo": "flutter-claude-code",
+        "rev": "4319e00c25bb555b9e542d8dd0659c427f097aa2",
+        "type": "github"
+      },
+      "original": {
+        "owner": "cleydson",
+        "repo": "flutter-claude-code",
+        "type": "github"
+      }
+    },
+    "claude-marketplace-official": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1787330694,
+        "narHash": "sha256-ZsVsr20c6dWNmBJdBZBNjF4DOvDrMqyrUyJjBOH5DJk=",
+        "owner": "anthropics",
+        "repo": "claude-plugins-official",
+        "rev": "340e33aef211d95769d252324854497af871dafe",
+        "type": "github"
+      },
+      "original": {
+        "owner": "anthropics",
+        "repo": "claude-plugins-official",
+        "type": "github"
+      }
+    },
+    "claude-marketplace-skills": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1787289787,
+        "narHash": "sha256-f7AONGu+GVKIHN4h/WaXITiKCqbzDJcTmEe0xjOuGa4=",
+        "owner": "alirezarezvani",
+        "repo": "claude-skills",
+        "rev": "98180dafc4f0bc9d629bd479fc6107674cfb3cf8",
+        "type": "github"
+      },
+      "original": {
+        "owner": "alirezarezvani",
+        "repo": "claude-skills",
+        "type": "github"
+      }
+    },
+    "claude-marketplace-ui-ux": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1787226546,
+        "narHash": "sha256-IJViR89dcLOBHj2iAVVcI0elb0T96CqACv/8UU5mK8w=",
+        "owner": "nextlevelbuilder",
+        "repo": "ui-ux-pro-max-skill",
+        "rev": "bc826e2267a36d98a2dcf5231e16c30ff546770f",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nextlevelbuilder",
+        "repo": "ui-ux-pro-max-skill",
+        "type": "github"
+      }
+    },
+    "claude-plugin-figma": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1787233503,
+        "narHash": "sha256-uSDR8pjwnFMSMUKY/HWHWhbbWuZ4buWss86Gq5GOYqk=",
+        "owner": "figma",
+        "repo": "mcp-server-guide",
+        "rev": "7f6562c4900fafb46e5e8fd3cc8ced954779bab3",
+        "type": "github"
+      },
+      "original": {
+        "owner": "figma",
+        "repo": "mcp-server-guide",
+        "type": "github"
+      }
+    },
+    "claude-plugin-superpowers": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1786553601,
+        "narHash": "sha256-EsGNO0dULWf5Bx6bGrCv2kI2Z8aKH0kRvGiuN23wChQ=",
+        "owner": "obra",
+        "repo": "superpowers",
+        "rev": "b36e0829c6d0140e93cfef2ca599b1b07d4a7797",
+        "type": "github"
+      },
+      "original": {
+        "owner": "obra",
+        "repo": "superpowers",
+        "type": "github"
+      }
+    },
     "dank-greeter": {
       "inputs": {
         "dank-qml-common": "dank-qml-common",
@@ -690,6 +802,13 @@
     "root": {
       "inputs": {
         "claude-desktop": "claude-desktop",
+        "claude-marketplace-caveman": "claude-marketplace-caveman",
+        "claude-marketplace-flutter": "claude-marketplace-flutter",
+        "claude-marketplace-official": "claude-marketplace-official",
+        "claude-marketplace-skills": "claude-marketplace-skills",
+        "claude-marketplace-ui-ux": "claude-marketplace-ui-ux",
+        "claude-plugin-figma": "claude-plugin-figma",
+        "claude-plugin-superpowers": "claude-plugin-superpowers",
         "dank-greeter": "dank-greeter",
         "dms": "dms",
         "dms-plugin-registry": "dms-plugin-registry",

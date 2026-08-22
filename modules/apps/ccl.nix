@@ -6,6 +6,10 @@ in
   options.apps.ccl.enable = lib.mkEnableOption "ccl (launch Claude Code against an LM Studio model)";
 
   config = lib.mkIf cfg.enable {
+    # ccl execs `ccr code`, which in turn launches claude — and the plugin set
+    # that module pins is the one those sessions get too.
+    apps.claude-code.enable = true;
+
     home.extraOptions =
       { pkgs, ... }:
       let
@@ -32,9 +36,8 @@ in
       {
         home.packages = [
           ccl
-          # ccl execs `ccr code`, which in turn launches claude. Both must be on PATH
-          # for the user too, so `ccr`/`claude` remain usable on their own.
-          pkgs.claude-code
+          # ccr must be on PATH for the user too, so it stays usable on its own;
+          # `claude` itself comes from apps.claude-code.
           pkgs.claude-code-router
         ];
       };
