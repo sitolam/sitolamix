@@ -39,6 +39,7 @@ in
           kdePackages.kdenlive
           mpv
           vlc
+          fladder # Jellyfin client
           loupe
           obs-studio
           noisetorch
