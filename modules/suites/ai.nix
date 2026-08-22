@@ -3,12 +3,17 @@ let
   cfg = config.suites.ai;
 in
 {
-  options.suites.ai.enable = lib.mkEnableOption "AI apps (LM Studio, ccl, Claude Desktop)";
+  options.suites.ai.enable = lib.mkEnableOption "AI apps (LM Studio, ccl, cco/OmniRoute, Claude Desktop)";
 
   config = lib.mkIf cfg.enable {
     # ccl launches Claude Code against a model LM Studio is serving; it is useless
     # without LM Studio, so it ships with this suite rather than with development.
     apps.ccl.enable = true;
+
+    # cco is the same idea against OmniRoute instead of LM Studio: a gateway in
+    # front of ~350 providers rather than one local model. It pulls in
+    # services.omniroute itself, which is the container the gateway runs in.
+    apps.cco.enable = true;
 
     # GUI for the same Claude Code engine as the `claude` CLI (plus Chat/Cowork).
     apps.claude-desktop.enable = true;
