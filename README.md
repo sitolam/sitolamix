@@ -84,7 +84,7 @@ Things this config does that a stock desktop does not:
 
 | Shell | |
 |---|---|
-| `Mod+Space` | dankMenu — root menu, drill in with `Enter`, out with `Esc`, type to search everything below |
+| `Mod+Space` | dankMenu — root menu; `Enter`/`Esc` in and out, `Ctrl+HJKL` for vim navigation, type to search everything below |
 | `Mod+D` | dashboard / dank dash |
 | `Mod+V` · `Mod+P` · `Mod+N` | clipboard · notepad · notifications |
 | `Mod+Ctrl+S` · `Mod+Ctrl+M` | control center · process list |
