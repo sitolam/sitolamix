@@ -66,13 +66,28 @@ in
     services.howdy = {
       enable = true;
       inherit (cfg) control;
-      settings.video.device_path = cfg.device;
+      settings.video = {
+        device_path = cfg.device;
+        # PAM runs auth modules one at a time, in stack order, synchronously —
+        # howdy is listed before pam_unix (see below), so the password prompt
+        # can't even appear until howdy's scan call returns. Default is 4s;
+        # trimmed to cut how long typing a password is blocked on a scan that
+        # isn't going to match anyway. DMS races fingerprint against password
+        # as an independent, concurrent PAM context (Modules/Lock/Pam.qml,
+        # `fprint`/`passwd` both `start()`, first one to `Success` wins and
+        # aborts the other) — howdy has no such slot, it's just wired into
+        # the same sequential stack as the password. Filed upstream:
+        # https://github.com/AvengeMedia/DankMaterialShell/issues/3146
+        # requesting a concurrent context like fprint's.
+        timeout = 2;
+      };
     };
 
     # Off globally, on for exactly three services. `login` is the one the DMS
-    # lock screen authenticates against (DMS has no pam service of its own — see
-    # the comment in dms/distro/nix/greeter.nix), `greetd` is the dms-greeter
-    # login screen, `sudo` is sudo.
+    # lock screen authenticates against — DMS actually mirrors this into a
+    # user-local `dankshell` PAM service at first lock (`dms auth
+    # resolve-lock`, see Modules/Lock/Pam.qml), not a static PAM file of its
+    # own — `greetd` is the dms-greeter login screen, `sudo` is sudo.
     security.pam.howdy.enable = false;
     security.pam.services = lib.genAttrs [ "login" "greetd" "sudo" ] (_: {
       howdy.enable = true;
