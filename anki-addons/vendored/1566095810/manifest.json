@@ -1,0 +1,12 @@
+{
+    "name": "Multiple Choice",
+    "package": "1566095810",
+    "ankiweb_id": "1566095810",
+    "author": "zjosua",
+    "version": "v2.10.3",
+    "homepage": "https://github.com/zjosua/anki-mc",
+    "conflicts": [
+        "multiple_choice"
+    ],
+    "mod": 1700252716
+}

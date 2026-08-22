@@ -1,0 +1,46 @@
+{
+  "achievement": true,
+  "add_pic_country_and_league": true,
+  "allways_on_top": false,
+  "autosync": true,
+  "board_position": [
+    0,
+    0
+  ],
+  "board_size": [
+    1412,
+    515
+  ],
+  "country": "Belgium",
+  "current_group": null,
+  "discord_button": true,
+  "focus_on_user": true,
+  "friends": [
+    "sitolam"
+  ],
+  "gamification_mode": true,
+  "groups": [],
+  "hidden_users": [],
+  "hide_all_users_name": false,
+  "homescreen": true,
+  "import_error": true,
+  "is_online_dot": true,
+  "maxUsers": 5,
+  "mini_mode": false,
+  "newday": 4,
+  "notification_id": null,
+  "rate_and_donation_buttons": true,
+  "scroll": true,
+  "set_font_family": null,
+  "shige_chang_log_day": "2025-11-06a",
+  "show_home_buttons": true,
+  "show_medals": true,
+  "show_your_name": false,
+  "size_multiplier": 1.2,
+  "sortby": "Cards",
+  "start_yesterday": true,
+  "sync_multiple_device": false,
+  "tab": 0,
+  "username": "sitolam",
+  "zoom_enable": true
+}

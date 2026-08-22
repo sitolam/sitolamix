@@ -1,0 +1,7 @@
+{
+    "name": "Progress bar(Fork for 23)",
+    "package": "Progress bar(Fork for 23)",
+    "author": "Shigeyuki",
+    "homepage": "https://www.patreon.com/Shigeyuki",
+    "conflicts":["715575551"]
+}

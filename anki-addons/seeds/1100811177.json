@@ -1,0 +1,19 @@
+{
+  "centerfragments": true,
+  "deckdefaultlang": {},
+  "defaultlang": "Dart",
+  "defaultlangperdeck": false,
+  "favorites": [
+    "Rust",
+    "Python",
+    "Dart"
+  ],
+  "font": "",
+  "hotkey": "Alt+s",
+  "linenos": false,
+  "one_time_info_for_50_54_shown": false,
+  "remove leading spaces if possible": true,
+  "show pre/code": false,
+  "style": "dracula",
+  "style_nm": "dracula"
+}

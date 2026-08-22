@@ -1,0 +1,43 @@
+{
+  "Browser_Enabled": true,
+  "Congrats_Enabled": true,
+  "Excluded_Deck_IDs": [
+    1
+  ],
+  "Include_Deleted_Reviews": true,
+  "Overview_Enabled": true,
+  "Use_Decimal_Format": true,
+  "Use_Rollover_Hour": true,
+  "Use_Toolbar_Options": true,
+  "cellsData": [
+    {
+      "days": 7,
+      "direction": "vertical",
+      "hrsUnit": "hrs",
+      "html": "<div class=\"{{CellClass}}\">\n    <div style=\"color: {{TitleColor}};\">{{Title}}</div>\n    <div style=\"color: {{OutputColor}}; font-weight: bold;\">{{Output}}</div>\n</div>\n",
+      "minUnit": "min",
+      "output": "%range_hrs",
+      "outputColor": "#76bfb4",
+      "range": -1,
+      "title": "Total",
+      "titleColor": "#FFFFFF",
+      "useCalendar": true,
+      "weekStart": 0
+    },
+    {
+      "days": 7,
+      "direction": "vertical",
+      "hrsUnit": "hrs",
+      "html": "<div class=\"{{CellClass}}\">\n    <div style=\"color: {{TitleColor}};\">{{Title}}</div>\n    <div style=\"color: {{OutputColor}}; font-weight: bold;\">{{Output}}</div>\n</div>\n",
+      "minUnit": "min",
+      "output": "%range_hrs",
+      "outputColor": "#76bfb4",
+      "range": 0,
+      "title": "Past %range",
+      "titleColor": "#FFFFFF",
+      "useCalendar": true,
+      "weekStart": 1
+    }
+  ],
+  "version": "2.1.4"
+}

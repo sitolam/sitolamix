@@ -1,0 +1,8 @@
+{
+  "TinyMCE6-toolbar1": "undo redo fontfamily blocks alignleft aligncenter alignright alignjustify link unlink charmap cleanup nextCloze sameCloze code codesample",
+  "TinyMCE6-toolbar2": "bold italic underline strikethrough superscript subscript forecolor backcolor removeformat hr blockquote numlist bullist anchor outdent indent table ltr rtl",
+  "auto_reset_number": 2,
+  "font": "Times New Roman",
+  "fontSize": "20",
+  "shortcut to open default dialog": "Ctrl+0"
+}

@@ -1,0 +1,181 @@
+{
+  "2026-05-04": {
+    "sessions": [
+      {
+        "minutes": 200.0
+      }
+    ],
+    "attempted": 200.0
+  },
+  "2026-05-05": {
+    "sessions": [
+      {
+        "minutes": 120.0,
+        "start": "17:30",
+        "end": "19:30"
+      },
+      {
+        "minutes": 113.2,
+        "start": "20:15",
+        "end": "22:08"
+      },
+      {
+        "minutes": 36.7,
+        "start": "23:42",
+        "end": "00:18"
+      }
+    ],
+    "attempted": 269.9
+  },
+  "2026-05-06": {
+    "sessions": [
+      {
+        "minutes": 7.4,
+        "auto": true
+      },
+      {
+        "start": "15:19",
+        "end": "17:39",
+        "minutes": 140.8
+      },
+      {
+        "start": "23:44",
+        "end": "00:03",
+        "minutes": 19.6
+      }
+    ],
+    "attempted": 167.8
+  },
+  "2026-05-07": {
+    "sessions": [
+      {
+        "minutes": 2.2,
+        "auto": true
+      },
+      {
+        "start": "23:15",
+        "end": "23:51",
+        "minutes": 36.0
+      }
+    ],
+    "attempted": 38.2
+  },
+  "2026-05-08": {
+    "sessions": [
+      {
+        "minutes": 23.0
+      }
+    ],
+    "attempted": 23.0
+  },
+  "2026-05-09": {
+    "sessions": [
+      {
+        "start": "14:49",
+        "end": "15:38",
+        "minutes": 49.3
+      },
+      {
+        "start": "20:29",
+        "end": "21:02",
+        "minutes": 33.5
+      },
+      {
+        "start": "21:02",
+        "end": "21:26",
+        "minutes": 24.3
+      }
+    ],
+    "attempted": 107.1
+  },
+  "2026-05-10": {
+    "sessions": [
+      {
+        "minutes": 4.4,
+        "auto": true
+      },
+      {
+        "start": "12:07",
+        "end": "12:48",
+        "minutes": 41.8
+      },
+      {
+        "start": "14:20",
+        "end": "16:02",
+        "minutes": 102.8
+      }
+    ],
+    "attempted": 149.0
+  },
+  "2026-05-14": {
+    "sessions": [
+      {
+        "start": "16:18",
+        "end": "18:28",
+        "minutes": 130.3
+      }
+    ],
+    "attempted": 130.3
+  },
+  "2026-05-16": {
+    "sessions": [
+      {
+        "minutes": 5.1,
+        "auto": true
+      },
+      {
+        "start": "00:13",
+        "end": "00:37",
+        "minutes": 24.1
+      }
+    ],
+    "attempted": 29.200000000000003
+  },
+  "2026-05-17": {
+    "sessions": [
+      {
+        "minutes": 8.3,
+        "auto": true
+      },
+      {
+        "start": "12:05",
+        "end": "13:00",
+        "minutes": 55
+      },
+      {
+        "start": "22:48",
+        "end": "23:50",
+        "minutes": 62.6
+      }
+    ],
+    "attempted": 125.9
+  },
+  "2026-05-19": {
+    "sessions": [
+      {
+        "minutes": 39.1,
+        "auto": true
+      },
+      {
+        "start": "23:06",
+        "end": "23:39",
+        "minutes": 33.5
+      }
+    ],
+    "attempted": 72.6
+  },
+  "2026-05-21": {
+    "sessions": [
+      {
+        "minutes": 3.7,
+        "auto": true
+      },
+      {
+        "start": "23:01",
+        "end": "23:42",
+        "minutes": 41.8
+      }
+    ],
+    "attempted": 45.5
+  }
+}

@@ -1,0 +1,22 @@
+{
+    "shortcut to open default dialog": "Ctrl+0",
+    "dialog shortcut: addCloze": "F8",
+    "dialog shortcut: codeEditor": "Ctrl+Shift+X",
+    "dialog shortcut: indent": "Ctrl+M",
+    "dialog shortcut: insertOrderedList": "F10",
+    "dialog shortcut: insertUnorderedList": "F9",
+    "dialog shortcut: lowerCase": "Ctrl+Alt+L",
+    "dialog shortcut: nextCloze": "F7",
+    "dialog shortcut: outdent": "Ctrl+Alt+M",
+    "dialog shortcut: removeFormat": "Ctrl+r",
+    "dialog shortcut: special character": "Ctrl+E",
+    "dialog shortcut: subscript": "Ctrl+187",
+    "dialog shortcut: superscript": "Ctrl+107",
+    "dialog shortcut: upperCase": "Ctrl+Alt+U",
+    "font": "Times New Roman",
+    "fontSize": "20",
+    "left-to-right_by_default": true,
+    "use Anki's built-in html processing": true,
+    "TinyMCE6-toolbar1": "undo redo fontfamily blocks alignleft aligncenter alignright alignjustify link unlink charmap cleanup nextCloze sameCloze code codesample",
+    "TinyMCE6-toolbar2": "bold italic underline strikethrough superscript subscript forecolor backcolor removeformat hr blockquote numlist bullist anchor outdent indent table ltr rtl"
+}

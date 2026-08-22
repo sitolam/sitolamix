@@ -1,0 +1,288 @@
+<script>
+var myfontsize = "%(FONTSIZE)s";
+
+tinymce.init({
+skin: "%(SKIN)s",
+theme: "%(THEME)s",
+
+selector: '.tinymce6_wysiwyg',
+// https://www.tiny.cloud/docs/tinymce/6/editor-important-options/#auto_focus
+// set to editor instance id which is id for the original div element that got replaced.
+auto_focus: 'tinymce6_wysiwyg_unique',
+document_base_url: '../../../../../../',
+body_class: 'bodyclass',
+content_css: [
+    %(CONTENTCSS)s
+    '../../../../../../_editor_button_styles.css',
+    '../../../../../../_editor.css',
+    '../../../../../../_tinymce_custom.css'
+],
+// use <b> for bold instead of strong etc.
+formats: {
+    bold : {inline : 'b' },  
+    italic : {inline : 'i' },
+    underline : {inline : 'u'}
+    },
+// forced_root_block has been deprecated in 2021-10 for 6.0, https://github.com/tinymce/tinymce/issues/7297
+// also see https://web.archive.org/web/20230620080219/https://github.com/tinymce/tinymce/discussions/7342#discussioncomment-3500195
+force_br_newlines: false,
+// force_p_newlines: false,  // removed in 6.0
+convert_newlines_to_brs: false,
+forced_root_block: 'div',
+extended_valid_elements: 'u,b,i',
+directionality : "%(DIRECTIONALITY)s",
+
+plugins: [  // here all bundled with 6.4
+    "advlist",  // Advanced List plugin: adds CSS list-style-type styled number formats and bullet types to the controls. https://www.tiny.cloud/docs/tinymce/6/advlist/
+    "anchor",  // button to the toolbar that inserts an anchor at the editor’s cursor insertion point. It also adds the menu item anchor under the Insert menu. https://www.tiny.cloud/docs/tinymce/6/anchor/
+    "autolink",  // format links as hyperlinks
+    "autoresize",  //
+    // "autosave",  //
+    "charmap",  // select unicode characters from window
+    "code",  // view source code
+    "codesample",  // wrap with <code> https://www.tiny.cloud/docs/tinymce/6/codesample/
+    "directionality",  // https://www.tiny.cloud/docs/tinymce/6/directionality/
+    "emoticons",  // insert emojis https://www.tiny.cloud/docs/tinymce/6/emoticons/
+    "fullscreen",  // maximize tinymce to window https://www.tiny.cloud/docs/tinymce/6/fullscreen/
+    "help",  // show help menu
+    // "image",  //
+    // "importcss",  //
+    "insertdatetime",  // https://www.tiny.cloud/docs/tinymce/6/insertdatetime/
+    "link",  // add hyperlinks
+    "lists",  // add numbered and bulleted lists
+    "media",  // add HTML5 video and audio elements to editable area
+    "nonbreaking",  // adds button to insert nbsp; https://www.tiny.cloud/docs/tinymce/6/nonbreaking/
+    // "pagebreak",  // allows to insert pagebreak, https://www.tiny.cloud/docs/tinymce/6/pagebreak/
+    // "preview",  //
+    // "quickbars",  // context menu bars https://www.tiny.cloud/docs/tinymce/6/quickbars/#
+    // "save",  //
+    "searchreplace",  // search/replace dialogs 
+    "table",  // table management functionality
+    // "template",  //
+    "visualblocks",  // see block level elements in the editable area - show hidden info
+    "visualchars",  // see invisible characters like &nbsp;
+    "wordcount",  //
+    // toc in 6.x it's a premium plugin https://www.tiny.cloud/docs/plugins/opensource/toc/
+],
+table_class_list: [
+    {title: 'None', value: ''},
+    {title: 'one', value: 'one'},
+    {title: 'two', value: 'two'}
+    ],
+
+statusbar: false,
+// hide upgrade button in menu https://www.tiny.cloud/docs/tinymce/6/editor-premium-upgrade-promotion/#premium-upgrade-promotion-option
+promotion: false,
+// https://www.tiny.cloud/docs/tinymce/6/menus-configuration-options/#example-the-tinymce-default-menu-items
+menubar : 'edit view insert format tools table help',
+// https://www.tiny.cloud/docs/tinymce/6/menus-configuration-options/#removed_menuitems
+removed_menuitems: 'file codeformat print image templates media fullscreen',
+
+// https://www.tiny.cloud/docs/tinymce/6/toolbar-configuration-options/
+// https://www.tiny.cloud/docs/tinymce/6/migration-from-5x/#things-we-renamed
+// since 6.4 there's fontsizeinput (but I don't want to set the font size in px)
+// image
+toolbar1: '%(TOOLBAR1)s',
+// hiliteYellow hiliteGreen hiliteBlue hiliteRed -- it's easiert to use CustomStyles.
+toolbar2: '%(TOOLBAR2)s',
+
+// the following doesn't adjust the default font size, it's still 20px which I set
+// below with editor.on this.getDoc().body.style.fontSize ... and setting
+// the body.style.fontSize to 1em works but then the font in the editor is too small ...
+// also see https://stackoverflow.com/questions/60676490/tinymce-v5-set-font-selector-default-size from 2020-05
+// https://www.tiny.cloud/blog/custom-font-sizes-in-tinymce/
+// fontsize_formats: "0.7em 0.8em 0.9em 1em 1.2em 1.5em 1.9em 2.4em", // "8pt 10pt 12pt 14pt 18pt 24pt 36pt"
+
+contextmenu: "link inserttable | cell row column deletetable",
+
+//https://www.tiny.cloud/docs/advanced/editor-command-identifiers/
+setup: function(editor) {
+    //https://stackoverflow.com/a/18970473
+    editor.on('init', function() 
+    {
+        this.getDoc().body.style.fontSize = `${myfontsize.toString()}px`; //'23px';
+        this.getDoc().body.style.fontFamily = '%(FONTNAME)s';
+        %(CUSTOMBGCOLOR)s
+        editor.execCommand('mceFullScreen');        //maximize,  https://stackoverflow.com/a/22959296
+    });
+
+
+    %(HILITERS)s  // not used
+
+
+    editor.addCommand('nextCloze', function() {
+        let selected_text = editor.selection.getContent({ format: 'html' });
+        let content = editor.getContent();
+        let return_text = newClozeText(content,selected_text,false);
+        editor.execCommand('mceInsertContent', 0, return_text);
+    });
+    editor.addShortcut('ctrl+shift+c', 'nextCloze', 'nextCloze'); 
+    editor.ui.registry.addButton('nextCloze', {
+            text: 'Cln',
+            tooltip: 'nextCloze' + '(' + 'ctrl+shift+c' + ')',
+            onAction: () => {editor.execCommand('nextCloze');}
+    });
+
+
+    editor.addCommand('sameCloze', function() {
+        let selected_text = editor.selection.getContent({ format: 'html' });
+        let content = editor.getContent();
+        let return_text = newClozeText(content,selected_text,true);
+        editor.execCommand('mceInsertContent', 0, return_text);
+    });
+    editor.addShortcut('ctrl+alt+shift+c', 'addCloze', 'sameCloze');
+    editor.ui.registry.addButton('sameCloze', {
+            text: 'Cls',
+            tooltip: 'sameCloze' + '(' + 'ctrl+alt+shift+c' + ')',
+            onAction: () => {editor.execCommand('sameCloze');}
+    });
+
+    
+    editor.addShortcut("%(SCUT-Superscript)s", 'Superscript', 'Superscript');
+    editor.addShortcut("%(SCUT-Subscript)s", 'Subscript', 'Subscript');
+    editor.addShortcut("%(SCUT-RemoveFormat)s", 'RemoveFormat', 'RemoveFormat');
+    editor.addShortcut("%(SCUT-CodeEditor)s", 'mceCodeEditor', 'mceCodeEditor');
+
+    editor.addShortcut("%(SCUT-indent)s", 'indent', 'Indent');                       
+    editor.addShortcut("%(SCUT-outdent)s", 'outdent', 'Outdent');               
+
+    editor.addShortcut("%(SCUT-nextCloze)s", "nextCloze", "nextCloze");  // nextCloze defined above
+    editor.addShortcut("%(SCUT-addCloze)s", "addCloze", "sameCloze");  // sameCloze defined above
+    editor.addShortcut("%(SCUT-InsertUnorderedList)s", "InsertUnorderedList", "InsertUnorderedList");
+    editor.addShortcut("%(SCUT-InsertOrderedList)s", "InsertOrderedList", "InsertOrderedList");
+    
+    editor.addShortcut("%(SCUT-SpecialCharacter)s", "Special character", function() {editor.execCommand("mceShowCharmap");});
+    editor.addShortcut("Alt+39", "Insert → (Alt+ArrowRight)", function () {editor.execCommand("mceInsertContent", 0, "→");});
+    editor.addShortcut("Shift+Alt+39", "Insert ⇒ (Shift+Alt+ArrowRight)", function () {editor.execCommand("mceInsertContent", 0, "⇒");});
+    editor.addShortcut("Ctrl+Alt+39", "Insert ↔ (Ctrl+Alt+ArrowRight)", function () {editor.execCommand("mceInsertContent", 0, "↔");});
+    editor.addShortcut("Ctrl+Shift+Alt+39", "Insert ⇔ (Ctrl+Shift+Alt+ArrowRight)", function () {editor.execCommand("mceInsertContent", 0, "⇔");});
+    editor.addShortcut("Alt+37", "Insert ← (Alt+ArrowLeft)", function () {editor.execCommand("mceInsertContent", 0, "←");});
+    editor.addShortcut("Shift+Alt+37", "Insert ⇐ (Shift+Alt+ArrowLeft)", function () {editor.execCommand("mceInsertContent", 0, "⇐");});
+    editor.addShortcut("Alt+38", "Insert ↑ (Alt+ArrowUp)", function () {editor.execCommand("mceInsertContent", 0, "↑");});
+    editor.addShortcut("Shift+Alt+38", "Insert ⇑ (Shift+Alt+ArrowUp)", function () {editor.execCommand("mceInsertContent", 0, "⇑");});
+    editor.addShortcut("Alt+40", "Insert ↓ (Alt+ArrowDown)", function () {editor.execCommand("mceInsertContent", 0, "↓");});
+    editor.addShortcut("Shift+Alt+40", "Insert ⇓ (Shift+Alt+ArrowDown)", function () {editor.execCommand("mceInsertContent", 0, "⇓");});
+    editor.addShortcut("Alt+A", "Insert α (Alt+A)", function () {editor.execCommand("mceInsertContent", 0, "α");});
+    editor.addShortcut("Alt+B", "Insert β (Alt+B)", function () {editor.execCommand("mceInsertContent", 0, "β");});
+    editor.addShortcut("Alt+G", "Insert γ (Alt+G)", function () {editor.execCommand("mceInsertContent", 0, "γ");});
+    editor.addShortcut("Alt+D", "Insert δ (Alt+D)", function () {editor.execCommand("mceInsertContent", 0, "δ");});
+    editor.addShortcut("%(SCUT-upperCase)s", "Upper case (%(SCUT-upperCase)s)", function () {editor.execCommand("mceInsertRawHTML", 0, editor.selection.getContent({ format: "html" }).toUpperCase());});
+    editor.addShortcut("%(SCUT-lowerCase)s", "Lower case (%(SCUT-lowerCase)s)", function () {editor.execCommand("mceInsertRawHTML", 0, editor.selection.getContent({ format: "html" }).toLowerCase());});
+
+
+/* unused: for incremental reading
+    var myexQ;
+    var myexA;
+    editor.addCommand('extractAsQuestion', function() {
+        myexQ = editor.selection.getContent({ format: 'html' });
+        editor.execCommand('delete', 0, myexQ);
+    });
+    editor.addShortcut('alt+s', 'extractAsQuestion', 'extractAsQuestion');
+    editor.ui.registry.addButton('extractAsQuestion', {
+            text: 'eQ',
+            tooltip: 'extractAsQuestion' + '(' + 'alt+s' + ')',
+            onAction: () => {editor.execCommand('extractAsQuestion');}
+    });
+
+    editor.addCommand('extractAsAnswer', function() {
+        myexA = editor.selection.getContent({ format: 'html' });
+        editor.execCommand('delete', 0, myexQ);
+    });
+    editor.addShortcut('alt+s', 'extractAsAnswer', 'extractAsAnswer');
+    editor.ui.registry.addButton('extractAsAnswer', {
+            text: 'eQ',
+            tooltip: 'extractAsAnswer' + '(' + 'alt+s' + ')',
+            onAction: () => {editor.execCommand('extractAsAnswer');}
+    });
+*/
+},
+})
+
+
+
+// usused
+// highlight
+// https://stackoverflow.com/a/17611715
+// https://stackoverflow.com/a/49841804
+function hilite(editor, tinymce, name, color, key, buttontext){
+    // https://www.tiny.cloud/docs/api/tinymce/tinymce.editor/#addcommand
+    // the command that you add with addCommand can be executed with execCommand.
+    editor.addCommand(name, function () {
+        let n = tinymce.activeEditor.selection.getNode();
+        let c = tinymce.activeEditor.dom.getStyle(n, 'background-color', true);
+        if (c ==color) {
+            nc = "transparent";
+        }
+        else{
+            nc =color;
+        }
+        tinymce.activeEditor.execCommand('HiliteColor', false, nc);
+    });  
+    editor.addShortcut(key, name, name);
+    // https://www.tiny.cloud/docs/ui-components/typesoftoolbarbuttons/
+    editor.ui.registry.addButton(name, {
+        text: buttontext,
+        tooltip: name + '(' + key + ')',
+        onAction: () => {editor.execCommand(name);}
+    });
+}
+
+
+function newClozeText (content, selected_text, same) {
+// this function is adjusted from kian which is
+//    Copyright (C) 2018 Hyun Woo Park, License: AGPLv3, http://www.gnu.org/licenses/.
+// https://github.com/phu54321/kian/blob/develop/src/components/editor/utils/cloze.js
+var maxClozeId = 0;
+content.replace(/\{\{c(\d+)::/g, (match, g1) => {
+    const clozeId = parseInt(g1)
+    if (maxClozeId < clozeId) maxClozeId = clozeId
+})
+if(same){
+    var newClozeIndex = Math.max(maxClozeId, 1);
+    }
+else{
+    var newClozeIndex = maxClozeId + 1;
+}
+var text = '{{c' + newClozeIndex + '::' + selected_text + '}}';
+return text;
+};
+
+
+// unused
+// preparation for cloze overlapper: the actual clozes - ctrl+shift+c need to be made from
+// the regular Add window
+function newOCclozeText (content, selected_text, same) {
+//this function is adjusted from kian which is
+//    Copyright (C) 2018 Hyun Woo Park, License: AGPLv3, http://www.gnu.org/licenses/.
+//https://github.com/phu54321/kian/blob/develop/src/components/editor/utils/cloze.js
+var maxClozeId = 0;
+content.replace(/\[\[oc(\d+)::/g, (match, g1) => {
+    const clozeId = parseInt(g1)
+    if (maxClozeId < clozeId) maxClozeId = clozeId
+})
+if(same){
+    var newClozeIndex = Math.max(maxClozeId, 1);
+}
+else{
+    var newClozeIndex = maxClozeId + 1;
+}
+var text = '[[oc' + newClozeIndex + '::' + selected_text + ']]';
+return text;
+};
+
+
+
+function resize_tiny_mce(){
+    tinyMCE.activeEditor.execCommand('mceFullScreen');
+}
+window.addEventListener('resize', resize_tiny_mce);
+
+</script>
+
+
+
+
+
+<div class="tinymce6_wysiwyg" id="tinymce6_wysiwyg_unique">
+CONTENTCONTENT
+</div>

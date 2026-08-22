@@ -1,0 +1,7 @@
+{
+    "name": "Anki Leaderboard (Fix by Shige)",
+    "package": "175794613",
+    "author": "Shigeyuki",
+    "homepage": "https://www.patreon.com/Shigeyuki",
+    "conflicts":["41708974"]
+}

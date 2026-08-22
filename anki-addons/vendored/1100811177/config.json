@@ -1,0 +1,19 @@
+{
+    "centerfragments": false,
+    "cssclasses": true,
+    "defaultlangperdeck": false,
+    "deckdefaultlang": {},
+    "defaultlang": "Python",
+    "favorites": ["Python", 
+        "HTML", 
+        "CSS", 
+        "JavaScript"
+    ],
+    "font": "",
+    "hotkey": "Alt+s",
+    "linenos": false,
+    "remove leading spaces if possible": true,
+    "show pre/code": false,
+    "style": "colorful",
+    "style_nm": "dracula"
+}

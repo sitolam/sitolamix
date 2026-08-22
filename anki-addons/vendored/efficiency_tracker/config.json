@@ -1,0 +1,8 @@
+{
+    "theme": "auto",
+    "good_threshold": 70,
+    "warn_threshold": 45,
+    "show_toolbar_button": true,
+    "range_days": 30,
+    "notify_every_30min": true
+}

@@ -1,0 +1,261 @@
+{
+  "ACCENT_CARD": [
+    "Card mode",
+    "#60a5fa",
+    "--accent-card"
+  ],
+  "ACCENT_DANGER": [
+    "Danger",
+    "#ef4444",
+    "--accent-danger"
+  ],
+  "ACCENT_NOTE": [
+    "Note mode",
+    "#22c55e",
+    "--accent-note"
+  ],
+  "BORDER": [
+    "Border",
+    "#c4c4c4",
+    "--border"
+  ],
+  "BORDER_FOCUS": [
+    "Border (focused input)",
+    "#3b82f6",
+    "--border-focus"
+  ],
+  "BORDER_STRONG": [
+    "Border (strong)",
+    "#858585",
+    "--border-strong"
+  ],
+  "BORDER_SUBTLE": [
+    "Border (subtle)",
+    "#e4e4e4",
+    "--border-subtle"
+  ],
+  "BUTTON_BG": [
+    "Button background",
+    "white",
+    "--button-bg"
+  ],
+  "BUTTON_DISABLED": [
+    "Button background (disabled)",
+    "#d6d6d680",
+    "--button-disabled"
+  ],
+  "BUTTON_HOVER": [
+    "Button background (hover)",
+    "#f4f4f4",
+    [
+      "--button-gradient-start",
+      "--button-gradient-end"
+    ]
+  ],
+  "BUTTON_HOVER_BORDER": [
+    "Button border (hover)",
+    "#999999",
+    "--button-hover-border"
+  ],
+  "BUTTON_PRIMARY_BG": [
+    "Button Primary Bg",
+    "#60a5fa",
+    "--button-primary-bg"
+  ],
+  "BUTTON_PRIMARY_DISABLED": [
+    "Button Primary Disabled",
+    "#93c5fd",
+    "--button-primary-disabled"
+  ],
+  "BUTTON_PRIMARY_GRADIENT_END": [
+    "Button Primary Gradient End",
+    "#2563eb",
+    "--button-primary-gradient-end"
+  ],
+  "BUTTON_PRIMARY_GRADIENT_START": [
+    "Button Primary Gradient Start",
+    "#60a5fa",
+    "--button-primary-gradient-start"
+  ],
+  "CANVAS": [
+    "Background",
+    "#f5f5f5",
+    [
+      "--canvas",
+      "--bs-body-bg"
+    ]
+  ],
+  "CANVAS_CODE": [
+    "Code editor background",
+    "white",
+    "--canvas-code"
+  ],
+  "CANVAS_ELEVATED": [
+    "Background (elevated)",
+    "white",
+    "--canvas-elevated"
+  ],
+  "CANVAS_GLASS": [
+    "Background (transparent text surface)",
+    "##ffffff66",
+    "--canvas-glass"
+  ],
+  "CANVAS_INSET": [
+    "Background (inset)",
+    "#eeeeee",
+    "--canvas-inset"
+  ],
+  "CANVAS_OVERLAY": [
+    "Background (menu & tooltip)",
+    "#fcfcfc",
+    "--canvas-overlay"
+  ],
+  "FG": [
+    "Text",
+    "#020202",
+    [
+      "--fg",
+      "--bs-body-color"
+    ]
+  ],
+  "FG_DISABLED": [
+    "Text (disabled)",
+    "#858585",
+    "--fg-disabled"
+  ],
+  "FG_FAINT": [
+    "Text (faint)",
+    "#afafaf",
+    "--fg-faint"
+  ],
+  "FG_LINK": [
+    "Text (link)",
+    "#1d4ed8",
+    "--fg-link"
+  ],
+  "FG_SUBTLE": [
+    "Text (subtle)",
+    "#737373",
+    "--fg-subtle"
+  ],
+  "FLAG_1": [
+    "Flag 1",
+    "#ef4444",
+    "--flag-1"
+  ],
+  "FLAG_2": [
+    "Flag 2",
+    "#fb923c",
+    "--flag-2"
+  ],
+  "FLAG_3": [
+    "Flag 3",
+    "#4ade80",
+    "--flag-3"
+  ],
+  "FLAG_4": [
+    "Flag 4",
+    "#3b82f6",
+    "--flag-4"
+  ],
+  "FLAG_5": [
+    "Flag 5",
+    "#e879f9",
+    "--flag-5"
+  ],
+  "FLAG_6": [
+    "Flag 6",
+    "#2dd4bf",
+    "--flag-6"
+  ],
+  "FLAG_7": [
+    "Flag 7",
+    "#a855f7",
+    "--flag-7"
+  ],
+  "HIGHLIGHT_BG": [
+    "Highlight background",
+    "#2563eb80",
+    "--highlight-bg"
+  ],
+  "HIGHLIGHT_FG": [
+    "Highlight text",
+    "black",
+    "--highlight-fg"
+  ],
+  "SCROLLBAR_BG": [
+    "Scrollbar background",
+    "#d6d6d6",
+    "--scrollbar-bg"
+  ],
+  "SCROLLBAR_BG_ACTIVE": [
+    "Scrollbar background (active)",
+    "#afafaf",
+    "--scrollbar-bg-active"
+  ],
+  "SCROLLBAR_BG_HOVER": [
+    "Scrollbar background (hover)",
+    "#c4c4c4",
+    "--scrollbar-bg-hover"
+  ],
+  "SELECTED_BG": [
+    "Selected Bg",
+    "#d6d6d680",
+    "--selected-bg"
+  ],
+  "SELECTED_FG": [
+    "Selected Fg",
+    "black",
+    "--selected-fg"
+  ],
+  "SHADOW": [
+    "Shadow",
+    "#c4c4c4",
+    "--shadow"
+  ],
+  "SHADOW_FOCUS": [
+    "Shadow (focused input)",
+    "#6366f1",
+    "--shadow-focus"
+  ],
+  "SHADOW_INSET": [
+    "Shadow (inset)",
+    "#454545",
+    "--shadow-inset"
+  ],
+  "SHADOW_SUBTLE": [
+    "Shadow (subtle)",
+    "#737373",
+    "--shadow-subtle"
+  ],
+  "STATE_BURIED": [
+    "Buried",
+    "#f59e0b",
+    "--state-buried"
+  ],
+  "STATE_LEARN": [
+    "Learn",
+    "#dc2626",
+    "--state-learn"
+  ],
+  "STATE_MARKED": [
+    "Marked",
+    "#c7d2fe",
+    "--state-marked"
+  ],
+  "STATE_NEW": [
+    "New",
+    "#3b82f6",
+    "--state-new"
+  ],
+  "STATE_REVIEW": [
+    "Review",
+    "#16a34a",
+    "--state-review"
+  ],
+  "STATE_SUSPENDED": [
+    "Suspended",
+    "#facc15",
+    "--state-suspended"
+  ]
+}

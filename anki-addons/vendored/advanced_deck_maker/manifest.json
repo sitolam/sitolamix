@@ -1,0 +1,8 @@
+{
+    "package": "advanced_deck_maker",
+    "name": "Advanced Deck Creator",
+    "author": "",
+    "description": "Create multiple Anki decks at once using || splits, {brace} expansion, and multi-line input.",
+    "min_point_version": 55,
+    "conflicts": []
+}

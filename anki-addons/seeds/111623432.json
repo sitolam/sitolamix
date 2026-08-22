@@ -1,0 +1,100 @@
+{
+  "batch_config": {},
+  "config_schema": 4,
+  "configuration": {
+    "display_introduction_message": false,
+    "hypertts_pro_api_key": null,
+    "install_time": 1749938947.007434,
+    "service_config": {
+      "Azure": {
+        "region": "westeurope"
+      }
+    },
+    "service_enabled": {
+      "Azure": true
+    },
+    "trial_registration_step": "finished",
+    "use_vocabai_api": false,
+    "user_choice_easy_advanced": false,
+    "user_uuid": "7dbf5a6badad475caabd51552029eee0",
+    "vocabai_api_url_override": null
+  },
+  "default_presets": {},
+  "mapping_rules": {},
+  "preferences": {},
+  "presets": {
+    "0903551f-5cc9-48b7-bcf7-a23862bb81e1": {
+      "name": "Engels woordenschat",
+      "source": {
+        "mode": "simple",
+        "source_field": "Vertaling",
+        "source_template": null,
+        "template_format_version": "v1",
+        "use_selection": false
+      },
+      "target": {
+        "remove_sound_tag": true,
+        "target_field": "Vertaling",
+        "text_and_sound_tag": true
+      },
+      "text_processing": {
+        "html_to_text_line": true,
+        "ignore_case": false,
+        "run_replace_rules_after": true,
+        "ssml_convert_characters": true,
+        "strip_brackets": false,
+        "text_replacement_rules": []
+      },
+      "uuid": "0903551f-5cc9-48b7-bcf7-a23862bb81e1",
+      "voice_selection": {
+        "voice": {
+          "options": {},
+          "voice_id": {
+            "service": "Azure",
+            "voice_key": {
+              "name": "Microsoft Server Speech Text to Speech Voice (en-GB, OliverNeural)"
+            }
+          }
+        },
+        "voice_selection_mode": "single"
+      }
+    },
+    "8004d634-d752-450e-8041-ebd8c26bf9c2": {
+      "name": "Frans woordenschat",
+      "source": {
+        "mode": "simple",
+        "source_field": "Vertaling",
+        "source_template": null,
+        "template_format_version": "v1",
+        "use_selection": false
+      },
+      "target": {
+        "remove_sound_tag": true,
+        "target_field": "Vertaling",
+        "text_and_sound_tag": true
+      },
+      "text_processing": {
+        "html_to_text_line": true,
+        "ignore_case": false,
+        "run_replace_rules_after": true,
+        "ssml_convert_characters": true,
+        "strip_brackets": false,
+        "text_replacement_rules": []
+      },
+      "uuid": "8004d634-d752-450e-8041-ebd8c26bf9c2",
+      "voice_selection": {
+        "voice": {
+          "options": {},
+          "voice_id": {
+            "service": "Azure",
+            "voice_key": {
+              "name": "Microsoft Server Speech Text to Speech Voice (fr-FR, MauriceNeural)"
+            }
+          }
+        },
+        "voice_selection_mode": "single"
+      }
+    }
+  },
+  "realtime_config": {}
+}
