@@ -476,6 +476,16 @@ in
         usbManager.enable = true; # NordicsSys/dms-usb-manager
         ambientSound.enable = true; # hthienloc/dms-ambient-sound (bar widget — no control-center variant)
         dankBatteryAlerts.enable = true; # AvengeMedia DankBatteryAlerts
+        # notsopreety/batteryOSD — not in dms-plugin-registry, so pinned as its
+        # own flake input (flake.nix) and pointed at directly, same as
+        # dankMenu/mouthGuard above. (Its sibling kbdBacklightOSD was tried
+        # too, but this laptop has no kernel-visible keyboard backlight — no
+        # /sys/class/leds/*kbd_backlight* node, no UPower KbdBacklight D-Bus
+        # object — so that plugin was inert and got dropped.)
+        batteryOSD = {
+          enable = true;
+          src = inputs.battery-osd;
+        };
       };
 
       # write plugin_settings.json marking each enabled plugin active, so they

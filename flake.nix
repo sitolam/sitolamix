@@ -111,6 +111,15 @@
       flake = false;
     };
 
+    # notsopreety/batteryOSD — a DMS plugin not in dms-plugin-registry (see
+    # modules/desktop/dms/plugins.nix). Plain plugin tree (plugin.json + QML at
+    # the root, no flake.nix), same shape as dms-plugins' subtrees, so
+    # flake=false.
+    battery-osd = {
+      url = "github:notsopreety/batteryOSD";
+      flake = false;
+    };
+
     # nmcbride/claude-desktop-nix — repacks Anthropic's official Linux .deb
     # (the app is not in nixpkgs and does not self-update on Linux, so the
     # version rides on this input's lock entry). Small third-party repo: read

@@ -68,6 +68,22 @@
         "type": "github"
       }
     },
+    "battery-osd": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1787148550,
+        "narHash": "sha256-G7hub23SF9o6j+N098NfoUovycqL8yyT4fJUHr1invE=",
+        "owner": "notsopreety",
+        "repo": "batteryOSD",
+        "rev": "170730fa798d0760662c32a17d98467b46ee02c7",
+        "type": "github"
+      },
+      "original": {
+        "owner": "notsopreety",
+        "repo": "batteryOSD",
+        "type": "github"
+      }
+    },
     "claude-desktop": {
       "inputs": {
         "nixpkgs": [
@@ -801,6 +817,7 @@
     },
     "root": {
       "inputs": {
+        "battery-osd": "battery-osd",
         "claude-desktop": "claude-desktop",
         "claude-marketplace-caveman": "claude-marketplace-caveman",
         "claude-marketplace-flutter": "claude-marketplace-flutter",

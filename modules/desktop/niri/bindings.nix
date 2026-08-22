@@ -200,18 +200,24 @@
               "playerctl"
               "previous"
             ];
-            # both external monitors (DMS controls one DDC device per call and
-            # has no "all" target). ddc:i2c-5 = HDMI-A-1, ddc:i2c-6 = DP-3 — if
-            # the i2c bus numbers ever shift, update these (ddcutil detect).
+            # internal panel (no device arg = DMS's default, which is the
+            # eDP backlight whenever the internal panel is active) plus both
+            # external monitors (DMS controls one DDC device per call and has
+            # no "all" target). ddc:i2c-5 = HDMI-A-1, ddc:i2c-6 = DP-3 — if the
+            # i2c bus numbers ever shift, update these (ddcutil detect).
+            # The trailing "" is required, not optional — dms ipc's transport
+            # enforces the QML handler's full arity (increment(step, device)),
+            # so a bare `dms ipc call brightness increment 5` errors with "Too
+            # few arguments" instead of falling back to the default device.
             "XF86MonBrightnessUp" = spawn [
               "sh"
               "-c"
-              "dms ipc call brightness increment 5 ddc:i2c-5; dms ipc call brightness increment 5 ddc:i2c-6"
+              ''dms ipc call brightness increment 5 ""; dms ipc call brightness increment 5 ddc:i2c-5; dms ipc call brightness increment 5 ddc:i2c-6''
             ];
             "XF86MonBrightnessDown" = spawn [
               "sh"
               "-c"
-              "dms ipc call brightness decrement 5 ddc:i2c-5; dms ipc call brightness decrement 5 ddc:i2c-6"
+              ''dms ipc call brightness decrement 5 ""; dms ipc call brightness decrement 5 ddc:i2c-5; dms ipc call brightness decrement 5 ddc:i2c-6''
             ];
 
             # apps
