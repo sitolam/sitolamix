@@ -184,6 +184,7 @@ animations and clocks ride along with the CLI tools in `modules/apps/cli.nix`;
 | Host | Machine |
 |---|---|
 | `gamingpc` | AMD CPU + NVIDIA GPU workstation — DP-3 primary, HDMI-A-1 secondary. |
+| `omnibook` | HP OmniBook laptop — Intel Core Ultra X7 358H (Panther Lake), Xe3 iGPU, LUKS+LVM root, IR face unlock. |
 
 ## 🗂 Structure
 
@@ -250,10 +251,42 @@ It's a `deferredModule`, so every file's contribution merges into
 > NVIDIA GPU. Installing it unchanged gives you *my* machine's assumptions.
 > Fork it, or at minimum give your machine its own host directory.
 
+> [!TIP]
+> Installing `omnibook` specifically? [`docs/omnibook-install.md`](docs/omnibook-install.md)
+> is the same procedure written end-to-end for that machine — encrypted layout,
+> firmware settings, BitLocker warning, howdy enrollment, and what to do on
+> `gamingpc` first.
+
 ### 1. Boot the installer
 
 Any recent [NixOS ISO](https://nixos.org/download/) (graphical or minimal).
 Get networking up — `nmtui` on the minimal image — and become root: `sudo -i`.
+
+**On an HP laptop (`omnibook`), change two firmware settings first** — F10 at
+the HP logo:
+
+- **Secure Boot → off.** This flake has no lanzaboote/shim setup, so a
+  Secure-Boot-enabled machine refuses to boot the installer *and* the installed
+  system.
+- **Storage / SATA mode → AHCI**, not Intel RST (VMD). HP ships RST on, and
+  with it the NVMe does not appear in `lsblk` at all — there is nothing to
+  partition. `hosts/omnibook/hardware.nix` also carries the `vmd` initrd module
+  so a system installed in RST mode still boots, but AHCI is the setting you
+  want.
+
+> [!WARNING]
+> **Save your BitLocker recovery key before changing either setting.** Windows 11
+> on an HP laptop seals the BitLocker key to the TPM, and both changes above
+> alter the TPM's PCR measurements, which breaks that seal. The next Windows
+> boot then demands a 48-digit recovery key instead of unlocking silently.
+>
+> Irrelevant for a wipe — fatal if you wanted to boot Windows once more to copy
+> files off. So either get your data off first, or grab the key:
+> `manage-bde -protectors -get C:` in an admin shell, or
+> <https://account.microsoft.com/devices/recoverykey>.
+
+Windows will not boot after the AHCI switch. That is fine here — `omnibook` is
+a wipe install. If you ever want it back, put the mode back to RST.
 
 ### 2. Partition, and **label the partitions**
 
@@ -290,6 +323,72 @@ mkdir -p /mnt/boot
 mount -o umask=077 /dev/disk/by-label/NIXBOOT /mnt/boot
 swapon /dev/disk/by-label/NIXSWAP
 ```
+
+#### On `omnibook` — encrypted, so a different layout
+
+The laptop leaves the house, so it gets full-disk encryption and the desktop
+doesn't. The concrete reason, beyond the obvious: `modules/system/sops.nix`
+decrypts `secrets/ha.yaml` with `/etc/ssh/ssh_host_ed25519_key`. On a plain
+disk, whoever walks off with the machine mounts it, reads that key, and has your
+Home Assistant token.
+
+LUKS2 with LVM inside it, one passphrase for the lot:
+
+```
+nvme0n1p1  NIXBOOT   vfat ESP, /boot, unencrypted
+nvme0n1p2  NIXCRYPT  LUKS2
+           └─ vg0    LVM
+              ├─ swap  32G   (= RAM, so hibernate has somewhere to land)
+              └─ root  rest, ext4
+```
+
+`/boot` stays outside the container so GRUB never touches an encrypted volume —
+no `enableCryptodisk`, no second prompt. GRUB loads the kernel and initrd, then
+the initrd asks for the passphrase once.
+
+```sh
+parted /dev/nvme0n1 -- mklabel gpt
+parted /dev/nvme0n1 -- mkpart NIXBOOT fat32 1MiB 1GiB
+parted /dev/nvme0n1 -- set 1 esp on
+parted /dev/nvme0n1 -- mkpart NIXCRYPT 1GiB 100%
+
+mkfs.fat -F32 -n NIXBOOT /dev/nvme0n1p1
+
+# LUKS2. Choose a passphrase you can type at a bare console — this prompt has
+# no keymap loaded yet, so it is US-QWERTY regardless of your layout.
+cryptsetup luksFormat --type luks2 /dev/nvme0n1p2
+cryptsetup open /dev/nvme0n1p2 cryptroot
+
+# LVM inside it
+pvcreate /dev/mapper/cryptroot
+vgcreate vg0 /dev/mapper/cryptroot
+lvcreate -L 32G -n swap vg0
+lvcreate -l 100%FREE -n root vg0
+
+mkfs.ext4 -L NIXROOT /dev/vg0/root
+mkswap    -L NIXSWAP /dev/vg0/swap
+```
+
+The partition *names* matter here, not filesystem labels:
+`hosts/omnibook/hardware.nix` opens `/dev/disk/by-partlabel/NIXCRYPT`, which is
+the GPT name `parted -- mkpart NIXCRYPT` sets. A LUKS container has no
+filesystem label of its own to use instead.
+
+Mount:
+
+```sh
+mount /dev/vg0/root /mnt
+mkdir -p /mnt/boot
+mount -o umask=077 /dev/disk/by-label/NIXBOOT /mnt/boot
+swapon /dev/vg0/swap
+```
+
+> [!NOTE]
+> The 32G swap LV is sized for 32 GB of RAM, so hibernate works. `hardware.nix`
+> sets `boot.resumeDevice` explicitly — systemd stage 1 (the nixpkgs default
+> now) only passes `resume=` to the kernel when that option is set, unlike the
+> old scripted stage 1 which inferred it from `swapDevices`. Miss it and
+> hibernate half-works: the image is written, and the next boot ignores it.
 
 ### 3. Give your machine a host
 
@@ -405,7 +504,7 @@ evaluation.
 ### 5. Install
 
 ```sh
-nixos-install --flake /mnt/home/otis/sitolamix#myhost
+nixos-install --flake /mnt/home/otis/sitolamix#myhost   # or #omnibook
 ```
 
 This builds the whole system, so expect a long first run and a lot of
@@ -423,6 +522,9 @@ reboot
 gh auth login              # so `git push` works — see GitHub auth below
 rclone config              # only if you kept services.rclone
 ```
+
+On `omnibook`, face unlock still needs a one-off enrollment on the machine —
+see [Face unlock](#-face-unlock-howdy) below.
 
 The checkout is already at `~/sitolamix`, which is what the dankMenu
 `Update ▸ Rebuild` rows assume (`flakeDir` in
@@ -517,6 +619,113 @@ config.sops.secrets.hass_token.path   # => /run/secrets/hass_token
 Adding another machine: add its age key to `.sops.yaml` and run
 `sops updatekeys secrets/ha.yaml`. To rotate a secret, edit it as above and
 replace the value — the old ciphertext is overwritten.
+
+</details>
+
+## 🙂 Face unlock (howdy)
+
+<details>
+<summary><code>omnibook</code> only — the laptop's Windows Hello IR camera used as a login shortcut, via <a href="https://github.com/boltgolt/howdy">howdy</a>. Convenience, <b>not</b> a security upgrade: read the warning first.</summary>
+
+<br>
+
+> [!WARNING]
+> **Howdy is weaker than Windows Hello.** Hello does a depth / structured-light
+> liveness check; howdy compares a flat IR image and can be fooled by a
+> well-printed photo or a phone screen. Upstream says outright: do not use it as
+> your only authentication method.
+>
+> `modules/hardware/howdy.nix` is wired accordingly:
+>
+> - `control = "sufficient"` — a face match unlocks, a miss falls *silently
+>   through to the password prompt*. Your password never stops working.
+> - scoped to **three** PAM services: `login` (which is what the DMS lock screen
+>   authenticates against — DMS has no PAM service of its own), `greetd` (the
+>   dms-greeter login screen) and `sudo`. Not `sshd`, not everything else —
+>   enabling `services.howdy` on its own would default `security.pam.howdy` to
+>   *every* service.
+> - howdy's own `abort_if_ssh` and `abort_if_lid_closed` guards stay on.
+>
+> Want it as a real second factor instead? Set
+> `hardware.howdy.control = "required"` on the host — then a failed scan
+> **blocks** the login rather than falling back.
+
+The config is declarative, the enrollment is not: face models are per-machine
+data in `/var/lib/howdy/models`, so they are a post-install step and never live
+in the repo.
+
+### 1. Find the IR camera
+
+A Windows Hello module enumerates as *two* V4L2 devices — the colour webcam and
+the infrared one. Only the IR node works in the dark, which is the whole point.
+
+```sh
+v4l2-ctl --list-devices
+```
+
+The IR device is usually the second `/dev/videoN` of the same USB camera. Test a
+candidate — this opens a preview and tells you what it sees:
+
+```sh
+sudo howdy -U otis test
+```
+
+Black frame with the lights off, or "dark image" complaints, means you picked
+the colour node (or the emitter is not firing — see step 4).
+
+### 2. Point the config at it
+
+`/etc/howdy/config.ini` is a read-only symlink into the nix store, so
+`howdy set` **cannot** work here. Set it in Nix instead:
+
+```nix
+# hosts/omnibook/default.nix
+hardware.howdy = {
+  enable = true;
+  device = "/dev/v4l/by-path/pci-0000:00:14.0-usb-0:8:1.0-video-index2";
+};
+```
+
+Prefer a `/dev/v4l/by-path/…` symlink over a bare `/dev/video2`: the numbering
+shifts when another camera is plugged in, and a howdy pointed at the wrong node
+just fails every scan. Get the stable path with
+`ls -l /dev/v4l/by-path/`. Then `just rebuild`.
+
+### 3. Enrol a face
+
+```sh
+sudo howdy -U otis add        # repeat a few times: glasses on, glasses off, dim room
+sudo howdy -U otis list       # what is enrolled
+sudo howdy -U otis remove 0   # drop one model
+```
+
+Lock the session (`Super+L`) to try it. It should unlock on sight, and drop to
+the password field if it does not recognise you.
+
+### 4. If the image is black
+
+Some Windows Hello modules need their IR LEDs kicked on explicitly. Symptom: the
+device is right, but every frame comes back dark.
+
+```nix
+hardware.howdy.irEmitter.enable = true;
+```
+
+`just rebuild`, then run the one-off probe — it cycles the camera's vendor
+commands until the emitter lights up, and saves what worked:
+
+```sh
+sudo linux-enable-ir-emitter configure
+```
+
+### Turning it off
+
+```nix
+hardware.howdy.enable = false;
+```
+
+`just rebuild`, and PAM goes back to password-only immediately. Enrolled models
+are left in `/var/lib/howdy/models`; delete the directory if you want them gone.
 
 </details>
 
