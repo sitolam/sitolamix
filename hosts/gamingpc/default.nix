@@ -13,6 +13,10 @@
   # hardware
   hardware.nvidia.enable = true;
 
+  # amd_pstate: was in modules/system/boot/kernel.nix, which every host imports.
+  # Moved here when omnibook (Intel) joined — it is a CPU-specific param.
+  boot.kernelParams = [ "amd_pstate=active" ];
+
   # cloud mounts — the remotes themselves are created with `rclone config`
   # (see README → Cloud mounts), only *which* ones to mount lives here.
   services.rclone = {

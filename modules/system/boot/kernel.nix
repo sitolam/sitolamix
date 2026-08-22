@@ -4,10 +4,11 @@
 # (github:xddxdd/nix-cachyos-kernel/release) and:
 #   nixpkgs.overlays = [ inputs.nix-cachyos-kernel.overlays.pinned ];
 #   boot.kernelPackages = pkgs.cachyosKernels.linuxPackages-cachyos-bore;
+#
+# CPU-specific kernel params do NOT belong here — this file is imported into
+# every host. `amd_pstate=active` lives in hosts/gamingpc/default.nix; Intel
+# hosts get intel_pstate on their own and need nothing.
 { pkgs, ... }:
 {
-  boot = {
-    kernelPackages = pkgs.linuxPackages_zen;
-    kernelParams = [ "amd_pstate=active" ];
-  };
+  boot.kernelPackages = pkgs.linuxPackages_zen;
 }
