@@ -4,7 +4,6 @@ let
   # (see hosts/omnibook/hardware.nix); gamingpc has no resume device, so
   # this stays plain suspend there automatically.
   hasHibernate = config.boot.resumeDevice != "";
-  sleepAction = if hasHibernate then "suspend-then-hibernate" else "suspend";
 in
 {
   config = lib.mkIf config.desktop.niri.enable {
@@ -17,6 +16,18 @@ in
         niri = "${config.programs.niri.package}/bin/niri";
         loginctl = "${pkgs.systemd}/bin/loginctl";
         systemctl = "${pkgs.systemd}/bin/systemctl";
+
+        # On battery, hibernate after the idle timeout (via
+        # suspend-then-hibernate); on AC, plain suspend — mirrors the lid
+        # switch split in hosts/omnibook/default.nix. `grep -q 1
+        # .../online` is true iff any power_supply reports an AC/mains
+        # source currently connected, regardless of its device name (AC,
+        # ADP1, ACAD, ...).
+        sleepCommand =
+          if hasHibernate then
+            "if grep -q 1 /sys/class/power_supply/*/online 2>/dev/null; then ${systemctl} suspend; else ${systemctl} suspend-then-hibernate; fi"
+          else
+            "${systemctl} suspend";
       in
       {
         # Idle manager. Deliberately NOT DMS's built-in IdleService — swayidle is
@@ -52,10 +63,10 @@ in
               resumeCommand = "${niri} msg action power-on-monitors";
             }
             {
-              # 15 min: suspend (suspend-then-hibernate on hosts with a
-              # resume device — see `hasHibernate` above).
+              # 15 min: suspend, or suspend-then-hibernate if on battery
+              # (see `sleepCommand` above).
               timeout = 900;
-              command = "${systemctl} ${sleepAction}";
+              command = sleepCommand;
             }
           ];
 
