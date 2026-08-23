@@ -286,8 +286,40 @@ let
       id = "windows.shared";
       icon = "folder_shared";
       label = "Shared Folder";
-      # Appears inside Windows as \\host.lan\Data.
+      # Appears inside Windows as \\host.lan\Data. Separate from the home
+      # directory, which is redirected into the RDP session itself (see
+      # services.winapps.rdpFlags) and shows up under "This PC".
       action = "nautilus ${winappsCfg.sharedDir}";
+    }
+    {
+      id = "windows.usage";
+      icon = "monitoring";
+      label = "Resource Usage";
+      aliases = [
+        "cpu"
+        "ram"
+        "stats"
+      ];
+      # Live CPU and memory can't go in a row label — the menu tree is a static
+      # file, and only `when`/`checked`/`disabled` are evaluated at open time.
+      # So this opens the real thing instead, which also keeps updating while
+      # you watch it.
+      disabled = "! systemctl is-active --quiet docker-windows";
+      action = "ghostty -e docker stats windows";
+    }
+    {
+      id = "windows.on-demand";
+      icon = "auto_mode";
+      label = "On-Demand";
+      aliases = [
+        "auto"
+        "automatic"
+      ];
+      # When on, opening Word starts the VM and waits for it, and the VM shuts
+      # itself down after services.winapps.idleTimeout minutes with no
+      # RemoteApp session open. When off, the VM is yours to start and stop.
+      checked = "winapps-on-demand status";
+      action = "winapps-on-demand toggle";
     }
 
     # Style
