@@ -90,9 +90,15 @@
               enabled = true;
             }
             # Windows VM status (see ../../services/winapps). Shows the container
-            # while it runs, with stop/restart/logs; it cannot *start* the VM,
-            # because NixOS runs the container with `--rm` and a stopped container
-            # no longer exists. Start lives in dankMenu's Windows submenu.
+            # while it runs, with stop/logs. Its Restart button is not wired to
+            # anything useful here: the plugin's restart is `docker restart
+            # windows`, but the unit's main process is the attached `docker run`,
+            # which exits the moment the container stops — systemd then runs
+            # ExecStop/ExecStopPost (`docker stop` + `docker rm -f`) and the VM
+            # just ends up off. Likewise it cannot *start* the VM, because NixOS
+            # runs the container with `--rm` and a stopped container no longer
+            # exists. Both start and restart live in dankMenu's Windows submenu,
+            # which goes through the systemd unit instead.
             {
               id = "dockerManager";
               enabled = true;

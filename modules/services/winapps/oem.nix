@@ -60,6 +60,10 @@ let
       )
 
       C:\OfficeSetup\setup.exe /configure "%~dp0configuration.xml"
+      if errorlevel 1 (
+        echo Office install failed, setup.exe exited %errorlevel%. > C:\OfficeSetup\FAILED.txt
+        exit /b 1
+      )
 
       endlocal
     ''} > $out
@@ -69,8 +73,10 @@ in
   config = lib.mkIf cfg.enable {
     # C+ copies and replaces: the OEM directory is a plain bind mount into the
     # container, and a symlink into /nix/store would not resolve from inside it.
-    # Replacing on every activation means editing the script above and
-    # rebuilding is enough — no stale copy to notice later.
+    # Replacing on every activation keeps the host-side copy current with the
+    # script above — but dockurr/windows only ever runs /oem once, at the end
+    # of the unattended install, so this refreshes what the *next* install will
+    # run, not anything on an already-installed guest.
     systemd.tmpfiles.rules = [
       "C+ ${cfg.stateDir}/oem/install.bat 0644 root root - ${installBat}"
       "C+ ${cfg.stateDir}/oem/configuration.xml 0644 root root - ${officeConfig}"

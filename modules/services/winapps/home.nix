@@ -40,14 +40,17 @@ let
         echo "Type=Application"
         echo "Name=$NAME"
         echo "Comment=$FULL_NAME"
-        echo "Exec=${winappsPkg}/bin/winapps $id %F"
+        echo "Exec=${winappsPkg}/bin/winapps $id %f"
         echo "Icon=${winappsPkg}/src/apps/$id/icon.svg"
         echo "Terminal=false"
         # FreeRDP sets the RemoteApp window's class from the Windows-side
         # application name, so this is what lets niri match the window to this
         # entry (and what makes the taskbar icon correct).
         echo "StartupWMClass=$FULL_NAME"
-        echo "Categories=''${CATEGORIES:-WinApps}"
+        # winapps only ever reads its second argument, so %f (one file) rather
+        # than %F (a list) — opening several files at once would silently drop
+        # all but the first.
+        echo "Categories=''${CATEGORIES:-WinApps};"
         echo "MimeType=''${MIME_TYPES:-}"
       } > "$out/$id.desktop"
     done
@@ -62,7 +65,7 @@ let
       echo "Icon=${winappsPkg}/src/install/windows.svg"
       echo "Terminal=false"
       echo "StartupWMClass=Microsoft Windows"
-      echo "Categories=WinApps"
+      echo "Categories=System;WinApps;"
     } > "$out/windows.desktop"
   '';
 
@@ -77,6 +80,13 @@ let
   # is not decrypted yet.
   writeConf = pkgs.writeShellScript "winapps-write-conf" ''
     set -eu
+    # NixOS activation runs under umask 0022, which is inherited here. Without
+    # this, `cat >` below would create winapps.conf mode 0644 (world-readable,
+    # root-owned) for the brief window before the explicit chmod/chown land —
+    # and if chown fails, `set -eu` aborts and leaves that world-readable
+    # plaintext-password file behind for good. Do not delete this as
+    # "redundant" with the chmod calls below: it is what makes them race-free.
+    umask 077
     secret=${config.sops.secrets.winapps_vm_env.path}
     dir=/home/otis/.config/winapps
     conf="$dir/winapps.conf"

@@ -951,15 +951,22 @@ few times a week. Start it from `Mod+Space` → Windows → Start VM, or:
 systemctl start docker-windows
 ```
 
-The bar's Docker widget shows whether it is up. It can stop and restart the VM
-but not start it — NixOS runs the container with `--rm`, so a stopped container
-no longer exists for that button to act on. Start from the menu.
+The bar's Docker widget shows whether it is up and can stop it, but not start
+or restart it — NixOS runs the container with `--rm`, so a stopped container
+no longer exists for that button to act on, and its Restart just stops the VM
+too (the unit's main process exits the moment `docker restart` stops the
+container, so systemd tears it down right after). Start and restart both go
+through the menu.
 
 **First boot takes 20–40 minutes** and is unattended: Windows installs itself,
 then Office 365 installs from Microsoft's Deployment Tool. Watch it at
-<http://127.0.0.1:8006>. When it settles, open Word inside that viewer once and
-sign in with your Microsoft 365 account — the activation lives in the VM's disk
-at `/var/lib/winapps/storage` and survives restarts.
+<http://127.0.0.1:8006>. The guest is unactivated Windows (a Microsoft 365
+sign-in licenses Office, not Windows) — expect a watermark and locked
+personalization settings; RDP and Office both work fine regardless. Read your
+generated Windows account password with `sops -d secrets/winapps.yaml` before
+you need it, then open Word inside that viewer once and sign in with your
+Microsoft 365 account — the activation lives in the VM's disk at
+`/var/lib/winapps/storage` and survives restarts.
 
 If Office is missing afterwards, look for `C:\OfficeSetup\FAILED.txt` in the
 guest; `C:\OEM\install.bat` is re-runnable by hand.

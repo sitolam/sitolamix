@@ -120,13 +120,13 @@ in
       }
     ];
 
-    # Account credentials for the guest. Read by systemd as root when starting
-    # the container, and by the activation script in ./home.nix — hence owner
-    # `otis` rather than `root`: root can read it either way, and this avoids a
-    # second copy of the same secret.
+    # Account credentials for the guest. Read as root twice over: by systemd
+    # when it starts the container (environmentFiles below), and by the system
+    # activation script in ./home.nix when it writes winapps.conf — neither of
+    # those runs as `otis`, so the secret is owned by root, per the spec.
     sops.secrets.winapps_vm_env = {
       sopsFile = ../../../secrets/winapps.yaml;
-      owner = "otis";
+      owner = "root";
       mode = "0400";
     };
 
@@ -181,7 +181,12 @@ in
 
     systemd.tmpfiles.rules = [
       "d ${cfg.stateDir} 0755 root root -"
-      "d ${cfg.stateDir}/storage 0755 root root -"
+      # 0700, tighter than its siblings: dockurr/windows builds its unattended-
+      # install media in here, including an autounattend.xml with the account
+      # password in plaintext, plus the guest's data.img (the whole Windows
+      # filesystem). Only root — i.e. systemd starting the container — ever
+      # needs to open this directory.
+      "d ${cfg.stateDir}/storage 0700 root root -"
       "d ${cfg.stateDir}/oem 0755 root root -"
       "d ${cfg.sharedDir} 0755 otis users -"
     ];
