@@ -1,0 +1,79 @@
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
+let
+  cfg = config.services.winapps;
+
+  # Office Deployment Tool answer file. `MatchOS` follows the guest's language;
+  # the excluded apps are the ones nobody asked for and which slow the install
+  # measurably. AUTOACTIVATE is 0 because activation happens through the one
+  # interactive Microsoft 365 sign-in, not through a key baked into the config.
+  officeConfig = pkgs.writeText "winapps-office-configuration.xml" ''
+    <Configuration>
+      <Add OfficeClientEdition="64" Channel="Current">
+        <Product ID="O365ProPlusRetail">
+          <Language ID="MatchOS" />
+          <ExcludeApp ID="Groove" />
+          <ExcludeApp ID="Lync" />
+          <ExcludeApp ID="Bing" />
+          <ExcludeApp ID="Teams" />
+        </Product>
+      </Add>
+      <Display Level="None" AcceptEULA="TRUE" />
+      <Property Name="AUTOACTIVATE" Value="0" />
+      <Property Name="FORCEAPPSHUTDOWN" Value="TRUE" />
+    </Configuration>
+  '';
+
+  # Runs once, as administrator, at the end of the unattended Windows install.
+  # Line endings must be CRLF — cmd.exe mis-parses a LF-only batch file in ways
+  # that look like syntax errors in unrelated lines.
+  installBat = pkgs.runCommand "winapps-install.bat" { } ''
+    ${pkgs.dos2unix}/bin/unix2dos < ${pkgs.writeText "install.bat.lf" ''
+      @echo off
+      setlocal
+
+      rem ── RDP host + RemoteApp ────────────────────────────────────────────
+      rem fDenyTSConnections: accept incoming RDP at all.
+      reg add "HKLM\SYSTEM\CurrentControlSet\Control\Terminal Server" /v fDenyTSConnections /t REG_DWORD /d 0 /f
+
+      rem fDisabledAllowList: let an *arbitrary* executable be published as a
+      rem RemoteApp. Without this every `winapps <app>` fails, and it fails
+      rem looking like a connection problem rather than a permissions one.
+      reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Terminal Server\TSAppAllowList" /v fDisabledAllowList /t REG_DWORD /d 1 /f
+
+      netsh advfirewall firewall set rule group="remote desktop" new enable=Yes
+
+      rem ── Office 365 ──────────────────────────────────────────────────────
+      rem officecdn.microsoft.com/pr/wsus/setup.exe is Microsoft's evergreen
+      rem Office Deployment Tool: always current, no version to pin and go
+      rem stale. %~dp0 is this script's own directory, i.e. the copied /oem.
+      mkdir C:\OfficeSetup
+      powershell -ExecutionPolicy Bypass -Command "[Net.ServicePointManager]::SecurityProtocol = 'Tls12'; Invoke-WebRequest -Uri 'https://officecdn.microsoft.com/pr/wsus/setup.exe' -OutFile 'C:\OfficeSetup\setup.exe'"
+
+      if not exist C:\OfficeSetup\setup.exe (
+        echo Office Deployment Tool download failed. > C:\OfficeSetup\FAILED.txt
+        exit /b 1
+      )
+
+      C:\OfficeSetup\setup.exe /configure "%~dp0configuration.xml"
+
+      endlocal
+    ''} > $out
+  '';
+in
+{
+  config = lib.mkIf cfg.enable {
+    # C+ copies and replaces: the OEM directory is a plain bind mount into the
+    # container, and a symlink into /nix/store would not resolve from inside it.
+    # Replacing on every activation means editing the script above and
+    # rebuilding is enough — no stale copy to notice later.
+    systemd.tmpfiles.rules = [
+      "C+ ${cfg.stateDir}/oem/install.bat 0644 root root - ${installBat}"
+      "C+ ${cfg.stateDir}/oem/configuration.xml 0644 root root - ${officeConfig}"
+    ];
+  };
+}
