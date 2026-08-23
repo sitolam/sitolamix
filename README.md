@@ -787,6 +787,36 @@ are left in `/var/lib/howdy/models`; delete the directory if you want them gone.
 
 </details>
 
+## 💤 Idle & hibernate
+
+<details>
+<summary><code>omnibook</code> only — lid close and idle both sleep instantly, then hibernate for real after a delay, but only on battery.</summary>
+
+<br>
+
+`modules/desktop/niri/idle.nix` runs the shared swayidle timers (lock at
+6 min, blank outputs at 10 min, sleep at 15 min idle). `hosts/omnibook/default.nix`
+adds the lid-switch and hibernate-delay config. Both key off
+`boot.resumeDevice`, which only omnibook sets (swap sized to RAM in
+`hosts/omnibook/hardware.nix`) — so on any other host this is all a no-op and
+idle-suspend stays plain `systemctl suspend`.
+
+The behaviour:
+
+- **Lid close or 15 min idle** → `systemctl suspend-then-hibernate`: sleeps
+  immediately (RAM suspend), then after `HibernateDelaySec` (30 min) still
+  suspended, wakes briefly to write RAM to swap and hibernate for real.
+- **On AC power**, hibernate is skipped — plain suspend instead, since there's
+  no point burning a resume-from-hibernate on something that's plugged in.
+  Lid switch uses logind's `HandleLidSwitchExternalPower`; the idle timer has
+  no such built-in, so it greps `/sys/class/power_supply/*/online` itself
+  before deciding.
+
+Tune the delay or add a battery-percentage cutoff in
+`systemd.sleep.settings.Sleep` (`hosts/omnibook/default.nix`).
+
+</details>
+
 ## ☁️ Cloud mounts (rclone)
 
 <details>
