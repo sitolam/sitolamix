@@ -936,6 +936,97 @@ always produce them. This is the model, not `ccl`.
 
 </details>
 
+## 🪟 Windows apps (WinApps)
+
+<details>
+<summary>Microsoft Office runs in a Windows VM and shows up as ordinary windows — Word is a launcher entry, <code>.docx</code> opens in it, and there is no second desktop to alt-tab into. <code>modules/services/winapps/</code> holds the whole thing.</summary>
+
+<br>
+
+**The VM does not run at boot.** That is deliberate: it costs ~4 GB of RAM and a
+steady slice of CPU, which on the laptop is a battery bill for something used a
+few times a week. Start it from `Mod+Space` → Windows → Start VM, or:
+
+```sh
+systemctl start docker-windows
+```
+
+The bar's Docker widget shows whether it is up and can stop it, but not start
+or restart it — NixOS runs the container with `--rm`, so a stopped container
+no longer exists for that button to act on, and its Restart just stops the VM
+too (the unit's main process exits the moment `docker restart` stops the
+container, so systemd tears it down right after). Start and restart both go
+through the menu.
+
+### First boot, once per machine
+
+Everything after `just rebuild` is unattended, but it is slow and it needs one
+interactive step at the end. In order:
+
+1. **Read your Windows password before you need it.** It was generated during
+   setup and you have never seen it:
+
+   ```sh
+   sops -d secrets/winapps.yaml
+   ```
+
+2. **Start the VM** — `Mod+Space` → Windows → Start VM, or
+   `systemctl start docker-windows`. Neither prompts for a password; a polkit
+   rule grants exactly `start` and `stop` on exactly this unit to `wheel`.
+
+3. **Wait 20–40 minutes**, watching <http://127.0.0.1:8006>. Windows installs
+   itself from a generated answer file, then Office 365 installs from
+   Microsoft's Deployment Tool. Nothing needs clicking during this.
+
+4. **Sign in to Office once.** In that same browser viewer, open Word and sign
+   in with your Microsoft 365 account. The activation lives in the VM's disk at
+   `/var/lib/winapps/storage` and survives every restart after this.
+
+   The guest itself is unactivated Windows — a Microsoft 365 sign-in licenses
+   Office, not Windows. Expect a desktop watermark and locked personalization
+   settings. RDP and Office both work fine regardless.
+
+5. **Launch Word from Linux.** It is a normal application now: hit `Mod+Space`,
+   type `word`, press enter. Double-clicking a `.docx` in Nautilus opens it too.
+   The VM must be running; if it is not, WinApps says so with a notification
+   rather than failing silently.
+
+If Office is missing when the install finishes, look for
+`C:\OfficeSetup\FAILED.txt` in the guest — the script writes it on both a failed
+download and a failed install. `C:\OEM\install.bat` is re-runnable by hand.
+
+### Day to day
+
+Start and stop from the Windows submenu. The applications themselves are
+ordinary launcher entries, so they are not repeated in that submenu — it owns
+the VM's lifecycle, nothing else:
+
+| Where | What is there |
+|---|---|
+| `Mod+Space` → Windows | Start VM, Stop VM, Full Desktop, Install Viewer, Shared Folder |
+| `Mod+Space` → type an app name | Word, Excel, PowerPoint, Outlook, OneNote |
+| Bar Docker widget | whether the VM is up, its ports, logs, and Stop |
+
+**Shared folder:** `~/Windows` on this side, `\\host.lan\Data` on the Windows
+side.
+
+**Adding an application** — add it to `services.winapps.apps` in the host file.
+The `id` must name a directory in WinApps' own list:
+
+```sh
+ls "$(nix build --no-link --print-out-paths 'github:winapps-org/winapps#winapps')/src/apps"
+```
+
+A wrong id fails the build rather than producing a launcher that does nothing —
+the entry's name, icon and MIME associations are read out of WinApps' own
+definition for that id at build time, so nothing is hand-maintained here.
+
+**Ports are loopback-only** (`127.0.0.1:3389` and `127.0.0.1:8006`). Do not drop
+those prefixes — the VM has an RDP host with a fixed password, and Docker's
+default would publish it on every network the laptop joins.
+
+</details>
+
 ## 📎 Attribution
 
 The HM + NixOS same-file mechanism (`home.extraOptions` + deferred module) and

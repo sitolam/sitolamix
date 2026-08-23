@@ -83,6 +83,16 @@
 
     helium.url = "github:FKouhai/helium2nix";
 
+    # winapps-org/winapps — runs a single Windows application over RDP in
+    # RemoteApp mode, so it paints as its own native window rather than inside a
+    # desktop. Not in nixpkgs. The flake exposes `packages` only (no NixOS
+    # module), so modules/services/winapps does all the wiring itself; the
+    # package's wrapper already carries FreeRDP 3.
+    winapps = {
+      url = "github:winapps-org/winapps";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     spicetify-nix = {
       url = "github:Gerg-L/spicetify-nix";
       inputs.nixpkgs.follows = "nixpkgs";
