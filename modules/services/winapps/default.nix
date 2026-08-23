@@ -33,11 +33,16 @@ in
 
     disk = lib.mkOption {
       type = lib.types.str;
-      default = "64G";
+      default = "32G";
       description = ''
-        Virtual disk size. Sparse — it does not consume this up front. 32G is
-        enough to install into and not enough to survive a year of Windows
-        updates.
+        Virtual disk size, and a ceiling rather than a reservation — the image
+        is sparse, so it only ever consumes what Windows has actually written.
+
+        32G installs Windows and Office comfortably and will get tight after a
+        year of updates. Raising it later is easy (dockur grows the disk on the
+        next boot); lowering it is not, and means deleting `stateDir/storage`
+        and reinstalling from scratch. omnibook is pinned higher in its host
+        file for exactly that reason.
       '';
     };
 
@@ -45,6 +50,49 @@ in
       type = lib.types.int;
       default = 4;
       description = "vCPUs handed to the guest.";
+    };
+
+    rdpScale = lib.mkOption {
+      type = lib.types.enum [
+        100
+        140
+        180
+      ];
+      default = 100;
+      description = ''
+        RemoteApp scaling, as a percentage. FreeRDP only accepts 100, 140 or
+        180, so this is an enum rather than a free number — WinApps would
+        otherwise silently round an arbitrary value to the nearest of the three.
+
+        Match it to the output scale the windows land on, or Windows renders at
+        1:1 and the text comes out tiny beside everything else: a niri scale of
+        1.75 wants 180, 1.5 wants 140, and an unscaled display wants 100.
+      '';
+    };
+
+    idleTimeout = lib.mkOption {
+      type = lib.types.int;
+      default = 15;
+      description = ''
+        Minutes with no RemoteApp session open before on-demand mode stops the
+        VM. Counted in consecutive one-minute checks rather than wall-clock, so
+        a suspended laptop does not wake up and immediately kill a VM you were
+        using.
+      '';
+    };
+
+    rdpFlags = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [ "/drive:home,/home/otis" ];
+      description = ''
+        Extra flags appended to every FreeRDP invocation.
+
+        The default maps the home directory into the session, so it shows up in
+        Windows Explorer under "This PC" as a redirected drive. That is a
+        per-session RDP redirection and has nothing to do with the container's
+        `/shared` bind mount (`sharedDir`), which is a separate always-present
+        network share.
+      '';
     };
 
     sharedDir = lib.mkOption {

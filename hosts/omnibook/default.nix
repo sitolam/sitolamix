@@ -59,7 +59,19 @@
   # On-demand Windows VM for Office (see modules/services/winapps). Not started
   # at boot by design — start it from dankMenu's Windows submenu. Defaults are
   # sized for this laptop; the VM is a real battery cost while running.
-  services.winapps.enable = true;
+  services.winapps = {
+    enable = true;
+    # This machine's VM already exists at 64G (installed before the default
+    # dropped to 32G). Shrinking would mean deleting stateDir/storage and
+    # reinstalling Windows and Office, and the image is sparse anyway — the
+    # number is a ceiling, not space consumed — so it is pinned rather than
+    # migrated.
+    disk = "64G";
+    # This panel runs at niri output scale 1.75; without a matching RDP scale
+    # Windows renders 1:1 and Office text comes out tiny next to everything
+    # else. FreeRDP only offers 100/140/180.
+    rdpScale = 180;
+  };
 
   # feature suites
   suites = {

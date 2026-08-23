@@ -1000,8 +1000,24 @@ the VM's lifecycle, nothing else:
 
 | Where | What is there |
 |---|---|
-| `Mod+Space` → Windows | Running/Stopped, Start VM, Stop VM, Full Desktop, Web Console, Shared Folder |
+| `Mod+Space` → Windows | Running/Stopped, Start VM, Stop VM, Full Desktop, Web Console, Shared Folder, Resource Usage, On-Demand |
 | `Mod+Space` → type an app name | Word, Excel, PowerPoint, Outlook, OneNote |
+
+**On-Demand** is a toggle. With it on, opening Word starts the VM and waits for
+it (with a notification, since a cold boot takes the better part of a minute),
+and the VM stops itself once no Office window has been open for
+`services.winapps.idleTimeout` minutes — 15 by default. With it off the VM is
+yours to start and stop from the two rows above; the idle watcher will not touch
+a VM you started by hand.
+
+Idle is counted in consecutive one-minute checks rather than wall-clock, so
+closing the lid for three hours does not mean the VM is killed the moment you
+open it again.
+
+**Resource Usage** opens `docker stats` in a terminal. It is not a row label
+because it cannot be: the menu tree is a static file, and only the
+`when`/`checked`/`disabled` conditions are evaluated when you open it — a live
+number in a label has nowhere to come from.
 
 **Full Desktop vs Web Console.** Full Desktop is the everyday one — the whole
 Windows desktop over RDP, fast and integrated. The Web Console is dockur's HTTP
@@ -1024,8 +1040,24 @@ WinApps never touches the VM's lifecycle. Stop it when you are done — that is
 what the menu row is for. On `gamingpc` (8 GB, 6 cores, wall power) leaving it
 running is fine.
 
-**Shared folder:** `~/Windows` on this side, `\\host.lan\Data` on the Windows
-side.
+**Your files, two ways.** The home directory is redirected into the RDP session
+itself (`services.winapps.rdpFlags`), so it appears in Windows Explorer under
+"This PC" as a drive whenever an app is open — nothing is copied, and it is not
+a network share. Separately, `~/Windows` is bind-mounted into the container and
+shows up as `\\host.lan\Data`; that one exists whether or not an app is running,
+which makes it the place to leave something for the VM to find on boot. It
+starts empty by design.
+
+**Scaling.** `services.winapps.rdpScale` must match the output scale the windows
+land on, or Windows renders 1:1 and Office text comes out tiny beside everything
+else. FreeRDP only accepts 100, 140 or 180; omnibook's panel is niri scale 1.75,
+so it is set to 180 in its host file.
+
+**Disk.** The default is 32G, and it is a ceiling rather than a reservation —
+the image is sparse and only consumes what Windows has written. Raising it later
+is easy (dockur grows the disk on the next boot); lowering it means deleting
+`/var/lib/winapps/storage` and reinstalling. omnibook is pinned at 64G because
+its VM was built before the default changed.
 
 **Adding an application** — add it to `services.winapps.apps` in the host file.
 The `id` must name a directory in WinApps' own list:
