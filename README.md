@@ -951,12 +951,8 @@ few times a week. Start it from `Mod+Space` → Windows → Start VM, or:
 systemctl start docker-windows
 ```
 
-The bar's Docker widget shows whether it is up and can stop it, but not start
-or restart it — NixOS runs the container with `--rm`, so a stopped container
-no longer exists for that button to act on, and its Restart just stops the VM
-too (the unit's main process exits the moment `docker restart` stops the
-container, so systemd tears it down right after). Start and restart both go
-through the menu.
+The submenu's first row is a readout: **Running** or **Stopped**, evaluated
+when you open the menu. Start and Stop grey out when they would be a no-op.
 
 ### First boot, once per machine
 
@@ -974,7 +970,8 @@ interactive step at the end. In order:
    `systemctl start docker-windows`. Neither prompts for a password; a polkit
    rule grants exactly `start` and `stop` on exactly this unit to `wheel`.
 
-3. **Wait 20–40 minutes**, watching <http://127.0.0.1:8006>. Windows installs
+3. **Wait 20–40 minutes**, watching the Web Console
+   (<http://127.0.0.1:8006>). Windows installs
    itself from a generated answer file, then Office 365 installs from
    Microsoft's Deployment Tool. Nothing needs clicking during this.
 
@@ -1003,9 +1000,29 @@ the VM's lifecycle, nothing else:
 
 | Where | What is there |
 |---|---|
-| `Mod+Space` → Windows | Start VM, Stop VM, Full Desktop, Install Viewer, Shared Folder |
+| `Mod+Space` → Windows | Running/Stopped, Start VM, Stop VM, Full Desktop, Web Console, Shared Folder |
 | `Mod+Space` → type an app name | Word, Excel, PowerPoint, Outlook, OneNote |
-| Bar Docker widget | whether the VM is up, its ports, logs, and Stop |
+
+**Full Desktop vs Web Console.** Full Desktop is the everyday one — the whole
+Windows desktop over RDP, fast and integrated. The Web Console is dockur's HTTP
+view of the guest's actual screen; it is slower and clunkier, and it is the only
+way in when RDP is not answering: during first boot, or afterwards if Windows
+breaks in a way that takes RDP down with it.
+
+There is no bar widget. `dockerManager` is installed but disabled
+(`modules/desktop/dms/plugins.nix`) — the VM is off most of the time, so a
+permanent widget would spend its life showing nothing.
+
+**Battery.** This is a full VM, not a container in the Linux sense: QEMU with
+KVM running a real Windows 11. Idle Windows is never really idle — Defender,
+Search indexing, and Update all tick over — so the host CPU never settles into
+its deep idle states, and the 4 GB is gone for as long as the VM is up. On the
+laptop, expect a noticeable dent in battery life. Nothing suspends it
+automatically: WinApps has an `AUTOPAUSE` feature, but it only works under its
+`libvirt` backend, and this setup uses `WAFLAVOR="manual"` precisely so that
+WinApps never touches the VM's lifecycle. Stop it when you are done — that is
+what the menu row is for. On `gamingpc` (8 GB, 6 cores, wall power) leaving it
+running is fine.
 
 **Shared folder:** `~/Windows` on this side, `\\host.lan\Data` on the Windows
 side.

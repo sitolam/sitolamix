@@ -212,9 +212,30 @@ let
     }
 
     # Windows — the VM is deliberately not running most of the time, so the
-    # first two rows are the primary lifecycle controls. `disabled` is a shell
-    # snippet the plugin evaluates while this submenu is open, so each row
-    # greys out when it would be a no-op.
+    # lifecycle controls come first. `when` / `checked` / `disabled` are shell
+    # snippets the plugin evaluates while this submenu is open, so all three
+    # rows below reflect the unit's state at the moment the menu is opened.
+    #
+    # Two mutually exclusive status rows rather than one row with `checked`:
+    # `checked` only appends a tick, so a single "Running" row reads as a claim
+    # rather than a reading when the VM is down. These say which it is. Both
+    # carry `disabled = "true"` because they are a readout, not a control —
+    # that greys them and makes them unclickable (a row with no action would
+    # otherwise be treated as an empty submenu to descend into).
+    {
+      id = "windows.status-up";
+      icon = "check_circle";
+      label = "Running";
+      when = "systemctl is-active --quiet docker-windows";
+      disabled = "true";
+    }
+    {
+      id = "windows.status-down";
+      icon = "radio_button_unchecked";
+      label = "Stopped";
+      when = "! systemctl is-active --quiet docker-windows";
+      disabled = "true";
+    }
     {
       id = "windows.start";
       icon = "play_arrow";
@@ -248,9 +269,17 @@ let
     {
       id = "windows.viewer";
       icon = "monitor";
-      label = "Install Viewer";
-      aliases = [ "console" ];
-      # The only way to watch the 20-40 minute first boot.
+      label = "Web Console";
+      aliases = [
+        "console"
+        "vnc"
+        "install"
+      ];
+      # dockurr/windows serves the guest's actual screen over HTTP. This is the
+      # only way in when RDP is not answering — during the 20-40 minute first
+      # boot, and afterwards if Windows breaks in a way that takes RDP with it.
+      # "Full Desktop" above is the everyday one: same desktop over RDP, which
+      # is far faster and properly integrated.
       target = "http://127.0.0.1:8006";
     }
     {
@@ -528,14 +557,14 @@ in
         # restart. It cannot *start* the VM — NixOS runs oci-containers with
         # `--rm`, so a stopped container no longer exists for the plugin's start
         # button to act on. Start lives in the dankMenu `windows` subtree below.
-        dockerManager = {
-          enable = true;
-          settings = {
-            # the plugin defaults to `alacritty --hold`, which is not installed here.
-            # Key name is `terminalApp` (DockerSettings.qml), not `terminalApplication`.
-            terminalApp = "ghostty -e";
-          };
-        };
+        # LuckShiba/DmsDockerManager, deliberately left off. Its only surface is
+        # a dankbar widget, and the bar is not where this belongs: the VM is
+        # off most of the time, so a permanent widget spends its life showing
+        # nothing. The Windows submenu below carries the status line instead,
+        # where it is read at the moment it is wanted. Re-enable here and add
+        # the id to rightWidgets in ./bar.nix if the general Docker view (all
+        # containers, compose projects, logs, shells) ever becomes useful.
+        dockerManager.enable = false;
         ambientSound.enable = true; # hthienloc/dms-ambient-sound (bar widget — no control-center variant)
         dankBatteryAlerts.enable = true; # AvengeMedia DankBatteryAlerts
         # notsopreety/batteryOSD — not in dms-plugin-registry, so pinned as its
