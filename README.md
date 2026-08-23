@@ -936,6 +936,54 @@ always produce them. This is the model, not `ccl`.
 
 </details>
 
+## 🪟 Windows apps (WinApps)
+
+<details>
+<summary>Microsoft Office runs in a Windows VM and shows up as ordinary windows — Word is a launcher entry, <code>.docx</code> opens in it, and there is no second desktop to alt-tab into. <code>modules/services/winapps/</code> holds the whole thing.</summary>
+
+<br>
+
+**The VM does not run at boot.** That is deliberate: it costs ~4 GB of RAM and a
+steady slice of CPU, which on the laptop is a battery bill for something used a
+few times a week. Start it from `Mod+Space` → Windows → Start VM, or:
+
+```sh
+systemctl start docker-windows
+```
+
+The bar's Docker widget shows whether it is up. It can stop and restart the VM
+but not start it — NixOS runs the container with `--rm`, so a stopped container
+no longer exists for that button to act on. Start from the menu.
+
+**First boot takes 20–40 minutes** and is unattended: Windows installs itself,
+then Office 365 installs from Microsoft's Deployment Tool. Watch it at
+<http://127.0.0.1:8006>. When it settles, open Word inside that viewer once and
+sign in with your Microsoft 365 account — the activation lives in the VM's disk
+at `/var/lib/winapps/storage` and survives restarts.
+
+If Office is missing afterwards, look for `C:\OfficeSetup\FAILED.txt` in the
+guest; `C:\OEM\install.bat` is re-runnable by hand.
+
+**Shared folder:** `~/Windows` on this side, `\\host.lan\Data` on the Windows
+side.
+
+**Adding an application** — add it to `services.winapps.apps` in the host file.
+The `id` must name a directory in WinApps' own list:
+
+```sh
+ls "$(nix build --no-link --print-out-paths 'github:winapps-org/winapps#winapps')/src/apps"
+```
+
+A wrong id fails the build rather than producing a launcher that does nothing.
+Both a desktop entry and a dankMenu row come from the same list, so they cannot
+drift apart.
+
+**Ports are loopback-only** (`127.0.0.1:3389` and `127.0.0.1:8006`). Do not drop
+those prefixes — the VM has an RDP host with a fixed password, and Docker's
+default would publish it on every network the laptop joins.
+
+</details>
+
 ## 📎 Attribution
 
 The HM + NixOS same-file mechanism (`home.extraOptions` + deferred module) and
