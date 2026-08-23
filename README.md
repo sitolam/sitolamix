@@ -981,8 +981,9 @@ few times a week. Start it from `Mod+Space` → Windows → Start VM, or:
 systemctl start docker-windows
 ```
 
-The submenu's first row is a readout: **Running** or **Stopped**, evaluated
-when you open the menu. Start and Stop grey out when they would be a no-op.
+The submenu's first row is a live readout — `Stopped`, or
+`Running · CPU 4% · RAM 2.1GiB` — sampled when you open the menu. Start and Stop
+are one button: only whichever one currently does something is on screen.
 
 ### First boot, once per machine
 
@@ -1030,7 +1031,7 @@ the VM's lifecycle, nothing else:
 
 | Where | What is there |
 |---|---|
-| `Mod+Space` → Windows | Running/Stopped, Start VM, Stop VM, Full Desktop, Web Console, Shared Folder, Resource Usage, On-Demand |
+| `Mod+Space` → Windows | Status, Start **or** Stop VM, On-Demand, Full Desktop, Web Console |
 | `Mod+Space` → type an app name | Word, Excel, PowerPoint, Outlook, OneNote |
 
 **On-Demand** is a toggle. With it on, opening Word starts the VM and waits for
@@ -1044,10 +1045,14 @@ Idle is counted in consecutive one-minute checks rather than wall-clock, so
 closing the lid for three hours does not mean the VM is killed the moment you
 open it again.
 
-**Resource Usage** opens `docker stats` in a terminal. It is not a row label
-because it cannot be: the menu tree is a static file, and only the
-`when`/`checked`/`disabled` conditions are evaluated when you open it — a live
-number in a label has nowhere to come from.
+The figures come from `labelCmd`, a condition kind added to
+[dankMenu](https://github.com/sitolam/dms-plugins) for this: unlike
+`when`/`checked`/`disabled`, which are judged by exit status, its stdout replaces
+the row's label. That is the only way to get a changing number into a menu whose
+tree is a static file.
+
+All of the VM's notifications are **low urgency** — starting, up, stopping, off.
+They are status, not decisions, so they should not interrupt a fullscreen window.
 
 **Full Desktop vs Web Console.** Full Desktop is the everyday one — the whole
 Windows desktop over RDP, fast and integrated. The Web Console is dockur's HTTP
@@ -1070,13 +1075,12 @@ WinApps never touches the VM's lifecycle. Stop it when you are done — that is
 what the menu row is for. On `gamingpc` (8 GB, 6 cores, wall power) leaving it
 running is fine.
 
-**Your files, two ways.** The home directory is redirected into the RDP session
-itself (`services.winapps.rdpFlags`), so it appears in Windows Explorer under
-"This PC" as a drive whenever an app is open — nothing is copied, and it is not
-a network share. Separately, `~/Windows` is bind-mounted into the container and
-shows up as `\\host.lan\Data`; that one exists whether or not an app is running,
-which makes it the place to leave something for the VM to find on boot. It
-starts empty by design.
+**Your files.** The home directory is redirected into the RDP session
+(`services.winapps.rdpFlags`), so it appears in Windows Explorer under "This PC"
+as a drive whenever an app is open. Nothing is copied and there is no share to
+mount. There used to be a second path in — a `~/Windows` folder bind-mounted as
+`\\host.lan\Data` — and it was removed: one way in is enough, and two only
+raised the question of which folder a given file was supposed to be in.
 
 **Scaling.** `services.winapps.rdpScale` must match the output scale the windows
 land on, or Windows renders 1:1 and Office text comes out tiny beside everything

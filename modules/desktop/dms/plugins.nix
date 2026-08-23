@@ -211,60 +211,63 @@ let
       action = "dms ipc call night toggle";
     }
 
-    # Windows — the VM is deliberately not running most of the time, so the
-    # lifecycle controls come first. `when` / `checked` / `disabled` are shell
-    # snippets the plugin evaluates while this submenu is open, so all three
-    # rows below reflect the unit's state at the moment the menu is opened.
-    #
-    # Two mutually exclusive status rows rather than one row with `checked`:
-    # `checked` only appends a tick, so a single "Running" row reads as a claim
-    # rather than a reading when the VM is down. These say which it is. Both
-    # carry `disabled = "true"` because they are a readout, not a control —
-    # that greys them and makes them unclickable (a row with no action would
-    # otherwise be treated as an empty submenu to descend into).
+    # Windows — the VM is deliberately not running most of the time. `when` /
+    # `checked` / `disabled` / `labelCmd` are shell snippets the plugin
+    # evaluates when this submenu opens, so every row below reads the unit's
+    # real state rather than describing it.
     {
-      id = "windows.status-up";
-      icon = "check_circle";
-      label = "Running";
-      when = "systemctl is-active --quiet docker-windows";
+      id = "windows.status";
+      icon = "memory";
+      label = "Status";
+      # labelCmd replaces the label with this snippet's output — the only way
+      # to show a live figure, since the menu tree itself is a static file.
+      # Reads "Stopped", or "Running · CPU 4% · RAM 2.1GiB / 4GiB". A snapshot
+      # taken when the menu opens, not a running meter.
+      labelCmd = "winapps-status";
+      # A readout, not a control. Without this a row with no action would be
+      # treated as an empty submenu to descend into.
       disabled = "true";
     }
-    {
-      id = "windows.status-down";
-      icon = "radio_button_unchecked";
-      label = "Stopped";
-      when = "! systemctl is-active --quiet docker-windows";
-      disabled = "true";
-    }
+    # One button, two definitions: `when` makes them mutually exclusive, so
+    # exactly one is ever on screen and it is always the one that does
+    # something. Both go through winapps-vm rather than systemctl directly, so
+    # a manual start announces itself the same way an on-demand one does.
     {
       id = "windows.start";
       icon = "play_arrow";
       label = "Start VM";
       aliases = [ "boot" ];
-      disabled = "systemctl is-active --quiet docker-windows";
-      action = "systemctl start docker-windows";
+      when = "! systemctl is-active --quiet docker-windows";
+      action = "winapps-vm start";
     }
     {
       id = "windows.stop";
       icon = "stop";
       label = "Stop VM";
       aliases = [ "shutdown" ];
-      disabled = "! systemctl is-active --quiet docker-windows";
-      # Windows gets 120s to shut down cleanly (see ../../services/winapps),
-      # so this row can take a while to complete. It does not block the menu.
-      action = "systemctl stop docker-windows";
+      when = "systemctl is-active --quiet docker-windows";
+      # Windows gets 120s to shut down cleanly (see ../../services/winapps).
+      action = "winapps-vm stop";
     }
-    # No per-application rows here on purpose. Every entry in
-    # services.winapps.apps already becomes a real desktop entry (see
-    # ../../services/winapps/home.nix), so Word and the rest show up in the
-    # Apps provider like any other application — and listing them again here
-    # meant every one of them appeared twice in the menu. This submenu owns the
-    # VM's lifecycle; the applications belong with the applications.
+    {
+      id = "windows.on-demand";
+      icon = "auto_mode";
+      label = "On-Demand";
+      aliases = [
+        "auto"
+        "automatic"
+      ];
+      # When on, opening Word starts the VM and waits for it, and the VM shuts
+      # itself down after services.winapps.idleTimeout minutes with no
+      # RemoteApp session open. When off, the VM is yours to start and stop.
+      checked = "winapps-on-demand status";
+      action = "winapps-on-demand toggle";
+    }
     {
       id = "windows.desktop";
       icon = "desktop_windows";
       label = "Full Desktop";
-      action = "winapps windows";
+      action = "winapps-run windows";
     }
     {
       id = "windows.viewer";
@@ -281,45 +284,6 @@ let
       # "Full Desktop" above is the everyday one: same desktop over RDP, which
       # is far faster and properly integrated.
       target = "http://127.0.0.1:8006";
-    }
-    {
-      id = "windows.shared";
-      icon = "folder_shared";
-      label = "Shared Folder";
-      # Appears inside Windows as \\host.lan\Data. Separate from the home
-      # directory, which is redirected into the RDP session itself (see
-      # services.winapps.rdpFlags) and shows up under "This PC".
-      action = "nautilus ${winappsCfg.sharedDir}";
-    }
-    {
-      id = "windows.usage";
-      icon = "monitoring";
-      label = "Resource Usage";
-      aliases = [
-        "cpu"
-        "ram"
-        "stats"
-      ];
-      # Live CPU and memory can't go in a row label — the menu tree is a static
-      # file, and only `when`/`checked`/`disabled` are evaluated at open time.
-      # So this opens the real thing instead, which also keeps updating while
-      # you watch it.
-      disabled = "! systemctl is-active --quiet docker-windows";
-      action = "ghostty -e docker stats windows";
-    }
-    {
-      id = "windows.on-demand";
-      icon = "auto_mode";
-      label = "On-Demand";
-      aliases = [
-        "auto"
-        "automatic"
-      ];
-      # When on, opening Word starts the VM and waits for it, and the VM shuts
-      # itself down after services.winapps.idleTimeout minutes with no
-      # RemoteApp session open. When off, the VM is yours to start and stop.
-      checked = "winapps-on-demand status";
-      action = "winapps-on-demand toggle";
     }
 
     # Style

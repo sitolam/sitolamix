@@ -88,17 +88,12 @@ in
         Extra flags appended to every FreeRDP invocation.
 
         The default maps the home directory into the session, so it shows up in
-        Windows Explorer under "This PC" as a redirected drive. That is a
-        per-session RDP redirection and has nothing to do with the container's
-        `/shared` bind mount (`sharedDir`), which is a separate always-present
-        network share.
+        Windows Explorer under "This PC" as a redirected drive. This is how the
+        guest reaches your files: a per-session RDP redirection, nothing copied
+        and no share to mount. There is deliberately no container-side bind
+        mount alongside it — one path in is enough, and two invited the question
+        of which one a given file was supposed to be in.
       '';
-    };
-
-    sharedDir = lib.mkOption {
-      type = lib.types.str;
-      default = "/home/otis/Windows";
-      description = "Host directory exposed inside Windows as `\\\\host.lan\\Data`.";
     };
 
     stateDir = lib.mkOption {
@@ -176,7 +171,6 @@ in
       volumes = [
         "${cfg.stateDir}/storage:/storage"
         "${cfg.stateDir}/oem:/oem"
-        "${cfg.sharedDir}:/shared"
       ];
 
       # Loopback prefixes are load-bearing: without them Docker publishes RDP on
@@ -209,7 +203,6 @@ in
       # needs to open this directory.
       "d ${cfg.stateDir}/storage 0700 root root -"
       "d ${cfg.stateDir}/oem 0755 root root -"
-      "d ${cfg.sharedDir} 0755 otis users -"
     ];
 
     # Starting and stopping a *system* unit needs root, and a menu entry that

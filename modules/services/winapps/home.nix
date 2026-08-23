@@ -30,7 +30,7 @@ let
     set -u
 
     if [ -e ${autoFlag} ] && ! ${pkgs.systemd}/bin/systemctl is-active --quiet docker-windows; then
-      ${pkgs.libnotify}/bin/notify-send --app-name="Windows" --icon=computer \
+      ${pkgs.libnotify}/bin/notify-send --urgency=low --app-name="Windows" --icon=computer \
         "Starting Windows" "The VM is off. $1 will open once it is up."
 
       if ! ${pkgs.systemd}/bin/systemctl start docker-windows; then
@@ -71,12 +71,12 @@ let
       on)
         ${pkgs.coreutils}/bin/mkdir -p "$(dirname "$flag")"
         ${pkgs.coreutils}/bin/touch "$flag"
-        ${pkgs.libnotify}/bin/notify-send --app-name="Windows" --icon=computer \
+        ${pkgs.libnotify}/bin/notify-send --urgency=low --app-name="Windows" --icon=computer \
           "On-demand enabled" "The VM starts when you open an app and stops after ${toString cfg.idleTimeout} min idle."
         ;;
       off)
         ${pkgs.coreutils}/bin/rm -f "$flag"
-        ${pkgs.libnotify}/bin/notify-send --app-name="Windows" --icon=computer \
+        ${pkgs.libnotify}/bin/notify-send --urgency=low --app-name="Windows" --icon=computer \
           "On-demand disabled" "Start and stop the VM yourself from the Windows menu."
         ;;
       toggle)
@@ -133,11 +133,86 @@ let
     echo "$ticks" > "$counter"
 
     if [ "$ticks" -ge ${toString cfg.idleTimeout} ]; then
-      ${pkgs.libnotify}/bin/notify-send --app-name="Windows" --icon=computer \
+      ${pkgs.libnotify}/bin/notify-send --urgency=low --app-name="Windows" --icon=computer \
         "Stopping Windows" "Idle for ${toString cfg.idleTimeout} minutes."
       ${pkgs.systemd}/bin/systemctl stop docker-windows
       ${pkgs.coreutils}/bin/rm -f "$counter"
     fi
+  '';
+
+  # ── winapps-vm ────────────────────────────────────────────────────────────
+  # What the menu's single start/stop row calls. Exists so that a manual
+  # start or stop announces itself the same way an on-demand one does —
+  # otherwise the VM coming up would be silent when you asked for it and noisy
+  # when it asked itself.
+  #
+  # All notifications here are low urgency on purpose: this is status, not
+  # something needing a decision, and it should never interrupt a fullscreen
+  # window or survive in a do-not-disturb queue.
+  winapps-vm = pkgs.writeShellScriptBin "winapps-vm" ''
+    set -u
+    notify() {
+      ${pkgs.libnotify}/bin/notify-send --urgency=low --app-name="Windows" \
+        --icon=computer "$1" "$2"
+    }
+
+    case "''${1:-}" in
+      start)
+        notify "Starting Windows" "The VM is booting."
+        if ${pkgs.systemd}/bin/systemctl start docker-windows; then
+          notify "Windows is up" "Office apps will open now."
+        else
+          ${pkgs.libnotify}/bin/notify-send --urgency=critical --app-name="Windows" \
+            --icon=dialog-error "Windows failed to start" \
+            "See: journalctl -u docker-windows"
+          exit 1
+        fi
+        ;;
+      stop)
+        notify "Stopping Windows" "Giving it time to shut down cleanly."
+        ${pkgs.systemd}/bin/systemctl stop docker-windows
+        notify "Windows is off" ""
+        ;;
+      *)
+        echo "usage: winapps-vm [start|stop]" >&2
+        exit 2
+        ;;
+    esac
+  '';
+
+  # ── winapps-status ────────────────────────────────────────────────────────
+  # One line for the menu's `labelCmd`. Reads "Stopped", or
+  # "Running  ·  CPU 4%  ·  RAM 2.1GiB / 4GiB" when it is up.
+  #
+  # `docker stats --no-stream` is a single sample rather than a stream, which is
+  # what a menu row wants — but it still costs a moment, so it only runs when
+  # the VM is actually up.
+  winapps-status = pkgs.writeShellScriptBin "winapps-status" ''
+    set -u
+
+    if ! ${pkgs.systemd}/bin/systemctl is-active --quiet docker-windows; then
+      echo "Stopped"
+      exit 0
+    fi
+
+    stats=$(${pkgs.docker}/bin/docker stats --no-stream \
+      --format '{{.CPUPerc}}\t{{.MemUsage}}' windows 2>/dev/null) || stats=""
+
+    if [ -z "$stats" ]; then
+      # Up, but the container is not answering yet — during boot, or while it
+      # is being torn down.
+      echo "Running  ·  starting up"
+      exit 0
+    fi
+
+    cpu=''${stats%%	*}
+    mem=''${stats#*	}
+    # docker reports MemUsage as "used / limit", but no memory limit is set on
+    # this container, so the limit half is the host's total RAM — nothing to do
+    # with the VM's own RAM_SIZE, and actively misleading next to it. Keep the
+    # used half only.
+    mem=''${mem%% /*}
+    echo "Running  ·  CPU $cpu  ·  RAM $mem"
   '';
 
   # WinApps ships one directory per supported application, each with an `info`
@@ -252,6 +327,8 @@ in
         winappsPkg
         winapps-run
         winapps-on-demand
+        winapps-vm
+        winapps-status
       ];
 
       # Ticks once a minute; `idleTimeout` counts those ticks, so the unit of
