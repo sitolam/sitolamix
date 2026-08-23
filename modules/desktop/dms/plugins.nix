@@ -52,6 +52,8 @@ let
   # ordered JSONC text preserves it.
   flakeDir = "/home/otis/sitolamix";
 
+  winappsCfg = config.services.winapps;
+
   dankMenuRows = [
     # Root
     {
@@ -73,6 +75,20 @@ let
       id = "trigger";
       icon = "bolt";
       label = "Trigger";
+    }
+    {
+      id = "windows";
+      icon = "desktop_windows";
+      label = "Windows";
+      aliases = [
+        "office"
+        "word"
+        "excel"
+        "vm"
+      ];
+      # The whole subtree disappears on a host without the VM, rather than
+      # offering rows that would fail.
+      when = if winappsCfg.enable then "true" else "false";
     }
     {
       id = "style";
@@ -193,6 +209,61 @@ let
       aliases = [ "nightlight" ];
       checked = "dms ipc call night status | grep -q enabled";
       action = "dms ipc call night toggle";
+    }
+
+    # Windows — the VM is deliberately not running most of the time, so the
+    # first two rows are the primary lifecycle controls. `disabled` is a shell
+    # snippet the plugin evaluates while this submenu is open, so each row
+    # greys out when it would be a no-op.
+    {
+      id = "windows.start";
+      icon = "play_arrow";
+      label = "Start VM";
+      aliases = [ "boot" ];
+      disabled = "systemctl is-active --quiet docker-windows";
+      action = "systemctl start docker-windows";
+    }
+    {
+      id = "windows.stop";
+      icon = "stop";
+      label = "Stop VM";
+      aliases = [ "shutdown" ];
+      disabled = "! systemctl is-active --quiet docker-windows";
+      # Windows gets 120s to shut down cleanly (see ../../services/winapps),
+      # so this row can take a while to complete. It does not block the menu.
+      action = "systemctl stop docker-windows";
+    }
+  ]
+  ++ map (app: {
+    id = "windows.${app.id}";
+    icon = app.icon;
+    label = app.label;
+    # Launching while the VM is down fails with a desktop notification rather
+    # than silently, so these are not disabled — starting the VM first is a
+    # reasonable thing to forget, and the error says so.
+    action = "winapps ${app.id}";
+  }) winappsCfg.apps
+  ++ [
+    {
+      id = "windows.desktop";
+      icon = "desktop_windows";
+      label = "Full Desktop";
+      action = "winapps windows";
+    }
+    {
+      id = "windows.viewer";
+      icon = "monitor";
+      label = "Install Viewer";
+      aliases = [ "console" ];
+      # The only way to watch the 20-40 minute first boot.
+      target = "http://127.0.0.1:8006";
+    }
+    {
+      id = "windows.shared";
+      icon = "folder_shared";
+      label = "Shared Folder";
+      # Appears inside Windows as \\host.lan\Data.
+      action = "nautilus ${winappsCfg.sharedDir}";
     }
 
     # Style
@@ -457,6 +528,19 @@ in
           settings.menuPath = "${dankMenuFile}";
         };
         usbManager.enable = true; # NordicsSys/dms-usb-manager
+        # LuckShiba/DmsDockerManager, via dms-plugin-registry. The status half
+        # of the Windows VM controls: running/stopped, ports, logs, stop and
+        # restart. It cannot *start* the VM — NixOS runs oci-containers with
+        # `--rm`, so a stopped container no longer exists for the plugin's start
+        # button to act on. Start lives in the dankMenu `windows` subtree below.
+        dockerManager = {
+          enable = true;
+          settings = {
+            # the plugin defaults to `alacritty --hold`, which is not installed here.
+            # Key name is `terminalApp` (DockerSettings.qml), not `terminalApplication`.
+            terminalApp = "ghostty -e";
+          };
+        };
         ambientSound.enable = true; # hthienloc/dms-ambient-sound (bar widget — no control-center variant)
         dankBatteryAlerts.enable = true; # AvengeMedia DankBatteryAlerts
         # notsopreety/batteryOSD — not in dms-plugin-registry, so pinned as its

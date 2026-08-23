@@ -89,6 +89,14 @@
               id = "usbManager";
               enabled = true;
             }
+            # Windows VM status (see ../../services/winapps). Shows the container
+            # while it runs, with stop/restart/logs; it cannot *start* the VM,
+            # because NixOS runs the container with `--rm` and a stopped container
+            # no longer exists. Start lives in dankMenu's Windows submenu.
+            {
+              id = "dockerManager";
+              enabled = true;
+            }
             # webcam mouth-closure tracker (local plugin, see plugins.nix).
             # left click = popout, middle = start/stop, right = mute alerts.
             {
