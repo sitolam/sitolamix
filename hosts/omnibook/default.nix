@@ -56,6 +56,8 @@
     remotes.gdrive_personal = { };
   };
 
+  services.winapps.enable = true;
+
   # feature suites
   suites = {
     core.enable = true;
