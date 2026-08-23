@@ -12,7 +12,7 @@ in
     enable = lib.mkEnableOption ''
       an on-demand Windows VM (dockurr/windows) whose applications are launched
       as native windows over RDP. Deliberately not started at boot — see the
-      `windows` subtree in ../desktop/dms/plugins.nix for the controls
+      `windows` subtree in ../../desktop/dms/plugins.nix for the controls
     '';
 
     version = lib.mkOption {
