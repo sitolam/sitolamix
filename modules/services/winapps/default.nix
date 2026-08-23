@@ -177,7 +177,7 @@ in
 
     # Longer than the container's own stop-timeout, so systemd does not SIGKILL
     # the container mid-shutdown and corrupt the guest filesystem.
-    systemd.services.docker-windows.serviceConfig.TimeoutStopSec = 150;
+    systemd.services.docker-windows.serviceConfig.TimeoutStopSec = lib.mkForce 150;
 
     systemd.tmpfiles.rules = [
       "d ${cfg.stateDir} 0755 root root -"

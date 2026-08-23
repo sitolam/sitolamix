@@ -56,6 +56,9 @@
     remotes.gdrive_personal = { };
   };
 
+  # On-demand Windows VM for Office (see modules/services/winapps). Not started
+  # at boot by design — start it from dankMenu's Windows submenu. Defaults are
+  # sized for this laptop; the VM is a real battery cost while running.
   services.winapps.enable = true;
 
   # feature suites

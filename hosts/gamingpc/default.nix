@@ -24,6 +24,14 @@
     remotes.gdrive_personal = { };
   };
 
+  # On-demand Windows VM for Office (see modules/services/winapps). Same VM as
+  # on omnibook, given the headroom this machine has and the laptop does not.
+  services.winapps = {
+    enable = true;
+    ram = "8G";
+    cores = 6;
+  };
+
   # feature suites
   suites = {
     core.enable = true;
