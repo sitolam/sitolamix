@@ -61,50 +61,23 @@ in
 
     apps = lib.mkOption {
       description = ''
-        Windows applications to surface. `id` must name a directory under
-        `<winapps>/src/apps`; `label` and `icon` are used for the dankMenu rows
-        (icon names are Material Symbols, as everywhere else in DMS).
+        Windows applications to surface as desktop entries. Each id must name a
+        directory under `<winapps>/src/apps`; the entry's name, icon and MIME
+        associations are read out of that directory at build time, so a wrong id
+        fails the build rather than producing a launcher that does nothing.
 
         The `-o365` ids target `C:\Program Files\Microsoft Office\root\Office16`,
         which is where the Office Deployment Tool installs. The unsuffixed ids
         target MSI install paths and will not resolve here.
       '';
+      type = lib.types.listOf lib.types.str;
       default = [
-        {
-          id = "word-o365";
-          label = "Word";
-          icon = "description";
-        }
-        {
-          id = "excel-o365";
-          label = "Excel";
-          icon = "table";
-        }
-        {
-          id = "powerpoint-o365";
-          label = "PowerPoint";
-          icon = "slideshow";
-        }
-        {
-          id = "outlook-o365";
-          label = "Outlook";
-          icon = "mail";
-        }
-        {
-          id = "onenote-o365";
-          label = "OneNote";
-          icon = "edit_note";
-        }
+        "word-o365"
+        "excel-o365"
+        "powerpoint-o365"
+        "outlook-o365"
+        "onenote-o365"
       ];
-      type = lib.types.listOf (
-        lib.types.submodule {
-          options = {
-            id = lib.mkOption { type = lib.types.str; };
-            label = lib.mkOption { type = lib.types.str; };
-            icon = lib.mkOption { type = lib.types.str; };
-          };
-        }
-      );
     };
   };
 

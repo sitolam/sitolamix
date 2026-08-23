@@ -958,18 +958,54 @@ too (the unit's main process exits the moment `docker restart` stops the
 container, so systemd tears it down right after). Start and restart both go
 through the menu.
 
-**First boot takes 20–40 minutes** and is unattended: Windows installs itself,
-then Office 365 installs from Microsoft's Deployment Tool. Watch it at
-<http://127.0.0.1:8006>. The guest is unactivated Windows (a Microsoft 365
-sign-in licenses Office, not Windows) — expect a watermark and locked
-personalization settings; RDP and Office both work fine regardless. Read your
-generated Windows account password with `sops -d secrets/winapps.yaml` before
-you need it, then open Word inside that viewer once and sign in with your
-Microsoft 365 account — the activation lives in the VM's disk at
-`/var/lib/winapps/storage` and survives restarts.
+### First boot, once per machine
 
-If Office is missing afterwards, look for `C:\OfficeSetup\FAILED.txt` in the
-guest; `C:\OEM\install.bat` is re-runnable by hand.
+Everything after `just rebuild` is unattended, but it is slow and it needs one
+interactive step at the end. In order:
+
+1. **Read your Windows password before you need it.** It was generated during
+   setup and you have never seen it:
+
+   ```sh
+   sops -d secrets/winapps.yaml
+   ```
+
+2. **Start the VM** — `Mod+Space` → Windows → Start VM, or
+   `systemctl start docker-windows`. Neither prompts for a password; a polkit
+   rule grants exactly `start` and `stop` on exactly this unit to `wheel`.
+
+3. **Wait 20–40 minutes**, watching <http://127.0.0.1:8006>. Windows installs
+   itself from a generated answer file, then Office 365 installs from
+   Microsoft's Deployment Tool. Nothing needs clicking during this.
+
+4. **Sign in to Office once.** In that same browser viewer, open Word and sign
+   in with your Microsoft 365 account. The activation lives in the VM's disk at
+   `/var/lib/winapps/storage` and survives every restart after this.
+
+   The guest itself is unactivated Windows — a Microsoft 365 sign-in licenses
+   Office, not Windows. Expect a desktop watermark and locked personalization
+   settings. RDP and Office both work fine regardless.
+
+5. **Launch Word from Linux.** It is a normal application now: hit `Mod+Space`,
+   type `word`, press enter. Double-clicking a `.docx` in Nautilus opens it too.
+   The VM must be running; if it is not, WinApps says so with a notification
+   rather than failing silently.
+
+If Office is missing when the install finishes, look for
+`C:\OfficeSetup\FAILED.txt` in the guest — the script writes it on both a failed
+download and a failed install. `C:\OEM\install.bat` is re-runnable by hand.
+
+### Day to day
+
+Start and stop from the Windows submenu. The applications themselves are
+ordinary launcher entries, so they are not repeated in that submenu — it owns
+the VM's lifecycle, nothing else:
+
+| Where | What is there |
+|---|---|
+| `Mod+Space` → Windows | Start VM, Stop VM, Full Desktop, Install Viewer, Shared Folder |
+| `Mod+Space` → type an app name | Word, Excel, PowerPoint, Outlook, OneNote |
+| Bar Docker widget | whether the VM is up, its ports, logs, and Stop |
 
 **Shared folder:** `~/Windows` on this side, `\\host.lan\Data` on the Windows
 side.
@@ -981,9 +1017,9 @@ The `id` must name a directory in WinApps' own list:
 ls "$(nix build --no-link --print-out-paths 'github:winapps-org/winapps#winapps')/src/apps"
 ```
 
-A wrong id fails the build rather than producing a launcher that does nothing.
-Both a desktop entry and a dankMenu row come from the same list, so they cannot
-drift apart.
+A wrong id fails the build rather than producing a launcher that does nothing —
+the entry's name, icon and MIME associations are read out of WinApps' own
+definition for that id at build time, so nothing is hand-maintained here.
 
 **Ports are loopback-only** (`127.0.0.1:3389` and `127.0.0.1:8006`). Do not drop
 those prefixes — the VM has an RDP host with a fixed password, and Docker's

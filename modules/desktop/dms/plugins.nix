@@ -233,17 +233,12 @@ let
       # so this row can take a while to complete. It does not block the menu.
       action = "systemctl stop docker-windows";
     }
-  ]
-  ++ map (app: {
-    id = "windows.${app.id}";
-    icon = app.icon;
-    label = app.label;
-    # Launching while the VM is down fails with a desktop notification rather
-    # than silently, so these are not disabled — starting the VM first is a
-    # reasonable thing to forget, and the error says so.
-    action = "winapps ${app.id}";
-  }) winappsCfg.apps
-  ++ [
+    # No per-application rows here on purpose. Every entry in
+    # services.winapps.apps already becomes a real desktop entry (see
+    # ../../services/winapps/home.nix), so Word and the rest show up in the
+    # Apps provider like any other application — and listing them again here
+    # meant every one of them appeared twice in the menu. This submenu owns the
+    # VM's lifecycle; the applications belong with the applications.
     {
       id = "windows.desktop";
       icon = "desktop_windows";

@@ -10,7 +10,7 @@ let
 
   winappsPkg = inputs.winapps.packages.${pkgs.stdenv.hostPlatform.system}.winapps;
 
-  appIds = map (a: a.id) cfg.apps;
+  appIds = cfg.apps;
 
   # WinApps ships one directory per supported application, each with an `info`
   # file (a shell fragment defining NAME, FULL_NAME, WIN_EXECUTABLE, CATEGORIES,
