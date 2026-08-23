@@ -77,4 +77,20 @@
   # Monitors are managed by DMS (settings UI -> ~/.config/niri/dms/outputs.kdl,
   # included via desktop.dms). Don't also declare outputs here — a second
   # definition in hm.kdl conflicts and DMS's changes wouldn't apply.
+
+  # Lid close and idle-suspend both hand off to suspend-then-hibernate (see
+  # modules/desktop/niri/idle.nix for the idle-timer side, gated on
+  # boot.resumeDevice which only this host sets). Laptop-only: gamingpc has
+  # no lid and no resume device, so none of this applies there.
+  #
+  # Sleeps immediately (RAM suspend, near-zero latency to resume), then
+  # after HibernateDelaySec of staying suspended, systemd wakes it briefly
+  # to write RAM out to swap and hibernate for real — so a closed lid on
+  # battery still only costs real power for 30 min before it's safe to
+  # unplug the charger entirely.
+  services.logind.settings.Login = {
+    HandleLidSwitch = "suspend-then-hibernate";
+    HandleLidSwitchExternalPower = "suspend-then-hibernate";
+  };
+  systemd.sleep.settings.Sleep.HibernateDelaySec = "30min";
 }

@@ -1,4 +1,11 @@
 { config, lib, ... }:
+let
+  # Only omnibook has swap sized and boot.resumeDevice set for hibernation
+  # (see hosts/omnibook/hardware.nix); gamingpc has no resume device, so
+  # this stays plain suspend there automatically.
+  hasHibernate = config.boot.resumeDevice != "";
+  sleepAction = if hasHibernate then "suspend-then-hibernate" else "suspend";
+in
 {
   config = lib.mkIf config.desktop.niri.enable {
     # HM function: needs home-manager's `config` (niri package) and `pkgs`.
@@ -45,9 +52,10 @@
               resumeCommand = "${niri} msg action power-on-monitors";
             }
             {
-              # 15 min: suspend.
+              # 15 min: suspend (suspend-then-hibernate on hosts with a
+              # resume device — see `hasHibernate` above).
               timeout = 900;
-              command = "${systemctl} suspend";
+              command = "${systemctl} ${sleepAction}";
             }
           ];
 
