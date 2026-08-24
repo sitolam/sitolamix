@@ -25,6 +25,27 @@
     vaapiDriver = "intel-media-driver";
   };
 
+  # Xe3 display-engine workarounds. The driver stack above is correct (xe +
+  # iHD, both confirmed loaded); what misbehaves is two power-saving features
+  # of Panther Lake's still-young display code:
+  #
+  #   xe.enable_psr=0 — Panel Self Refresh. Symptoms in `journalctl -k -b`:
+  #     "Timed out waiting PSR idle state", "Selective fetch area calculation
+  #     failed in pipe A", "CPU pipe A FIFO underrun". On screen: half the
+  #     panel randomly going black or garbled. Costs a little idle battery.
+  #   xe.enable_dsb=0 — Display State Buffer, the batched register-write path
+  #     for atomic commits. Symptom: "[CRTC:151:pipe A] DSB 0 poll error"
+  #     repeating about once per vblank (660k lines in one boot before this),
+  #     which stalls commits and reads as dropped frames in video playback.
+  #
+  # Both are display-engine only — no effect on rendering or VA-API decode.
+  # Drop them one at a time after a kernel bump and check the counts are still
+  # zero: `journalctl -k -b | grep -cE "DSB 0 poll error|PSR idle state"`.
+  boot.kernelParams = [
+    "xe.enable_psr=0"
+    "xe.enable_dsb=0"
+  ];
+
   # 5th-gen NPU (NPU4). ivpu kernel driver upstreamed in Linux 6.13 (zen here
   # is 7.1.8), and pkgs.intel-npu-driver 1.35.0 has carried Panther Lake
   # userspace/firmware support since 1.28.0 — nixpkgs just never enabled this

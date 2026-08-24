@@ -817,6 +817,63 @@ Tune the delay or add a battery-percentage cutoff in
 
 </details>
 
+## 🩹 Display glitches (Panther Lake / Xe3)
+
+<details>
+<summary><code>omnibook</code> only — the driver stack is right; two of the display engine's power-saving features are not. Recheck after every kernel bump.</summary>
+
+<br>
+
+**The driver side is already correct**, and worth stating plainly so it isn't
+re-debugged: `hosts/omnibook/default.nix` sets `hardware.intelgpu.driver =
+"xe"` (Panther Lake is xe-only — `common/gpu/intel` from nixos-hardware still
+defaults to `i915`, which is wrong here) and
+`vaapiDriver = "intel-media-driver"`. `vainfo` reports the iHD driver with
+H.264/HEVC/VP9/AV1 decode, and GuC, HuC, GSC and DMC firmware all load. Nothing
+about video decode is broken.
+
+**nixos-hardware has no Panther Lake module.** As of the current pin,
+`common/cpu/intel/` and `common/gpu/intel/` stop at `lunar-lake` — no
+`panther-lake`, and no `hp-omnibook` under the vendor directories either. That
+is why the host imports the generic `common-cpu-intel` +
+`common-pc-laptop{,-ssd}` stack and sets the two GPU options by hand.
+**Recheck this after `nix flake update nixos-hardware`:**
+
+```bash
+ls "$(nix eval --raw --impure --expr \
+  '(builtins.getFlake (toString ./.)).inputs.nixos-hardware.outPath')/common/cpu/intel"
+```
+
+If a `panther-lake` (or `hp/omnibook`) directory shows up, import it and drop
+the hand-set `hardware.intelgpu` block — upstream will keep it more current
+than we will.
+
+**What actually glitches** is the Xe3 display engine. Two features are buggy on
+this panel and are disabled by `boot.kernelParams` in the host file:
+
+| Param | Kernel symptom | What you see |
+|---|---|---|
+| `xe.enable_psr=0` | `Timed out waiting PSR idle state`, `Selective fetch area calculation failed in pipe A`, `CPU pipe A FIFO underrun` | Half the screen randomly going black or garbled |
+| `xe.enable_dsb=0` | `[CRTC:151:pipe A] DSB 0 poll error`, roughly once per vblank — 660k lines in a single boot before the workaround | Stuttering and dropped frames, most obvious in video playback |
+
+Both are display-engine only: rendering, VA-API decode and the NPU are
+untouched. Disabling PSR costs a little idle battery, which is the price of a
+panel that doesn't tear itself in half.
+
+These are workarounds for driver bugs, not permanent settings. After a kernel
+bump, drop one param at a time, reboot, use the machine for a while, and count:
+
+```bash
+# `command` bypasses the grep -> rg alias set in modules/apps/fish.nix —
+# ripgrep reads -E as --encoding and errors out on this pattern.
+journalctl -k -b | command grep -cE "DSB 0 poll error|PSR idle state|FIFO underrun"
+```
+
+Zero means the fix landed upstream and the param can stay gone. Anything else,
+put it back.
+
+</details>
+
 ## ☁️ Cloud mounts (rclone)
 
 <details>
