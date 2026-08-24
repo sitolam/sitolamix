@@ -77,6 +77,18 @@
     remotes.gdrive_personal = { };
   };
 
+  # NAS shares (see modules/services/nas.nix). Automounted on first access, so
+  # the paths exist even when the NAS is unreachable.
+  services.nas = {
+    enable = true;
+    server = "192.168.68.148";
+    shares = [
+      "backup"
+      "shared"
+      "media"
+    ];
+  };
+
   # On-demand Windows VM for Office (see modules/services/winapps). Not started
   # at boot by design — start it from dankMenu's Windows submenu. Defaults are
   # sized for this laptop; the VM is a real battery cost while running.

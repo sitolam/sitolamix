@@ -494,30 +494,21 @@ creation_rules:
 `.sops.yaml` only governs *new* files, so re-encrypt the existing one to the new
 recipient list and push.
 
-Two things to know before running it: `sops` searches only *user* key
-locations (`~/.ssh/`, `~/.config/sops/age/keys.txt`, and a handful of env
-vars), so it will **not** find the SSH **host** key this repo actually
-encrypts to — you get *"Failed to get the data key required to decrypt the
-SOPS file"*. And `/etc/ssh/ssh_host_ed25519_key` is root-only, so it has to be
-handed over deliberately. In fish:
-
-```fish
-sudo -v    # prime sudo, so it doesn't prompt from inside the substitution
-set -x SOPS_AGE_KEY (sudo cat /etc/ssh/ssh_host_ed25519_key | nix run nixpkgs#ssh-to-age -- -private-key)
-
-nix run nixpkgs#sops -- -d secrets/ha.yaml >/dev/null; and echo OK   # decrypts? writes nothing
-```
-
-Don't run `sops` under `sudo` instead — it works, but rewrites the file as
-root inside your checkout.
-
-```fish
-nix run nixpkgs#sops -- updatekeys secrets/ha.yaml
-set -e SOPS_AGE_KEY     # drop the key from this shell again
+```sh
+just updatekeys secrets/ha.yaml     # asks for sudo, see below
 
 git commit -am "chore(sops): add myhost as a recipient"
 git push
 ```
+
+The recipe handles the part that trips people up: `sops` searches only *user*
+key locations (`~/.ssh/`, `~/.config/sops/age/keys.txt`, a handful of env vars),
+so on its own it will **not** find the SSH **host** key this repo actually
+encrypts to — bare `sops updatekeys` fails with *"Failed to get the data key
+required to decrypt the SOPS file"*. And `/etc/ssh/ssh_host_ed25519_key` is
+root-only, hence the sudo prompt. `just updatekeys` converts it to age and
+passes it to that one command only. Don't run `sops` under `sudo` instead — it
+works, but rewrites the file as root inside your checkout.
 
 Then back in the installer, pull that commit into the clone:
 
@@ -659,8 +650,17 @@ nix run nixpkgs#ssh-to-age < /etc/ssh/ssh_host_ed25519_key.pub
 Add / edit a secret (opens `$EDITOR` with decrypted content, re-encrypts on save):
 
 ```sh
-nix run nixpkgs#sops -- secrets/ha.yaml
+just secret secrets/ha.yaml
 ```
+
+The recipe exists because `sops` searches only *user* key locations (`~/.ssh/`,
+`~/.config/sops/age/keys.txt`, a few env vars) and so never finds the SSH
+**host** key this repo encrypts to — bare `sops secrets/ha.yaml` fails with
+*"Failed to get the data key required to decrypt the SOPS file"*. `just secret`
+converts `/etc/ssh/ssh_host_ed25519_key` (root-only, so it asks for sudo) to age
+and passes it to sops for that one command, without exporting it into your
+shell. Don't run `sops` under `sudo` instead — it works, but rewrites the file
+as root inside your checkout.
 
 Then declare it and reference the runtime path:
 
@@ -672,11 +672,10 @@ sops.secrets.hass_token = { owner = "otis"; mode = "0400"; };
 config.sops.secrets.hass_token.path   # => /run/secrets/hass_token
 ```
 
-Adding another machine: add its age key to `.sops.yaml` and run
-`sops updatekeys secrets/ha.yaml` — with `SOPS_AGE_KEY` set from this machine's
-host key, as in the install section, since sops does not look at
-`/etc/ssh/` on its own. To rotate a secret, edit it as above and
-replace the value — the old ciphertext is overwritten.
+Adding another machine: add its age key to `.sops.yaml`, then re-encrypt every
+existing secret to the new recipient list with `just updatekeys secrets/ha.yaml`
+(same host-key handling as `just secret`). To rotate a secret, edit it as above
+and replace the value — the old ciphertext is overwritten.
 
 </details>
 
@@ -956,6 +955,87 @@ made from your phone or the web UI within seconds.
 > [!IMPORTANT]
 > `~/.config/rclone/rclone.conf` holds live OAuth refresh tokens. It stays in
 > `$HOME` at mode `600` and must never be committed — this repo is public.
+
+</details>
+
+## 🗄️ NAS shares (SMB)
+
+<details>
+<summary>The home NAS's SMB shares mounted under <code>/mnt/nas/&lt;share&gt;</code> as real kernel <code>cifs</code> mounts, automounted on first access, with the share password held in sops — no keyring prompt, no GVFS, available to every process and to root.</summary>
+
+<br>
+
+`modules/services/nas.nix` turns each entry of `services.nas.shares` into a
+`fileSystems` entry:
+
+```nix
+# hosts/<host>/default.nix
+services.nas = {
+  enable = true;
+  server = "192.168.68.148";
+  shares = [ "backup" "shared" "media" ];   # => /mnt/nas/backup, …
+};
+```
+
+The mounts are `noauto` + `x-systemd.automount`: systemd creates the mount point
+and only runs `mount.cifs` when something first touches the path. Boot never
+waits on the NAS, so a laptop away from the home network still boots normally
+and the mount simply happens once it is back. An idle mount is released again
+after 10 minutes.
+
+### Credentials
+
+`secrets/nas.yaml` holds one key, `nas_credentials`, whose value is a
+`mount.cifs` credentials file:
+
+```sh
+just secret secrets/nas.yaml
+```
+
+```yaml
+nas_credentials: |
+  username=<smb user>
+  password=<smb password>
+```
+
+`just secret` is what hands sops the decryption key — plain `sops secrets/nas.yaml`
+fails with *"Failed to get the data key required to decrypt the SOPS file"*,
+because sops never looks at the SSH **host** key this repo encrypts to. See
+[Secrets (sops)](#-secrets-sops).
+
+sops-nix decrypts it to `/run/secrets/nas_credentials` (tmpfs, root-only) and
+the mount options point `credentials=` at that path, so the password is never in
+the nix store, in `/etc/fstab`, or in git as plaintext.
+
+### Everyday use
+
+| Command | |
+|---|---|
+| `ls /mnt/nas/media` | triggers the mount if it isn't up |
+| `systemctl status mnt-nas-media.automount` | is the trigger armed |
+| `systemctl status mnt-nas-media.mount` | is it actually mounted, and why not |
+| `sudo systemctl restart mnt-nas-media.mount` | remount after changing credentials |
+
+Files show up owned by `otis` (`uid=1000,gid=100`) — SMB carries no usable Unix
+ownership here, so it is fixed at mount time.
+
+The module also adds a GTK bookmark per share, so they show up in the Nautilus
+sidebar next to the XDG folders from `modules/desktop/xdg.nix`. That is the part
+that has to be declared: gio auto-displays mounts only under `/media`,
+`/run/media/$USER` or `$HOME`, and the fstab flag that would force it
+(`x-gvfs-show`) is read only by GVFS's udisks2 monitor, which handles block
+devices — a `//host/share` device is invisible to it. A bookmark works even
+while the share is idle-unmounted: opening it touches the path, which triggers
+the automount. Restart the file manager (`nautilus -q`) after a rebuild that
+changes the bookmark list.
+
+### Options
+
+| Option | Default | |
+|---|---|---|
+| `services.nas.server` | — | host or IP serving the shares |
+| `services.nas.shares` | `[ ]` | share names to mount |
+| `services.nas.mountRoot` | `/mnt/nas` | parent directory of every mount |
 
 </details>
 
