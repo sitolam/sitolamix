@@ -10,9 +10,10 @@ let
   haTokenPath = config.sops.secrets.hass_token.path;
 
   # ── MouthGuard ────────────────────────────────────────────────────────────
-  # MouthGuard lives in sitolam/dms-plugins, not in dms-plugin-registry, so
-  # instead of just flipping `enable` we hand the same plugins.<id> option a
-  # `src` we assemble here from that input's plugins/mouthguard subtree.
+  # MouthGuard lives in sitolam/dms-plugins. The registry has since adopted it
+  # (plugins/sitolam-mouthguard.json), but we still hand the same plugins.<id>
+  # option a `src` assembled here from that input's plugins/mouthguard subtree
+  # — see the mkForce note at the option itself for why ours has to win.
   #
   # StartupCheck.qml and MouthGuardDaemon.qml both resolve the detector as
   # "<pluginDir>/result/bin/mouthguard-detector" — the artifact of running
@@ -24,10 +25,10 @@ let
   # That is now dms-plugins' own `packages.mouthguard-detector`, rather than a
   # hand-assembled copy of its python environment. The copy existed because
   # that flake builds from its own nixpkgs instance, which this config cannot
-  # add overlays to (same trap as niri, see ../niri/default.nix), and the dlib
-  # pin below had to reach the detector. Since the detector moved from dlib to
-  # MediaPipe Face Mesh on OpenVINO it needs no overlay — and it now carries
-  # things this config would otherwise have to reproduce exactly: the two
+  # add overlays to (same trap as niri, see ../niri/default.nix), and a dlib
+  # pin this file used to carry had to reach the detector. Since the detector
+  # moved from dlib to MediaPipe Face Mesh on OpenVINO it needs no overlay — and
+  # it now carries things this config would otherwise reproduce exactly: the two
   # pinned MediaPipe model files, and the NPU runtime (Intel's NPU graph
   # compiler, which nixpkgs does not package, placed where OpenVINO looks for
   # it). Duplicating that here would be the same trap in reverse.
@@ -443,28 +444,6 @@ let
 in
 {
   config = lib.mkIf config.desktop.dms.enable {
-    # nixpkgs bumped dlib 20.0 -> 20.0.1 (2026-08-18) without refreshing
-    # python3Packages.dlib: build-cores.patch no longer applies, and 20.0.1's
-    # setup.py dropped the `--set` build flag the nix expression feeds it, so
-    # the python binding fails to build on unstable. Pin the src back to 20.0 —
-    # what stable ships, and what the binary cache already has. howdy is the
-    # only consumer left (its passthru.pythonDeps lists dlib); mouthGuard used
-    # to be the other one and no longer touches dlib at all. Drop once nixpkgs
-    # fixes python3Packages.dlib.
-    nixpkgs.overlays = [
-      (_final: prev: {
-        dlib = prev.dlib.overrideAttrs (_: rec {
-          version = "20.0";
-          src = prev.fetchFromGitHub {
-            owner = "davisking";
-            repo = "dlib";
-            tag = "v${version}";
-            sha256 = "sha256-VTX7s0p2AzlvPUsSMXwZiij+UY9g2y+a1YIge9bi0sw=";
-          };
-        });
-      })
-    ];
-
     home.extraOptions = {
       # DMS plugins from the registry (github:AvengeMedia/dms-plugin-registry);
       # the registry homeModule (imported in ./default.nix) provides the pinned
@@ -536,7 +515,19 @@ in
         # (default.nix) for its SoundEffect alerts.
         mouthGuard = {
           enable = true;
-          src = mouthGuardPlugin;
+          # mkForce is required, not stylistic: dms-plugin-registry has adopted
+          # this plugin (plugins/sitolam-mouthguard.json) and its module sets
+          # every plugin's `src` at normal priority, not mkDefault — so without
+          # this the two definitions conflict and evaluation fails outright.
+          #
+          # Ours has to win for two reasons. The registry would install the
+          # plugin tree alone, without the `result` symlink to the detector its
+          # QML resolves (see the `let` block above). And this is our own
+          # plugin: sourcing it from the dms-plugins input means a push to that
+          # repo plus `nix flake update dms-plugins` lands here immediately,
+          # instead of waiting on the registry's prefetch to catch up — which
+          # is the whole point when iterating on it.
+          src = lib.mkForce mouthGuardPlugin;
         };
         # omarchy-style root menu, bound to Mod+Space in ../niri/bindings.nix.
         # The tree is generated below rather than taken from the plugin's own
@@ -544,7 +535,12 @@ in
         # only the default for a standalone install.
         dankMenu = {
           enable = true;
-          src = "${inputs.dms-plugins}/plugins/dankmenu";
+          # mkForce for the same reason as mouthGuard above — the registry
+          # adopted this one too (plugins/sitolam-dankmenu.json), and its `src`
+          # is not mkDefault, so the two definitions conflict without this.
+          # Also ours: kept on the dms-plugins input so testing a change is a
+          # push plus `nix flake update dms-plugins`, not a registry refresh.
+          src = lib.mkForce "${inputs.dms-plugins}/plugins/dankmenu";
           settings.menuPath = "${dankMenuFile}";
         };
         usbManager.enable = true; # NordicsSys/dms-usb-manager
@@ -563,16 +559,17 @@ in
         dockerManager.enable = false;
         ambientSound.enable = true; # hthienloc/dms-ambient-sound (bar widget — no control-center variant)
         dankBatteryAlerts.enable = true; # AvengeMedia DankBatteryAlerts
-        # notsopreety/batteryOSD — not in dms-plugin-registry, so pinned as its
-        # own flake input (flake.nix) and pointed at directly, same as
-        # dankMenu/mouthGuard above. (Its sibling kbdBacklightOSD was tried
-        # too, but this laptop has no kernel-visible keyboard backlight — no
-        # /sys/class/leds/*kbd_backlight* node, no UPower KbdBacklight D-Bus
-        # object — so that plugin was inert and got dropped.)
-        batteryOSD = {
-          enable = true;
-          src = inputs.battery-osd;
-        };
+        # notsopreety/batteryOSD. Used to need its own flake input, back when it
+        # was missing from dms-plugin-registry; the registry has since adopted
+        # it (plugins/notsopreety-batteryOSD.json), so this is a plain `enable`
+        # again and the input is gone. Nothing local is layered on top of this
+        # one and it is somebody else's plugin, so there is no reason to carry
+        # a second pin for it — unlike dankMenu/mouthGuard above.
+        # (Its sibling kbdBacklightOSD was tried too, but this laptop has no
+        # kernel-visible keyboard backlight — no /sys/class/leds/*kbd_backlight*
+        # node, no UPower KbdBacklight D-Bus object — so that plugin was inert
+        # and got dropped.)
+        batteryOSD.enable = true;
       };
 
       # write plugin_settings.json marking each enabled plugin active, so they
