@@ -1039,6 +1039,53 @@ changes the bookmark list.
 
 </details>
 
+## 🖨️ Printing (CUPS)
+
+<details>
+<summary>CUPS with driverless IPP discovery over Avahi/mDNS — printers on the LAN show up without typing an IP or installing a vendor driver.</summary>
+
+<br>
+
+`modules/services/printing.nix` is enabled for every host through
+`suites.core` (`services.printing-suite.enable = true;`). It turns on:
+
+```nix
+services.printing.enable = true;   # CUPS
+services.avahi = {
+  enable = true;
+  nssmdns4 = true;      # resolve .local mDNS names
+  openFirewall = true;  # let mDNS/IPP discovery broadcasts through
+};
+```
+
+### Everyday use
+
+Add a printer with `system-config-printer` (in every host's packages) or the
+CUPS web UI at `http://localhost:631`. A driverless/AirPrint/IPP-Everywhere
+printer on the same LAN should just appear in the discovery list — no driver
+to pick.
+
+`lpstat -p` lists configured printers; `lpq` / `lpq -P <name>` shows the
+queue.
+
+### Vendor drivers
+
+If a printer isn't driverless-capable and needs a vendor driver (older
+HP/Brother/Epson models), add the driver package to `drivers` in
+`modules/services/printing.nix`:
+
+```nix
+services.printing.drivers = [ pkgs.hplip ];   # example: HP
+```
+
+### Options
+
+| Option | Default | |
+|---|---|---|
+| `services.printing-suite.enable` | `false` | turn on CUPS + Avahi discovery |
+
+</details>
+
 ## 🤖 Local models (ccl)
 
 <details>

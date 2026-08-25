@@ -6,6 +6,8 @@ in
   options.suites.core.enable = lib.mkEnableOption "core shell + CLI programs every host wants";
 
   config = lib.mkIf cfg.enable {
+    services.printing-suite.enable = true;
+
     apps = {
       fish.enable = true;
       git.enable = true;
@@ -28,6 +30,7 @@ in
       {
         home.packages = [
           pkgs.mission-center # GUI system monitor (GNOME-style task manager)
+          pkgs.system-config-printer # GUI for services.printing-suite (add/manage printers)
         ];
       };
   };
