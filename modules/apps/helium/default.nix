@@ -101,10 +101,12 @@ in
         "--enable-smooth-scrolling"
         # Hardware video decode + the Vulkan-backed ANGLE path.
         "--enable-features=VaapiVideoDecoder,Vulkan,VulkanFromANGLE,DefaultANGLEVulkan"
-      ]
-      ++
-        lib.optional (userscripts != [ ])
-          "--load-extension=${lib.concatMapStringsSep "," toString userscripts}";
+        # Unpacked extensions can only arrive this way: policy install wants a
+        # Web Store id, and Chromium's standalone-external-extension directory
+        # is the compiled-in /usr/share/chromium/extensions, which NixOS has no
+        # business creating.
+        "--load-extension=${lib.concatMapStringsSep "," toString userscripts}"
+      ];
 
       # Chrome Enterprise policies, written to /etc/chromium/policies/managed —
       # which is the directory this build of helium actually reads (verified in
@@ -113,10 +115,19 @@ in
       # packaging: that sandbox never bound /etc/chromium, so policies were
       # invisible to the browser.
       policies = {
-        ExtensionSettings = lib.mapAttrs (_: _: {
-          installation_mode = "normal_installed";
-          update_url = webstore;
-        }) extensions;
+        ExtensionSettings =
+          lib.mapAttrs (_: _: {
+            installation_mode = "normal_installed";
+            update_url = webstore;
+          }) extensions
+          // {
+            # Without this catch-all, naming any id in ExtensionSettings blocks
+            # every id that is *not* named — including themes and anything
+            # installed by hand ("… is blocked by the administrator" in the
+            # extension log). The declared set is meant to be a floor, not a
+            # whitelist.
+            "*".installation_mode = "allowed";
+          };
 
         # --load-extension trips two nags on every launch otherwise: the yellow
         # "unsupported command-line flag" bar, and the "turn off developer mode
