@@ -81,7 +81,15 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    helium.url = "github:FKouhai/helium2nix";
+    # oxcl/nix-flake-helium-browser — repacks imputnet's official .deb with
+    # patchelf (the Brave/Vivaldi approach) and ships a NixOS module with
+    # `flags` and `policies`. Replaced FKouhai/helium2nix, whose AppImage/bwrap
+    # sandbox never bound /etc/chromium, so Chrome Enterprise policies — how
+    # extensions get installed declaratively — could not reach the browser.
+    helium = {
+      url = "github:oxcl/nix-flake-helium-browser";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
     # winapps-org/winapps — runs a single Windows application over RDP in
     # RemoteApp mode, so it paints as its own native window rather than inside a
