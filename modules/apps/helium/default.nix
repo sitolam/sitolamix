@@ -8,7 +8,15 @@
 let
   cfg = config.apps.helium;
 
-  webstore = "https://clients2.google.com/service/update2/crx";
+  # Helium's own Web Store update pings never carry `prodversion`, which
+  # makes clients2.google.com answer "noupdate" for every extension no
+  # matter how ExtensionSettings is configured — verified by hand: the same
+  # ping with `&prodversion=151` (helium's own Chrome/151 UA version)
+  # returns a real codebase URL, without it, "noupdate". This is a bug in
+  # helium's build, not something a policy can route around, so route
+  # through a local proxy that patches the ping instead. See update-proxy.py.
+  updateProxyPort = 8791;
+  webstore = "http://127.0.0.1:${toString updateProxyPort}/service/update2/crx";
 
   # Chrome Web Store IDs of every extension this profile carries. Listing them
   # here is what makes the browser reproducible: helium pulls them from the
@@ -90,6 +98,17 @@ in
   options.apps.helium.enable = lib.mkEnableOption "Helium browser (declarative flags, policies, extensions)";
 
   config = lib.mkIf cfg.enable {
+    systemd.services.helium-extension-update-proxy = {
+      description = "Prodversion-patching proxy for Helium's Chrome Web Store update pings";
+      wantedBy = [ "multi-user.target" ];
+      serviceConfig = {
+        ExecStart = "${pkgs.python3}/bin/python3 ${./update-proxy.py}";
+        DynamicUser = true;
+        Restart = "on-failure";
+        RestartSec = 5;
+      };
+    };
+
     programs.helium = {
       enable = true;
 
