@@ -55,17 +55,6 @@ let
   };
 
   plugins = {
-    # Written here rather than fetched: ./_plugin holds the `/sitolamix` skill,
-    # the conventions for editing this repo. Kept in-tree so the skill and the
-    # code it describes move in the same commit; `_`-prefixed so import-tree
-    # does not try to load it as a NixOS module. Its version is a constant
-    # because there is no upstream rev to name — the store path already changes
-    # whenever the skill does.
-    sitolamix = {
-      path = "${./_plugin}";
-      version = "in-tree";
-    };
-
     # anthropics/claude-plugins-official
     frontend-design = mkPlugin inputs.claude-marketplace-official "plugins/frontend-design";
     # These two are `{"source":"url"}` rows in that marketplace, i.e. pointers

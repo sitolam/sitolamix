@@ -1,8 +1,0 @@
-{
-  "name": "sitolamix",
-  "description": "Conventions for editing the sitolamix NixOS flake.",
-  "version": "1.0.0",
-  "author": {
-    "name": "otis"
-  }
-}
