@@ -64,8 +64,8 @@ let
       name = "Claude";
       pin = false;
     };
-    "mcbpblocgmgfnpjjppndjkmgjaogfceg" = {
-      name = "GoFullPage - Full Page Screen Capture";
+    "mfpiaehgjbbfednooihadalhehabhcjo" = {
+      name = "Scrolling Screenshot Tool";
       pin = false;
     };
     "nngceckbapebfimnlniiiahkandclblb" = {
@@ -85,6 +85,10 @@ let
     "bdhficnphioomdjhdfbhdepjgggekodf" = "Smartschool++";
     "epjdekbdhhhpkpkclookegeabjkpblch" = "Smartschool Grid - Percentages";
     "lbpdknjafmmnemenflppkofaakldbfom" = "Smarter Smartschool";
+    # Was briefly the screenshot extension here; Scrolling Screenshot Tool
+    # replaced it, and this one has to be named to get it back out of the
+    # profiles that already installed it.
+    "mcbpblocgmgfnpjjppndjkmgjaogfceg" = "GoFullPage - Full Page Screen Capture";
   };
 
   # Wraps a Tampermonkey-style userscript into a minimal MV3 extension that
