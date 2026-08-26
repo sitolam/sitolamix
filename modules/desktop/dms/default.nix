@@ -42,24 +42,26 @@ in
     # needs to capture; screenshots themselves use grim/slurp/satty.
     programs.gpu-screen-recorder.enable = true;
 
-    # backs the power-profile switcher in the battery control-center tile
-    # (see bar.nix controlCenterWidgets). No TLP here, so no conflict.
-    services.power-profiles-daemon.enable = true;
+    services = {
+      # backs the power-profile switcher in the battery control-center tile
+      # (see bar.nix controlCenterWidgets). No TLP here, so no conflict.
+      power-profiles-daemon.enable = true;
 
-    # DMS reads battery presence/charge/AC-online state over UPower's DBus
-    # API, not by polling /sys/class/power_supply itself. Without this the
-    # battery tile has nothing to query, which is why it showed no battery
-    # and defaulted to "plugged in".
-    services.upower.enable = true;
+      # DMS reads battery presence/charge/AC-online state over UPower's DBus
+      # API, not by polling /sys/class/power_supply itself. Without this the
+      # battery tile has nothing to query, which is why it showed no battery
+      # and defaulted to "plugged in".
+      upower.enable = true;
 
-    # the profile picture. DMS asks AccountsService for the user's IconFile
-    # (PortalService.getUserProfileImage -> freedesktop.accounts.getUserIconFile)
-    # and shows nothing at all when the bus name is missing, which is what a
-    # blank avatar looks like. Nothing else here pulls accounts-daemon in — it
-    # used to arrive with ReGreet, and went away with it — so enable it
-    # explicitly. accountsservice reports ~/.face as the icon when the user has
-    # no /var/lib/AccountsService entry, and that file is written below.
-    services.accounts-daemon.enable = true;
+      # the profile picture. DMS asks AccountsService for the user's IconFile
+      # (PortalService.getUserProfileImage -> freedesktop.accounts.getUserIconFile)
+      # and shows nothing at all when the bus name is missing, which is what a
+      # blank avatar looks like. Nothing else here pulls accounts-daemon in — it
+      # used to arrive with ReGreet, and went away with it — so enable it
+      # explicitly. accountsservice reports ~/.face as the icon when the user has
+      # no /var/lib/AccountsService entry, and that file is written below.
+      accounts-daemon.enable = true;
+    };
 
     # runtime deps the enabled DMS plugins shell out to (registry ships only the
     # plugin source). nix dedups any already present (mpv/udisks/util-linux/...).

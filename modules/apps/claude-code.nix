@@ -166,30 +166,32 @@ in
       pkgs.writers.writeJSON "claude-managed-settings.json" managedSettings;
 
     home.extraOptions = {
-      home.packages = [
-        pkgs.claude-code
-        # Claude Code shells out to node/npx for MCP servers and JS tooling,
-        # and the package itself doesn't pull a runtime in.
-        pkgs.nodejs
-      ];
+      home = {
+        packages = [
+          pkgs.claude-code
+          # Claude Code shells out to node/npx for MCP servers and JS tooling,
+          # and the package itself doesn't pull a runtime in.
+          pkgs.nodejs
+        ];
 
-      # nixpkgs' wrapper disables Claude's self-updater but then sets
-      # FORCE_AUTOUPDATE_PLUGINS=1, which re-enables *plugin* auto-update on
-      # startup — it would try to git-pull store paths on every launch. The
-      # wrapper uses setenv(..., overwrite=0), so a value already in the
-      # environment survives, and empty reads as false at the one place Claude
-      # tests it.
-      home.sessionVariables.FORCE_AUTOUPDATE_PLUGINS = "";
+        # nixpkgs' wrapper disables Claude's self-updater but then sets
+        # FORCE_AUTOUPDATE_PLUGINS=1, which re-enables *plugin* auto-update on
+        # startup — it would try to git-pull store paths on every launch. The
+        # wrapper uses setenv(..., overwrite=0), so a value already in the
+        # environment survives, and empty reads as false at the one place Claude
+        # tests it.
+        sessionVariables.FORCE_AUTOUPDATE_PLUGINS = "";
 
-      # force: both files normally exist as Claude-written state, and without it
-      # home-manager stops at "would be clobbered" on the first switch.
-      home.file.".claude/plugins/known_marketplaces.json" = {
-        force = true;
-        source = pkgs.writers.writeJSON "claude-known-marketplaces.json" knownMarketplaces;
-      };
-      home.file.".claude/plugins/installed_plugins.json" = {
-        force = true;
-        source = pkgs.writers.writeJSON "claude-installed-plugins.json" installedPlugins;
+        # force: both files normally exist as Claude-written state, and without
+        # it home-manager stops at "would be clobbered" on the first switch.
+        file.".claude/plugins/known_marketplaces.json" = {
+          force = true;
+          source = pkgs.writers.writeJSON "claude-known-marketplaces.json" knownMarketplaces;
+        };
+        file.".claude/plugins/installed_plugins.json" = {
+          force = true;
+          source = pkgs.writers.writeJSON "claude-installed-plugins.json" installedPlugins;
+        };
       };
     };
   };

@@ -14,15 +14,35 @@
   system.stateVersion = "25.11";
 
   # hardware
-  #
-  # Core Ultra X7 358H is Panther Lake — Xe3 graphics, xe-only, no i915 path.
-  # nixos-hardware has no panther-lake directory either, so these are the two
-  # settings its lunar-lake module would have applied (common/gpu/intel still
-  # defaults `driver` to i915, which is wrong here). The zen kernel this flake
-  # pins is well past the 6.8 the xe driver asserts on.
-  hardware.intelgpu = {
-    driver = "xe";
-    vaapiDriver = "intel-media-driver";
+  hardware = {
+    # Core Ultra X7 358H is Panther Lake — Xe3 graphics, xe-only, no i915 path.
+    # nixos-hardware has no panther-lake directory either, so these are the two
+    # settings its lunar-lake module would have applied (common/gpu/intel still
+    # defaults `driver` to i915, which is wrong here). The zen kernel this flake
+    # pins is well past the 6.8 the xe driver asserts on.
+    intelgpu = {
+      driver = "xe";
+      vaapiDriver = "intel-media-driver";
+    };
+
+    # 5th-gen NPU (NPU4). ivpu kernel driver upstreamed in Linux 6.13 (zen here
+    # is 7.1.8), and pkgs.intel-npu-driver 1.35.0 has carried Panther Lake
+    # userspace/firmware support since 1.28.0 — nixpkgs just never enabled this
+    # module for us. /dev/accel/accel0 is the resulting device node.
+    cpu.intel.npu.enable = true;
+
+    # Face unlock on the IR camera. Convenience, not a second factor — read the
+    # security note at the top of modules/hardware/howdy.nix. The IR device node
+    # is machine-specific; set `hardware.howdy.device` here once you have found
+    # it (see README → Face unlock).
+    # /dev/video2 (confirmed IR: `v4l2-ctl --list-formats-ext` reports Card
+    # type "HP IR Camera", GREY-only, vs video0's color MJPG/YUYV) via its
+    # stable by-path symlink — bare /dev/videoN numbering isn't guaranteed
+    # across boots.
+    howdy = {
+      enable = true;
+      device = "/dev/v4l/by-path/pci-0000:00:14.0-usb-0:3:1.2-video-index0";
+    };
   };
 
   # Xe3 display-engine workarounds. The driver stack above is correct (xe +
@@ -46,65 +66,70 @@
     "xe.enable_dsb=0"
   ];
 
-  # 5th-gen NPU (NPU4). ivpu kernel driver upstreamed in Linux 6.13 (zen here
-  # is 7.1.8), and pkgs.intel-npu-driver 1.35.0 has carried Panther Lake
-  # userspace/firmware support since 1.28.0 — nixpkgs just never enabled this
-  # module for us. /dev/accel/accel0 is the resulting device node.
-  hardware.cpu.intel.npu.enable = true;
-
-  # Face unlock on the IR camera. Convenience, not a second factor — read the
-  # security note at the top of modules/hardware/howdy.nix. The IR device node
-  # is machine-specific; set `hardware.howdy.device` here once you have found
-  # it (see README → Face unlock).
-  # /dev/video2 (confirmed IR: `v4l2-ctl --list-formats-ext` reports Card
-  # type "HP IR Camera", GREY-only, vs video0's color MJPG/YUYV) via its
-  # stable by-path symlink — bare /dev/videoN numbering isn't guaranteed
-  # across boots.
-  hardware.howdy = {
-    enable = true;
-    device = "/dev/v4l/by-path/pci-0000:00:14.0-usb-0:3:1.2-video-index0";
-  };
-
   # 2880x1800 panel at niri output scale 1.75 (see `niri msg outputs`) makes
-  # the shared 7px default (modules/desktop/stylix.nix) nearly invisible —
+  # the shared 7px default (modules/theming/stylix.nix) nearly invisible —
   # that size is logical/unscaled, so it doesn't grow with output scale.
   stylix.cursor.size = 16;
 
-  # cloud mounts — the remotes themselves are created with `rclone config`
-  # (see README → Cloud mounts), only *which* ones to mount lives here.
-  services.rclone = {
-    enable = true;
-    remotes.gdrive_personal = { };
+  services = {
+    # cloud mounts — the remotes themselves are created with `rclone config`
+    # (see README → Cloud mounts), only *which* ones to mount lives here.
+    rclone = {
+      enable = true;
+      remotes.gdrive_personal = { };
+    };
+
+    # NAS shares (see modules/services/nas.nix). Automounted on first access, so
+    # the paths exist even when the NAS is unreachable.
+    nas = {
+      enable = true;
+      server = "192.168.68.148";
+      shares = [
+        "backup"
+        "shared"
+        "media"
+      ];
+    };
+
+    # On-demand Windows VM for Office (see modules/services/winapps). Not started
+    # at boot by design — start it from dankMenu's Windows submenu. Defaults are
+    # sized for this laptop; the VM is a real battery cost while running.
+    winapps = {
+      enable = true;
+      # This machine's VM already exists at 64G (installed before the default
+      # dropped to 32G). Shrinking would mean deleting stateDir/storage and
+      # reinstalling Windows and Office, and the image is sparse anyway — the
+      # number is a ceiling, not space consumed — so it is pinned rather than
+      # migrated.
+      disk = "64G";
+      # This panel runs at niri output scale 1.75; without a matching RDP scale
+      # Windows renders 1:1 and Office text comes out tiny next to everything
+      # else. FreeRDP only offers 100/140/180.
+      rdpScale = 180;
+    };
+
+    # Lid close and idle-suspend both hand off to hibernate — but only on
+    # battery. On AC there's no reason to burn a resume-from-hibernate on
+    # what's effectively a desktop with a lid, so that case stays plain
+    # suspend. Idle-timer side (same battery/AC split) lives in
+    # modules/desktop/niri/idle.nix, gated on boot.resumeDevice which only
+    # this host sets. Laptop-only: gamingpc has no lid and no resume device,
+    # so none of this applies there.
+    #
+    # suspend-then-hibernate sleeps immediately (RAM suspend, near-zero
+    # latency to resume), then after HibernateDelaySec of staying suspended,
+    # systemd wakes it briefly to write RAM out to swap and hibernate for
+    # real — so a closed lid on battery still only costs real power for
+    # 30 min before it's safe to unplug the charger entirely.
+    logind.settings.Login = {
+      HandleLidSwitch = "suspend-then-hibernate";
+      HandleLidSwitchExternalPower = "suspend";
+    };
   };
 
-  # NAS shares (see modules/services/nas.nix). Automounted on first access, so
-  # the paths exist even when the NAS is unreachable.
-  services.nas = {
-    enable = true;
-    server = "192.168.68.148";
-    shares = [
-      "backup"
-      "shared"
-      "media"
-    ];
-  };
-
-  # On-demand Windows VM for Office (see modules/services/winapps). Not started
-  # at boot by design — start it from dankMenu's Windows submenu. Defaults are
-  # sized for this laptop; the VM is a real battery cost while running.
-  services.winapps = {
-    enable = true;
-    # This machine's VM already exists at 64G (installed before the default
-    # dropped to 32G). Shrinking would mean deleting stateDir/storage and
-    # reinstalling Windows and Office, and the image is sparse anyway — the
-    # number is a ceiling, not space consumed — so it is pinned rather than
-    # migrated.
-    disk = "64G";
-    # This panel runs at niri output scale 1.75; without a matching RDP scale
-    # Windows renders 1:1 and Office text comes out tiny next to everything
-    # else. FreeRDP only offers 100/140/180.
-    rdpScale = 180;
-  };
+  # The other half of the lid/idle handoff above: how long suspend-then-hibernate
+  # stays merely suspended before writing RAM to swap.
+  systemd.sleep.settings.Sleep.HibernateDelaySec = "30min";
 
   # feature suites
   suites = {
@@ -122,23 +147,4 @@
   # Monitors are managed by DMS (settings UI -> ~/.config/niri/dms/outputs.kdl,
   # included via desktop.dms). Don't also declare outputs here — a second
   # definition in hm.kdl conflicts and DMS's changes wouldn't apply.
-
-  # Lid close and idle-suspend both hand off to hibernate — but only on
-  # battery. On AC there's no reason to burn a resume-from-hibernate on
-  # what's effectively a desktop with a lid, so that case stays plain
-  # suspend. Idle-timer side (same battery/AC split) lives in
-  # modules/desktop/niri/idle.nix, gated on boot.resumeDevice which only
-  # this host sets. Laptop-only: gamingpc has no lid and no resume device,
-  # so none of this applies there.
-  #
-  # suspend-then-hibernate sleeps immediately (RAM suspend, near-zero
-  # latency to resume), then after HibernateDelaySec of staying suspended,
-  # systemd wakes it briefly to write RAM out to swap and hibernate for
-  # real — so a closed lid on battery still only costs real power for
-  # 30 min before it's safe to unplug the charger entirely.
-  services.logind.settings.Login = {
-    HandleLidSwitch = "suspend-then-hibernate";
-    HandleLidSwitchExternalPower = "suspend";
-  };
-  systemd.sleep.settings.Sleep.HibernateDelaySec = "30min";
 }

@@ -17,31 +17,33 @@
   # Moved here when omnibook (Intel) joined — it is a CPU-specific param.
   boot.kernelParams = [ "amd_pstate=active" ];
 
-  # cloud mounts — the remotes themselves are created with `rclone config`
-  # (see README → Cloud mounts), only *which* ones to mount lives here.
-  services.rclone = {
-    enable = true;
-    remotes.gdrive_personal = { };
-  };
+  services = {
+    # cloud mounts — the remotes themselves are created with `rclone config`
+    # (see README → Cloud mounts), only *which* ones to mount lives here.
+    rclone = {
+      enable = true;
+      remotes.gdrive_personal = { };
+    };
 
-  # NAS shares (see modules/services/nas.nix). Automounted on first access, so
-  # the paths exist even when the NAS is unreachable.
-  services.nas = {
-    enable = true;
-    server = "192.168.68.148";
-    shares = [
-      "backup"
-      "shared"
-      "media"
-    ];
-  };
+    # NAS shares (see modules/services/nas.nix). Automounted on first access, so
+    # the paths exist even when the NAS is unreachable.
+    nas = {
+      enable = true;
+      server = "192.168.68.148";
+      shares = [
+        "backup"
+        "shared"
+        "media"
+      ];
+    };
 
-  # On-demand Windows VM for Office (see modules/services/winapps). Same VM as
-  # on omnibook, given the headroom this machine has and the laptop does not.
-  services.winapps = {
-    enable = true;
-    ram = "8G";
-    cores = 6;
+    # On-demand Windows VM for Office (see modules/services/winapps). Same VM as
+    # on omnibook, given the headroom this machine has and the laptop does not.
+    winapps = {
+      enable = true;
+      ram = "8G";
+      cores = 6;
+    };
   };
 
   # feature suites

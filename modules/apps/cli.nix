@@ -9,31 +9,33 @@ in
     home.extraOptions =
       { pkgs, ... }:
       {
-        programs.bat.enable = true;
-        programs.eza = {
-          enable = true;
-          icons = "auto";
-          git = true;
-        };
-        programs.fzf = {
-          enable = true;
-          enableFishIntegration = true;
-          # atuin owns Ctrl-R (rich history search); leave fzf's other widgets intact
-          historyWidget.command = "";
-        };
-        programs.zoxide = {
-          enable = true;
-          enableFishIntegration = true;
-        };
-        programs.btop.enable = true;
-        programs.atuin = {
-          enable = true;
-          enableFishIntegration = true;
-          flags = [ "--disable-up-arrow" ];
-        };
-        programs.mise = {
-          enable = true;
-          enableFishIntegration = true;
+        programs = {
+          bat.enable = true;
+          eza = {
+            enable = true;
+            icons = "auto";
+            git = true;
+          };
+          fzf = {
+            enable = true;
+            enableFishIntegration = true;
+            # atuin owns Ctrl-R (rich history search); leave fzf's other widgets intact
+            historyWidget.command = "";
+          };
+          zoxide = {
+            enable = true;
+            enableFishIntegration = true;
+          };
+          btop.enable = true;
+          atuin = {
+            enable = true;
+            enableFishIntegration = true;
+            flags = [ "--disable-up-arrow" ];
+          };
+          mise = {
+            enable = true;
+            enableFishIntegration = true;
+          };
         };
 
         home.packages = with pkgs; [
