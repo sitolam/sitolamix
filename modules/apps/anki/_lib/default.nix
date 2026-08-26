@@ -9,7 +9,11 @@
 # Two addons hold live secrets (HyperTTS's Azure key, Anki Leaderboard's auth
 # token) which are stripped from their vendored/seeded config and re-merged in
 # from sops on every activation instead -- see `secretMerges` below and how
-# school.nix wires it to config.sops.secrets.*.path.
+# ../default.nix wires it to config.sops.secrets.*.path.
+#
+# This tree sits under `_lib` on purpose: import-tree's default filter skips
+# any path containing `/_`, so none of these data files are mistaken for NixOS
+# modules. ../default.nix imports it explicitly.
 #
 # ReColor's colors are theme-driven rather than a static seed: its dark-mode
 # swatches come from the active theme's `recolor` table (themes/<name>.nix),
@@ -17,7 +21,11 @@
 # values/css var names, captured once in recolor-schema.json since they never
 # change). The result is written to its meta.json on *every* activation (not
 # just first-install), so switching the active theme re-colors Anki too.
-{ pkgs, lib, theme }:
+{
+  pkgs,
+  lib,
+  theme,
+}:
 let
   inherit (pkgs.stable) anki-utils;
 
@@ -143,7 +151,9 @@ in
               if [ ! -e "${addonsDir}/${id}/meta.json" ]; then
                 install -m 0600 "${./seeds}/${id}.json" "${addonsDir}/${id}/_seed_config.json"
                 ${pkgs.jq}/bin/jq -n --slurpfile c "${addonsDir}/${id}/_seed_config.json" \
-                  '{mod: 0, disabled: ${if lib.elem id disabledIds then "true" else "false"}, config: $c[0]}' > "${addonsDir}/${id}/meta.json"
+                  '{mod: 0, disabled: ${
+                    if lib.elem id disabledIds then "true" else "false"
+                  }, config: $c[0]}' > "${addonsDir}/${id}/meta.json"
                 rm -f "${addonsDir}/${id}/_seed_config.json"
               fi
             ''
