@@ -74,6 +74,19 @@ let
     };
   };
 
+  # Extensions this profile must NOT carry. Deleting an id from `extensions`
+  # above is not enough to get rid of one: the "*" catch-all below is
+  # `allowed`, so an extension already sitting in ~/.config/net.imput.helium
+  # from an earlier generation simply stops being managed and keeps running.
+  # `removed` is the mode that actually uninstalls it and blocks a reinstall,
+  # so an id has to stay named here for as long as any profile might still
+  # have it. Drop a row only after every machine has rebuilt past it.
+  removedExtensions = {
+    "bdhficnphioomdjhdfbhdepjgggekodf" = "Smartschool++";
+    "epjdekbdhhhpkpkclookegeabjkpblch" = "Smartschool Grid - Percentages";
+    "lbpdknjafmmnemenflppkofaakldbfom" = "Smarter Smartschool";
+  };
+
   # Wraps a Tampermonkey-style userscript into a minimal MV3 extension that
   # helium loads with --load-extension. Tampermonkey keeps its scripts in the
   # profile's LevelDB — exactly the mutable state this module exists to get rid
@@ -180,6 +193,7 @@ in
             }
             // lib.optionalAttrs ext.pin { toolbar_pin = "force_pinned"; }
           ) extensions
+          // lib.mapAttrs (_: _: { installation_mode = "removed"; }) removedExtensions
           // {
             # Without this catch-all, naming any id in ExtensionSettings blocks
             # every id that is *not* named — including themes and anything
