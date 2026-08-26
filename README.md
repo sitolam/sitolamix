@@ -11,6 +11,7 @@ enable-switch, side by side.
 [![DankMaterialShell](https://img.shields.io/badge/shell-DankMaterialShell-f5c2e7?style=flat-square)](https://github.com/AvengeMedia/DankMaterialShell)
 [![home-manager](https://img.shields.io/badge/home--manager-folded%20in-41439a?style=flat-square)](https://github.com/nix-community/home-manager)
 [![stylix](https://img.shields.io/badge/theme-stylix%20·%20catppuccin-89b4fa?style=flat-square)](https://github.com/nix-community/stylix)
+[![built with Claude Code](https://img.shields.io/badge/vibe%20coded%20with-Claude%20Code-d97757?style=flat-square)](https://claude.com/claude-code)
 
 </div>
 
@@ -49,6 +50,10 @@ enable-switch, side by side.
 
 ![system monitor](assets/screenshots/sysmon.png)
 
+**yazi** — the terminal file manager, with git status and full-border plugins
+
+![yazi](assets/screenshots/yazi.png)
+
 </div>
 
 </details>
@@ -78,7 +83,7 @@ A single-user NixOS configuration built on three ideas:
 | **Terminal** | [ghostty](https://ghostty.org/) |
 | **Login shell** | fish + [starship](https://starship.rs/) |
 | **Files** | GNOME Files (nautilus) |
-| **Browser** | helium |
+| **Browser** | [helium](https://helium.computer/) (default) + [zen](https://zen-browser.app/) — helium's flags, policies and extension set are declared in Nix |
 | **Idle / lock** | swayidle → lock · DPMS · suspend (pauses while media plays) |
 | **Theming** | [stylix](https://github.com/nix-community/stylix) — fixed `catppuccin-mocha` base16; every themable app follows |
 | **Greeter** | [dank-greeter](https://github.com/AvengeMedia/dank-greeter) — greetd + DMS's own login screen, drawn per-output by the same niri build as the session, wearing a copy of the desktop's theme |
@@ -113,6 +118,11 @@ Things this config does that a stock desktop does not:
   which points Claude Code at a model running locally in LM Studio.
 - 🎧 **Bar full of plugins** — typing sounds, take-a-break, ambient sound, USB
   manager, KDE Connect, Home Assistant, emoji launcher, calculator.
+- 🎨 **Theming that goes inside apps** — stylix paints the desktop, but spicetify
+  rebuilds Spotify's own CSS and a generated `meta.json` recolors Anki, both from
+  the same `themes/catppuccin-mocha.nix` palette. Change the theme, they follow.
+- 📇 **Anki as config** — 17 addons deployed from Nix, credentials merged in from
+  sops, and GUI-made settings still survive a rebuild (§ Anki).
 - 🔒 **Lock before sleep** — swayidle locks, then suspends, and pauses the whole
   chain while media is playing.
 
@@ -194,17 +204,36 @@ imports list** — and hosts under `hosts/<name>/` are **auto-discovered**.
 
 ```
 flake.nix              flake description + inputs
+flake.lock             every input pinned — including the Claude Code plugin set
 flake/                 flake-parts modules (systems builder, devshell, formatter)
+Justfile               the task runner — see § Rebuild
 hosts/<name>/          per-host: default.nix (suite toggles) + hardware.nix
 modules/
   hm.nix               home-manager bridge — the `home.extraOptions` mechanism
   system/              always-on baseline (base, nix, locale, users, boot, sops, openssh …)
-  hardware/            audio / bluetooth / graphics baseline; nvidia gated
-  desktop/             niri, dms, stylix, xdg (gated on the desktop suite)
-  services/            kde-connect, docker, rclone … (gated)
-  apps/                one file per app, each `apps.<name>.enable`
+  hardware/            audio / bluetooth / graphics baseline; nvidia + howdy gated
+  desktop/             niri, dms, greetd, kanata, xdg (gated on the desktop suite)
+  theming/             stylix — `theming.stylix.*`
+  services/            kde-connect, docker, rclone, nas, printing, winapps … (gated)
+  apps/                one file (or directory) per app, each `apps.<name>.enable`
   suites/              groups that flip a batch of enables (core, desktop, dev …)
+themes/                theme registry — palettes read by stylix, dms and anki
+secrets/               sops-encrypted age ciphertext, one file per subsystem
+docs/                  install walkthrough + the design docs behind each feature
+assets/                screenshots, wallpaper, avatar
 ```
+
+Two conventions worth knowing:
+
+- **A module with sidecar files is a directory.** `modules/apps/ccl/` carries
+  `ccl.sh`, `modules/desktop/kanata/` carries `config.kbd`,
+  `modules/apps/helium/` carries the update proxy and userscripts. A module
+  with no sidecars is a single `.nix` file.
+- **Data that is not a module goes in `_lib`.** import-tree's filter skips any
+  path containing `/_`, so `modules/apps/anki/_lib/` holds Anki's whole addon
+  tree right next to the module that uses it without being mistaken for one.
+  Cross-cutting data that several modules read (`themes/`) stays at the repo
+  root instead.
 
 ### Enable-options + suites
 
@@ -328,7 +357,7 @@ swapon /dev/disk/by-label/NIXSWAP
 
 The laptop leaves the house, so it gets full-disk encryption and the desktop
 doesn't. The concrete reason, beyond the obvious: `modules/system/sops.nix`
-decrypts `secrets/ha.yaml` with `/etc/ssh/ssh_host_ed25519_key`. On a plain
+decrypts `secrets/home-assistant.yaml` with `/etc/ssh/ssh_host_ed25519_key`. On a plain
 disk, whoever walks off with the machine mounts it, reads that key, and has your
 Home Assistant token.
 
@@ -418,7 +447,7 @@ tied to that one disk.
 
 ### 4. Re-key the secrets *before* installing
 
-`modules/system/sops.nix` decrypts `secrets/ha.yaml` with **this machine's SSH
+`modules/system/sops.nix` decrypts `secrets/home-assistant.yaml` with **this machine's SSH
 host key**, converted to age. A new machine has a different key, so it is not a
 recipient and the build fails. You have to add it as one.
 
@@ -463,7 +492,7 @@ anywhere.
 So why does `gamingpc`'s own private key come into it? Because adding a
 recipient is two operations, not one:
 
-1. **decrypt** `secrets/ha.yaml` — which needs a key that is *already* a
+1. **decrypt** `secrets/home-assistant.yaml` — which needs a key that is *already* a
    recipient, i.e. gamingpc's
 2. re-encrypt the result to both recipients
 
@@ -495,7 +524,7 @@ creation_rules:
 recipient list and push.
 
 ```sh
-just updatekeys secrets/ha.yaml     # asks for sudo, see below
+just updatekeys secrets/home-assistant.yaml     # asks for sudo, see below
 
 git commit -am "chore(sops): add myhost as a recipient"
 git push
@@ -528,8 +557,8 @@ they cannot read. Start your own:
 
 ```sh
 # .sops.yaml: replace the gamingpc key with your own recipient, then
-rm secrets/ha.yaml
-nix run nixpkgs#sops -- secrets/ha.yaml     # opens $EDITOR, writes fresh ciphertext
+rm secrets/home-assistant.yaml
+nix run nixpkgs#sops -- secrets/home-assistant.yaml     # opens $EDITOR, writes fresh ciphertext
 ```
 
 Put a `hass_token:` key in it to match what `modules/system/sops.nix` declares.
@@ -601,14 +630,29 @@ port along with it.
 
 ## 🔧 Rebuild
 
-```sh
-just rebuild        # nh os switch .
-just update         # nix flake update + rebuild
-just check          # nix flake check --no-build
-just drybuild       # dry-run build of the current host
-```
+Everything routine goes through the `Justfile`. `just` with no argument lists
+the lot.
+
+| Recipe | What it does |
+|---|---|
+| `just rebuild` | `nh os switch .` — build and activate this checkout |
+| `just update` | `nix flake update`, then rebuild |
+| `just check` | `nix flake check --no-build` |
+| `just drybuild [host]` | dry-run build (defaults to `hostname`) |
+| `just build [host]` | real build, leaves a `result` symlink |
+| `just doctor` | `check` + `drybuild` — the pre-push gate |
+| `just diff` | `nvd diff /run/current-system result` — what a build would change |
+| `just fmt` | `nix fmt` (nixfmt via treefmt, walks the tree) |
+| `just dms-reload` | restart the DankMaterialShell user service |
+| `just outputs` / `just windows` | `niri msg outputs` / `niri msg windows` |
+| `just secret <file>` | edit an encrypted secret — see § Secrets |
+| `just updatekeys <file>` | re-encrypt a secret after adding a host |
 
 Fish also wraps `just` so it works from any cwd (see `modules/apps/fish.nix`).
+
+For working *on* the flake rather than with it, `nix develop` (or `direnv allow`,
+since `.envrc` is just `use flake`) gives you `nvd`, `deadnix`, `statix`, `nil`,
+`nixd`, `nh`, `just` and `nixfmt` without installing any of them globally.
 
 > [!TIP]
 > After a rebuild that touches DankMaterialShell plugins or settings, run
@@ -650,12 +694,12 @@ nix run nixpkgs#ssh-to-age < /etc/ssh/ssh_host_ed25519_key.pub
 Add / edit a secret (opens `$EDITOR` with decrypted content, re-encrypts on save):
 
 ```sh
-just secret secrets/ha.yaml
+just secret secrets/home-assistant.yaml
 ```
 
 The recipe exists because `sops` searches only *user* key locations (`~/.ssh/`,
 `~/.config/sops/age/keys.txt`, a few env vars) and so never finds the SSH
-**host** key this repo encrypts to — bare `sops secrets/ha.yaml` fails with
+**host** key this repo encrypts to — bare `sops secrets/home-assistant.yaml` fails with
 *"Failed to get the data key required to decrypt the SOPS file"*. `just secret`
 converts `/etc/ssh/ssh_host_ed25519_key` (root-only, so it asks for sudo) to age
 and passes it to sops for that one command, without exporting it into your
@@ -673,7 +717,7 @@ config.sops.secrets.hass_token.path   # => /run/secrets/hass_token
 ```
 
 Adding another machine: add its age key to `.sops.yaml`, then re-encrypt every
-existing secret to the new recipient list with `just updatekeys secrets/ha.yaml`
+existing secret to the new recipient list with `just updatekeys secrets/home-assistant.yaml`
 (same host-key handling as `just secret`). To rotate a secret, edit it as above
 and replace the value — the old ciphertext is overwritten.
 
@@ -1047,7 +1091,7 @@ changes the bookmark list.
 <br>
 
 `modules/services/printing.nix` is enabled for every host through
-`suites.core` (`services.printing-suite.enable = true;`). It turns on:
+`suites.core` (`services.printing-cups.enable = true;`). It turns on:
 
 ```nix
 services.printing.enable = true;   # CUPS
@@ -1082,7 +1126,7 @@ services.printing.drivers = [ pkgs.hplip ];   # example: HP
 
 | Option | Default | |
 |---|---|---|
-| `services.printing-suite.enable` | `false` | turn on CUPS + Avahi discovery |
+| `services.printing-cups.enable` | `false` | turn on CUPS + Avahi discovery |
 
 </details>
 
@@ -1294,10 +1338,173 @@ default would publish it on every network the laptop joins.
 
 </details>
 
+## 📇 Anki (declarative addons)
+
+<details>
+<summary>17 addons deployed from Nix into Anki's <em>real</em> mutable addon folder — GUI config still survives rebuilds, two addons get their credentials from sops, and ReColor's palette is regenerated from the active theme. <code>modules/apps/anki/</code>.</summary>
+
+<br>
+
+The obvious approach — `pkgs.anki.withAddons` — was rejected. It replaces
+`addons21` wholesale via `ANKI_ADDONS`, which makes every addon read-only in the
+store and breaks Anki's own "save config" flow. So instead a home-manager
+activation script *deploys into* the real folder:
+
+- **Code** is rsynced from the store on every activation, so a rebuild is what
+  updates an addon.
+- **`meta.json` and `user_files/` are excluded** from that rsync. Once they
+  exist, Anki owns them — anything you change in the addon's GUI config sticks.
+- **First install only**, a captured config from `_lib/seeds/<id>.json` is
+  written as the initial `meta.json`.
+
+Three things override that "leave it alone" rule on purpose:
+
+| Mechanism | Applies to | Why |
+|---|---|---|
+| `secretMerges` | HyperTTS (Azure key), Anki Leaderboard (auth token) | Live credentials. Stripped from the seed, re-merged from `/run/secrets/*` with `jq` on every activation, so they are never in git. |
+| `themedFiles` | ReColor | Its whole `meta.json` is generated from the active theme's `recolor` table and rewritten every time, so switching themes re-colors Anki too. |
+| `disabledIds` | Anki Leaderboard | The one addon that was off on the old machine, and stays off. |
+
+### Layout
+
+```
+modules/apps/anki/
+  default.nix        the module: apps.anki.enable, sops secrets, activation
+  _lib/
+    default.nix      addon set + mkActivationScript
+    fetched/         addons built from upstream sources, with patches
+    vendored/        addons committed here (forks, or ones with no clean source)
+    seeds/           captured first-install meta.json config per addon id
+    recolor-schema.json   ReColor's shipped labels / light values / css vars
+```
+
+`_lib` is not a typo — import-tree skips any path containing `/_`, so the addon
+tree lives beside its module without being loaded as one.
+
+### Adding an addon
+
+**From upstream** — add it to `_lib/fetched/default.nix` with its source and, if
+needed, a patch under `_lib/fetched/patches/`.
+
+**Vendored** — drop the addon folder into `_lib/vendored/<ankiweb-id>/` and add
+that id to `vendoredIds` in `_lib/default.nix`. The id only has to be unique;
+`advanced_deck_maker` and `efficiency_tracker` are locally-written addons whose
+"id" is just a name.
+
+**With a config you want as the default** — install it, configure it in the GUI,
+then copy the `config` object out of its `meta.json` into
+`_lib/seeds/<id>.json` and add the id to `seededIds`.
+
+> [!NOTE]
+> Anki's own "Update Add-ons" dialog will still offer to update these. Letting it
+> is harmless but pointless — the next `just rebuild` rsyncs the pinned code back
+> over the top. Bump the flake or the vendored folder instead.
+
+</details>
+
+## 🌐 Helium (declarative browser)
+
+<details>
+<summary>Flags, Chrome Enterprise policies and the whole extension set declared in Nix — including a local proxy that keeps the extension updater from breaking on Helium's version string. <code>modules/apps/helium/</code>.</summary>
+
+<br>
+
+Helium is a Chromium fork, so extensions can be installed *by policy* rather than
+by hand: `ExtensionInstallForcelist` in `/etc/chromium/policies/` names each
+extension id and its update URL, and the browser fetches them on start. That is
+what makes the extension set reproducible.
+
+Three things had to be solved to get there, and each is worth knowing before
+touching this module:
+
+- **The packaging matters.** This uses
+  [`oxcl/nix-flake-helium-browser`](https://github.com/oxcl/nix-flake-helium-browser),
+  which repacks the official `.deb` with `patchelf`. The previous input
+  (`FKouhai/helium2nix`) ran an AppImage inside bwrap and never bound
+  `/etc/chromium`, so policies could not reach the browser at all — no policies,
+  no declarative extensions.
+- **A forcelist is not an allowlist.** Setting `ExtensionInstallForcelist` alone
+  once combined with a blocklist in a way that blocked everything *else*,
+  including manually-installed extensions. See the commit history on this module.
+- **The update endpoint needs a patched `prodversion`.** Google's update service
+  rejects Helium's version string, so `update-proxy.py` sits in front of it and
+  rewrites `prodversion` to a Chrome version the endpoint accepts. Without it
+  every extension update 400s.
+
+`userscripts/` holds page scripts loaded through the extension set rather than
+through any Nix mechanism — they are data for a userscript manager.
+
+</details>
+
+## 📱 Android (adb + scrcpy)
+
+<details>
+<summary><code>apps.android</code> — adb, scrcpy, and auto-reconnect to a phone paired over Wi-Fi, so mirroring is one command and never a USB cable hunt.</summary>
+
+<br>
+
+Enabled by `suites.development`. The design notes are in
+[`docs/design/specs/2026-08-05-android-adb-scrcpy-design.md`](docs/design/specs/2026-08-05-android-adb-scrcpy-design.md).
+
+Pair the phone once (Developer options → Wireless debugging → Pair device with
+pairing code):
+
+```sh
+adb pair <phone-ip>:<pairing-port>
+adb connect <phone-ip>:<port>
+scrcpy
+```
+
+After that the wireless auto-connect handles reconnection, so `scrcpy` on its
+own is usually enough.
+
+</details>
+
+## 🔌 Claude Code (pinned plugins)
+
+<details>
+<summary>The plugin set is pinned by <code>flake.lock</code>, not cloned and self-updated by Claude — so a rebuild is the only thing that changes it. <code>modules/apps/claude-code.nix</code>.</summary>
+
+<br>
+
+Claude Code normally clones plugin marketplaces into `~/.claude/plugins` and
+updates them on its own schedule. This module writes that tree from Nix instead,
+which means the plugin set is reproducible and moves only when you say so.
+
+Each marketplace is a `flake = false` input holding a
+`.claude-plugin/marketplace.json`:
+
+| Input | Repo |
+|---|---|
+| `claude-marketplace-official` | `anthropics/claude-plugins-official` |
+| `claude-marketplace-caveman` | `JuliusBrussee/caveman` |
+| `claude-marketplace-skills` | `alirezarezvani/claude-skills` |
+| `claude-marketplace-flutter` | `cleydson/flutter-claude-code` |
+| `claude-marketplace-ui-ux` | `nextlevelbuilder/ui-ux-pro-max-skill` |
+
+Two plugins need their own pins because the official marketplace only *points*
+at them (`{"source":"url"}` entries naming another repo, so the marketplace tree
+does not contain them): `claude-plugin-superpowers` and `claude-plugin-figma`.
+
+Bump one with `nix flake update <input-name>`, then `just rebuild`.
+
+`ccl` (§ Local models) execs `ccr code`, which launches `claude` — so those
+sessions get this same pinned set.
+
+</details>
+
 ## 📎 Attribution
 
 The HM + NixOS same-file mechanism (`home.extraOptions` + deferred module) and
 the enable-options / suites layout are adapted from a previous personal repo,
 `quickhyprnix`.
+
+**Vibe coded with [Claude Code](https://claude.com/claude-code).** Nearly every
+module here — and this README — was written in a conversation with Claude rather
+than typed out by hand: describe the behaviour, read the diff, rebuild, keep
+what survives. The long comments in the `.nix` files are part of that workflow;
+they are the reasoning behind each decision, kept in the file so the next
+session (human or model) does not have to rediscover it. Treat them as the real
+documentation.
 
 <div align="center"><sub>Built with Nix · themed with stylix · broken and fixed on <code>main</code></sub></div>
