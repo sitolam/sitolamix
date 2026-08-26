@@ -26,15 +26,52 @@ let
   # "normal_installed" installs and pins the extension while still letting the
   # extensions page disable it; "force_installed" would also take away the
   # on/off switch, which is more lockdown than we want on a personal machine.
+  #
+  # `pin` decides whether the extension gets a permanent toolbar button
+  # (`toolbar_pin = "force_pinned"`). Toolbar pinning otherwise lives in the
+  # profile, so it is exactly the kind of state this module exists to own.
+  # Only the two worth a one-click button are pinned; everything else is left
+  # at Chromium's default — unpinned, still reachable from the puzzle menu and
+  # still pinnable by hand. A floor, not a cage.
   extensions = {
-    "bdhficnphioomdjhdfbhdepjgggekodf" = "Smartschool++";
-    "dhdgffkkebhmkfjojejmpbldmpobfkfo" = "Tampermonkey";
-    "dpacanjfikmhoddligfbehkpomnbgblf" = "AHA Music - Song Finder";
-    "ekhagklcjbdpajgpjgmbionohlpdbjgc" = "Zotero Connector";
-    "epjdekbdhhhpkpkclookegeabjkpblch" = "Smartschool Grid - Percentages";
-    "fcoeoabgfenejglbffodgkkbkcdhcgfn" = "Claude";
-    "lbpdknjafmmnemenflppkofaakldbfom" = "Smarter Smartschool";
-    "nngceckbapebfimnlniiiahkandclblb" = "Bitwarden Password Manager";
+    "cjpalhdlnbpafiamejdnhcphjbkeiagm" = {
+      name = "uBlock Origin";
+      # Deliberately the Web Store build rather than helium's compiled-in uBO.
+      # The store still serves the full MV2 extension despite the MV2 sunset
+      # (verified 2026-08-26: the update ping answers with a 1.74.0 codebase
+      # URL), and it keeps its own filter lists and settings instead of
+      # helium's fork of them.
+      #
+      # Helium's built-in copy has no policy and no pref that turns it off —
+      # only the Settings > Services > uBlock switch — so that one has to be
+      # flipped by hand once per profile. Running both at once means two
+      # element pickers and two sets of cosmetic filters on every page.
+      pin = false;
+    };
+    "dhdgffkkebhmkfjojejmpbldmpobfkfo" = {
+      name = "Tampermonkey";
+      pin = false;
+    };
+    "dpacanjfikmhoddligfbehkpomnbgblf" = {
+      name = "AHA Music - Song Finder";
+      pin = false;
+    };
+    "ekhagklcjbdpajgpjgmbionohlpdbjgc" = {
+      name = "Zotero Connector";
+      pin = true;
+    };
+    "fcoeoabgfenejglbffodgkkbkcdhcgfn" = {
+      name = "Claude";
+      pin = false;
+    };
+    "mcbpblocgmgfnpjjppndjkmgjaogfceg" = {
+      name = "GoFullPage - Full Page Screen Capture";
+      pin = false;
+    };
+    "nngceckbapebfimnlniiiahkandclblb" = {
+      name = "Bitwarden Password Manager";
+      pin = true;
+    };
   };
 
   # Wraps a Tampermonkey-style userscript into a minimal MV3 extension that
@@ -135,10 +172,14 @@ in
       # invisible to the browser.
       policies = {
         ExtensionSettings =
-          lib.mapAttrs (_: _: {
-            installation_mode = "normal_installed";
-            update_url = webstore;
-          }) extensions
+          lib.mapAttrs (
+            _: ext:
+            {
+              installation_mode = "normal_installed";
+              update_url = webstore;
+            }
+            // lib.optionalAttrs ext.pin { toolbar_pin = "force_pinned"; }
+          ) extensions
           // {
             # Without this catch-all, naming any id in ExtensionSettings blocks
             # every id that is *not* named — including themes and anything
