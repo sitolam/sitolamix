@@ -6,12 +6,13 @@ in
   options.suites.desktop.enable = lib.mkEnableOption "niri + DankMaterialShell + stylix + kanata desktop";
 
   config = lib.mkIf cfg.enable {
-    desktop.niri.enable = true;
-    # trying DankMaterialShell instead of noctalia on this branch
-    desktop.dms.enable = true;
-    desktop.greetd.enable = true;
+    desktop = {
+      niri.enable = true;
+      dms.enable = true;
+      greetd.enable = true;
+      kanata.enable = true;
+    };
     theming.stylix.enable = true;
-    keyboard.kanata.enable = true;
     services.kde-connect.enable = true;
   };
 }

@@ -37,7 +37,7 @@ in
       # its own UI (see modules/desktop/dms/default.nix). The wallpaper is runtime
       # state now; the option is `null or path`, so leaving it unset is supported.
       base16Scheme = "${pkgs.base16-schemes}/share/themes/${theme.themeName}.yaml";
-      polarity = theme.polarity;
+      inherit (theme) polarity;
       override = lib.mkIf (theme.override != null) theme.override;
 
       cursor = {

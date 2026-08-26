@@ -2,7 +2,7 @@
 {
   fonts = {
     packages = with pkgs; [
-      # UI / terminal (stylix picks its faces from these, see ../desktop/stylix.nix)
+      # UI / terminal (stylix picks its faces from these, see ../theming/stylix.nix)
       nerd-fonts.meslo-lg
       nerd-fonts.jetbrains-mono
       nerd-fonts.symbols-only

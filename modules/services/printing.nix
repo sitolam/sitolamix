@@ -1,9 +1,13 @@
+# The option is `services.printing-cups`, not `services.printing`: nixpkgs
+# already owns `services.printing` (the CUPS module this one configures), so
+# a same-named option here would collide with it. Every other module in this
+# repo matches its filename -- this is the one deliberate exception.
 { config, lib, ... }:
 let
-  cfg = config.services.printing-suite;
+  cfg = config.services.printing-cups;
 in
 {
-  options.services.printing-suite.enable = lib.mkEnableOption "CUPS printing with driverless network discovery";
+  options.services.printing-cups.enable = lib.mkEnableOption "CUPS printing with driverless network discovery";
 
   config = lib.mkIf cfg.enable {
     services.printing = {

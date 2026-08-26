@@ -1,4 +1,4 @@
-{ }:
+_:
 let
   # Catppuccin Mocha's official named palette (catppuccin.com/palette) --
   # the source of truth for anything below that wants a swatch by name
@@ -43,7 +43,7 @@ in
   override = null;
 
   # DankMaterialShell M3 tokens -> base16 slot names (resolved to hex from the
-  # active stylix scheme in modules/desktop/dms.nix). Set to null to fall back to
+  # active stylix scheme in modules/desktop/dms/theme.nix). Set to null to fall back to
   # stylix's own auto mapping. That mapping leads with base0D (blue) + surface0
   # containers, which reads Nord-ish; lead with mauve (base0E) and keep the bar
   # (surfaceContainer) on the darkest base slot instead.

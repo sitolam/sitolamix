@@ -266,7 +266,7 @@ labels and LVM paths, the generated one uses UUIDs. Differences in
 
 ## Part 6 — Re-key the sops secrets — **before** installing
 
-`modules/system/sops.nix` decrypts `secrets/ha.yaml` with the machine's SSH host
+`modules/system/sops.nix` decrypts `secrets/home-assistant.yaml` with the machine's SSH host
 key, converted to age. A fresh machine is not a recipient, so **the install
 fails at build time** if you skip this.
 
@@ -321,7 +321,7 @@ anywhere.
 So why does `gamingpc`'s own private key come into it? Because adding a
 recipient is two operations, not one:
 
-1. **decrypt** `secrets/ha.yaml` — which needs a key that is *already* a
+1. **decrypt** `secrets/home-assistant.yaml` — which needs a key that is *already* a
    recipient, i.e. gamingpc's
 2. re-encrypt the result to both recipients
 
@@ -365,7 +365,7 @@ handed over deliberately. In fish:
 sudo -v    # prime sudo, so it doesn't prompt from inside the substitution
 set -x SOPS_AGE_KEY (sudo cat /etc/ssh/ssh_host_ed25519_key | nix run nixpkgs#ssh-to-age -- -private-key)
 
-nix run nixpkgs#sops -- -d secrets/ha.yaml >/dev/null; and echo OK   # decrypts? writes nothing
+nix run nixpkgs#sops -- -d secrets/home-assistant.yaml >/dev/null; and echo OK   # decrypts? writes nothing
 ```
 
 Don't run `sops` under `sudo` instead — it works, but rewrites the file as
@@ -373,7 +373,7 @@ root inside your checkout.
 
 ```fish
 cd ~/sitolamix
-nix run nixpkgs#sops -- updatekeys secrets/ha.yaml
+nix run nixpkgs#sops -- updatekeys secrets/home-assistant.yaml
 set -e SOPS_AGE_KEY
 
 git commit -am "chore(sops): add omnibook as a recipient"
@@ -396,7 +396,7 @@ Both machines can now decrypt.
 nixos-install --flake /mnt/home/otis/sitolamix#omnibook
 ```
 
-Long first run, lots of downloading. The noctalia / niri / nix-community caches
+Long first run, lots of downloading. The niri / nix-community caches
 in `flake.nix`'s `nixConfig` cover most of the non-nixpkgs closure.
 
 Set the user password before rebooting, or greetd has nothing to let you in

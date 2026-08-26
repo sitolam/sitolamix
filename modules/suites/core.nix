@@ -6,7 +6,7 @@ in
   options.suites.core.enable = lib.mkEnableOption "core shell + CLI programs every host wants";
 
   config = lib.mkIf cfg.enable {
-    services.printing-suite.enable = true;
+    services.printing-cups.enable = true;
 
     apps = {
       fish.enable = true;
@@ -17,7 +17,6 @@ in
       direnv.enable = true;
       neovim.enable = true;
       yazi.enable = true;
-      fastfetch.enable = true;
       nitch.enable = true;
       cli.enable = true;
       nautilus.enable = true;
@@ -30,7 +29,7 @@ in
       {
         home.packages = [
           pkgs.mission-center # GUI system monitor (GNOME-style task manager)
-          pkgs.system-config-printer # GUI for services.printing-suite (add/manage printers)
+          pkgs.system-config-printer # GUI for services.printing-cups (add/manage printers)
         ];
       };
   };
