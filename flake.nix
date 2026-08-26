@@ -1,15 +1,13 @@
 {
-  description = "sitolamix — enable-options NixOS: niri + noctalia + stylix (catppuccin-mocha)";
+  description = "sitolamix — enable-options NixOS: niri + DankMaterialShell + stylix (catppuccin-mocha)";
 
   nixConfig = {
-    # garnix / hyprland / lantian were dropped — see modules/system/nix.nix.
+    # garnix / hyprland / lantian / noctalia were dropped — see modules/system/nix.nix.
     extra-substituters = [
-      "https://noctalia.cachix.org"
       "https://niri.cachix.org"
       "https://nix-community.cachix.org"
     ];
     extra-trusted-public-keys = [
-      "noctalia.cachix.org-1:pCOR47nnMEo5thcxNDtzWpOxNFQsBRglJzxWPp3dkU4="
       "niri.cachix.org-1:Wv0OmO7PsuocRKzfDoJ3mulSl7Z6oezYhGhR+3W2964="
       "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
     ];
@@ -46,8 +44,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    noctalia.url = "github:noctalia-dev/noctalia-shell";
-
     # niri scratchpad (Rust). packages.default = the `niri-scratchpad` binary.
     niri-scratchpad = {
       url = "github:argosnothing/niri-scratchpad-rs";
@@ -61,8 +57,8 @@
       flake = false;
     };
 
-    # DankMaterialShell (Quickshell + Go). Tried on this branch as an
-    # alternative to noctalia; drives blur via niri's ext-background-effect.
+    # DankMaterialShell (Quickshell + Go) — the bar, panels, control center,
+    # lock screen and plugin host. Drives blur via niri's ext-background-effect.
     dms = {
       url = "github:AvengeMedia/DankMaterialShell/stable";
       inputs.nixpkgs.follows = "nixpkgs";
