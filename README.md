@@ -124,6 +124,9 @@ Things this config does that a stock desktop does not:
   the same `themes/catppuccin-mocha.nix` palette. Change the theme, they follow.
 - 📇 **Anki as config** — 17 addons deployed from Nix, credentials merged in from
   sops, and GUI-made settings still survive a rebuild (§ Anki).
+- 📐 **The repo documents itself to its own agent** — `/sitolamix` is a Claude
+  Code skill written in this tree and pinned into the plugin set by the same
+  flake, so the house rules ship with the code they describe.
 - 🔒 **Lock before sleep** — swayidle locks, then suspends, and pauses the whole
   chain while media is playing.
 
@@ -230,11 +233,12 @@ Two conventions worth knowing:
   `ccl.sh`, `modules/desktop/kanata/` carries `config.kbd`,
   `modules/apps/helium/` carries the update proxy and userscripts. A module
   with no sidecars is a single `.nix` file.
-- **Data that is not a module goes in `_lib`.** import-tree's filter skips any
-  path containing `/_`, so `modules/apps/anki/_lib/` holds Anki's whole addon
-  tree right next to the module that uses it without being mistaken for one.
-  Cross-cutting data that several modules read (`themes/`) stays at the repo
-  root instead.
+- **Data that is not a module goes in a `_`-prefixed directory.** import-tree's
+  filter skips any path containing `/_`, so `modules/apps/anki/_lib/` holds
+  Anki's whole addon tree, and `modules/apps/claude-code/_plugin/` the
+  `/sitolamix` skill, right next to the modules that use them without either
+  being mistaken for a NixOS module. Cross-cutting data that several modules
+  read (`themes/`) stays at the repo root instead.
 
 ### Enable-options + suites
 
@@ -1488,6 +1492,31 @@ at them (`{"source":"url"}` entries naming another repo, so the marketplace tree
 does not contain them): `claude-plugin-superpowers` and `claude-plugin-figma`.
 
 Bump one with `nix flake update <input-name>`, then `just rebuild`.
+
+### `/sitolamix` — the house-rules skill
+
+One plugin is not fetched at all. `modules/apps/claude-code/_plugin/` is written
+in this repo and joins the same Nix-built marketplace as the rest, which means
+the skill and the code it describes move in one commit and can never drift apart.
+
+It carries a single skill, `/sitolamix`: the conventions for working on this
+flake — one file per feature, the namespace/directory mapping, when a module
+becomes a directory, what `_lib` is for, which files this repo owns that apps
+also try to write, and the verification gates (`just check`, statix, deadnix,
+and `nvd diff` for anything claiming to be a pure refactor). Claude loads it on
+its own when a request matches; type `/sitolamix` to force it.
+
+To change it, edit
+[`_plugin/skills/sitolamix/SKILL.md`](modules/apps/claude-code/_plugin/skills/sitolamix/SKILL.md)
+and rebuild — the store path changes, so Claude picks the new text up on next
+launch. To add a second skill, drop another directory under `_plugin/skills/`;
+nothing else needs touching.
+
+> [!NOTE]
+> This is a *project*-specific skill living at *user* scope, so it is offered in
+> every repo, not just this one. That is deliberate — it is as useful when
+> editing this flake from somewhere else — but it does mean the description has
+> to name sitolamix explicitly so Claude does not reach for it elsewhere.
 
 `ccl` (§ Local models) execs `ccr code`, which launches `claude` — so those
 sessions get this same pinned set.
