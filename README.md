@@ -1511,7 +1511,7 @@ sessions get this same pinned set.
 
 ## 📄 Licence
 
-**GPL-3.0-or-later.** Copyright © 2026 Jan Lammertyn. Full text in
+**GPL-3.0-or-later.** Copyright © 2026 Otis Lammertyn. Full text in
 [`LICENSE`](LICENSE), the copyright notice and third-party carve-outs in
 [`COPYRIGHT`](COPYRIGHT).
 
