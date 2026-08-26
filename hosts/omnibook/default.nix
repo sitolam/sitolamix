@@ -45,24 +45,28 @@
     };
   };
 
-  # Xe3 display-engine workarounds. The driver stack above is correct (xe +
-  # iHD, both confirmed loaded); what misbehaves is two power-saving features
-  # of Panther Lake's still-young display code:
+  # Xe3 display-engine workaround. The driver stack above is correct (xe +
+  # iHD, both confirmed loaded); what misbehaves is Panther Lake's still-young
+  # display code.
   #
-  #   xe.enable_psr=0 — Panel Self Refresh. Symptoms in `journalctl -k -b`:
-  #     "Timed out waiting PSR idle state", "Selective fetch area calculation
-  #     failed in pipe A", "CPU pipe A FIFO underrun". On screen: half the
-  #     panel randomly going black or garbled. Costs a little idle battery.
   #   xe.enable_dsb=0 — Display State Buffer, the batched register-write path
   #     for atomic commits. Symptom: "[CRTC:151:pipe A] DSB 0 poll error"
   #     repeating about once per vblank (660k lines in one boot before this),
   #     which stalls commits and reads as dropped frames in video playback.
   #
-  # Both are display-engine only — no effect on rendering or VA-API decode.
-  # Drop them one at a time after a kernel bump and check the counts are still
-  # zero: `journalctl -k -b | grep -cE "DSB 0 poll error|PSR idle state"`.
+  # Display-engine only — no effect on rendering or VA-API decode.
+  #
+  # xe.enable_psr=0 (Panel Self Refresh) used to sit here too, for half-panel
+  # blackouts logged as "Timed out waiting PSR idle state", "Selective fetch
+  # area calculation failed in pipe A" and "CPU pipe A FIFO underrun". Dropped
+  # on 2026-08-26 to retest on zen 7.1.9 (it was set on 7.1.8), because PSR is
+  # the display feature that actually costs idle battery when off. If the
+  # blackouts come back, put it back; if they do not, it is fixed upstream.
+  # Verify after a few hours of use, on this boot:
+  #   journalctl -k -b | grep -cE "PSR idle state|Selective fetch|FIFO underrun"
+  # Same one-at-a-time retest applies to DSB after the next kernel bump:
+  #   journalctl -k -b | grep -c "DSB 0 poll error"
   boot.kernelParams = [
-    "xe.enable_psr=0"
     "xe.enable_dsb=0"
   ];
 

@@ -865,7 +865,7 @@ Tune the delay or add a battery-percentage cutoff in
 ## 🩹 Display glitches (Panther Lake / Xe3)
 
 <details>
-<summary><code>omnibook</code> only — the driver stack is right; two of the display engine's power-saving features are not. Recheck after every kernel bump.</summary>
+<summary><code>omnibook</code> only — the driver stack is right; several of the display engine's features are not. Recheck after every kernel bump.</summary>
 
 <br>
 
@@ -893,17 +893,43 @@ If a `panther-lake` (or `hp/omnibook`) directory shows up, import it and drop
 the hand-set `hardware.intelgpu` block — upstream will keep it more current
 than we will.
 
-**What actually glitches** is the Xe3 display engine. Two features are buggy on
-this panel and are disabled by `boot.kernelParams` in the host file:
+**What actually glitches** is the Xe3 display engine, in three separate ways.
+
+One feature is disabled by `boot.kernelParams` in the host file:
 
 | Param | Kernel symptom | What you see |
 |---|---|---|
-| `xe.enable_psr=0` | `Timed out waiting PSR idle state`, `Selective fetch area calculation failed in pipe A`, `CPU pipe A FIFO underrun` | Half the screen randomly going black or garbled |
 | `xe.enable_dsb=0` | `[CRTC:151:pipe A] DSB 0 poll error`, roughly once per vblank — 660k lines in a single boot before the workaround | Stuttering and dropped frames, most obvious in video playback |
 
+`xe.enable_psr=0` (Panel Self Refresh) sat alongside it until 2026-08-26, for
+`Timed out waiting PSR idle state`, `Selective fetch area calculation failed in
+pipe A` and `CPU pipe A FIFO underrun` — half the screen randomly going black
+or garbled. It was **dropped to retest on zen 7.1.9**, because PSR is the
+display feature that actually saves idle battery and is therefore the one worth
+reclaiming. If the blackouts return, put the param back; if they don't, the bug
+was fixed upstream and it can stay gone.
+
 Both are display-engine only: rendering, VA-API decode and the NPU are
-untouched. Disabling PSR costs a little idle battery, which is the price of a
-panel that doesn't tear itself in half.
+untouched.
+
+**VRR is the third, and is still open.** With PSR and DSB handled, the glitches
+that remain during video playback log as:
+
+```
+[drm] *ERROR* Atomic update failure on pipe A (start=... time 18 us, min 1836, max 1859, ...)
+[drm] *ERROR* [CRTC:151:pipe A] VRR push send still pending
+```
+
+The `min`/`max` vblank window shifts from one event to the next, which is VRR
+retiming the frame window; the compositor misses it and the panel shows a stale
+or black frame. Video is hit hardest because a varying framerate drives VRR
+hardest. VRR is enabled on `eDP-1` — **DMS owns
+`~/.config/niri/dms/outputs.kdl`, so toggle it in the DMS settings UI, not in
+Nix.** niri's `variable-refresh-rate on-demand` is a middle option, but
+on-demand activates on fullscreen video, which is precisely the case that
+glitches. Note that VRR is a poor battery trade here regardless: PSR saves real
+power, and simply running the panel at 60Hz instead of 120Hz saves more than
+VRR ever does.
 
 These are workarounds for driver bugs, not permanent settings. After a kernel
 bump, drop one param at a time, reboot, use the machine for a while, and count:
