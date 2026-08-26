@@ -1412,11 +1412,13 @@ then copy the `config` object out of its `meta.json` into
 <br>
 
 Helium is a Chromium fork, so extensions can be installed *by policy* rather than
-by hand: `ExtensionInstallForcelist` in `/etc/chromium/policies/` names each
-extension id and its update URL, and the browser fetches them on start. That is
-what makes the extension set reproducible.
+by hand: `ExtensionSettings` in `/etc/chromium/policies/` names each extension
+id, its update URL and whether it gets a toolbar button, and the browser acts on
+that at startup. That is what makes the extension set reproducible — the set, the
+pinning and the *absence* of anything removed all travel with the flake instead
+of with `~/.config/net.imput.helium`.
 
-Three things had to be solved to get there, and each is worth knowing before
+Four things had to be solved to get there, and each is worth knowing before
 touching this module:
 
 - **The packaging matters.** This uses
@@ -1425,13 +1427,36 @@ touching this module:
   (`FKouhai/helium2nix`) ran an AppImage inside bwrap and never bound
   `/etc/chromium`, so policies could not reach the browser at all — no policies,
   no declarative extensions.
-- **A forcelist is not an allowlist.** Setting `ExtensionInstallForcelist` alone
-  once combined with a blocklist in a way that blocked everything *else*,
-  including manually-installed extensions. See the commit history on this module.
+- **Naming any id blocks every id you did not name.** The earlier
+  `ExtensionInstallForcelist` approach combined with a blocklist in a way that
+  blocked everything *else*, manually-installed extensions included. The fix is
+  the `"*".installation_mode = "allowed"` catch-all: the declared set is a floor,
+  not a whitelist.
 - **The update endpoint needs a patched `prodversion`.** Google's update service
   rejects Helium's version string, so `update-proxy.py` sits in front of it and
   rewrites `prodversion` to a Chrome version the endpoint accepts. Without it
   every extension update 400s.
+- **Deleting an id does not uninstall the extension.** Because the catch-all is
+  `allowed`, an extension already sitting in the profile from an earlier
+  generation just stops being managed and keeps running. `removedExtensions`
+  exists for this: it maps ids to `installation_mode = "removed"`, the only mode
+  that actually uninstalls and blocks a reinstall. Ids stay listed there for as
+  long as any profile might still carry them.
+
+Two smaller things the module decides:
+
+- **Pinning is declarative.** `pin = true` on an entry emits
+  `toolbar_pin = "force_pinned"`. Only the extensions worth a one-click button
+  get it; everything else is left at Chromium's default, which is unpinned but
+  still pinnable by hand.
+- **uBlock Origin comes from the Web Store, not from Helium.** Helium ships its
+  own compiled-in uBO with its own fork of the filter lists, and neither a policy
+  nor a pref can turn it off — only the **Settings → Services → uBlock** switch,
+  which has to be flipped by hand once per profile. Leaving both on gives every
+  page two element pickers and two sets of cosmetic filters.
+
+Policies are read at startup, so a rebuild is not enough: **quit Helium
+completely and reopen it** before concluding a change did not apply.
 
 `userscripts/` holds page scripts loaded through the extension set rather than
 through any Nix mechanism — they are data for a userscript manager.
