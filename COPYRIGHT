@@ -1,0 +1,43 @@
+sitolamix — personal NixOS flake
+Copyright (C) 2026  Jan Lammertyn
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+The full text of the licence is in ./LICENSE.
+
+
+Third-party code included in this repository
+--------------------------------------------
+
+The licence above covers the configuration written for this repository. It
+does NOT relicense third-party code that is vendored here — that code stays
+under the terms its own authors chose, and those terms travel with it.
+
+  modules/apps/anki/_lib/vendored/
+      Anki add-ons committed into this tree, each retaining its own licence.
+      The set spans AGPL-3.0, GPL-2.0/GPL-3.0, Apache-2.0, BSD and MIT terms,
+      and some of the bundled media assets carry separate attribution
+      requirements of their own. Every add-on directory ships the licence
+      files it came with; read those before redistributing any of it.
+      See modules/apps/anki/_lib/vendored/README.md for the summary.
+
+  modules/apps/anki/_lib/fetched/
+      Add-ons built from upstream sources at evaluation time. Nothing of
+      theirs is committed here beyond small patches, but the resulting
+      binaries are the upstream projects' work under the upstream licences.
+
+Everything reached through flake.nix inputs — nixpkgs, niri, stylix,
+DankMaterialShell, Helium, WinApps, the Claude Code plugin marketplaces and
+the rest — is fetched at build time and is likewise governed by its own
+licence, not this one.

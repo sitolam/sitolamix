@@ -12,6 +12,7 @@ enable-switch, side by side.
 [![home-manager](https://img.shields.io/badge/home--manager-folded%20in-41439a?style=flat-square)](https://github.com/nix-community/home-manager)
 [![stylix](https://img.shields.io/badge/theme-stylix%20·%20catppuccin-89b4fa?style=flat-square)](https://github.com/nix-community/stylix)
 [![built with Claude Code](https://img.shields.io/badge/vibe%20coded%20with-Claude%20Code-d97757?style=flat-square)](https://claude.com/claude-code)
+[![licence: GPL-3.0](https://img.shields.io/badge/licence-GPL--3.0-a6e3a1?style=flat-square)](LICENSE)
 
 </div>
 
@@ -1492,6 +1493,25 @@ Bump one with `nix flake update <input-name>`, then `just rebuild`.
 sessions get this same pinned set.
 
 </details>
+
+## 📄 Licence
+
+**GPL-3.0-or-later.** Copyright © 2026 Jan Lammertyn. Full text in
+[`LICENSE`](LICENSE), the copyright notice and third-party carve-outs in
+[`COPYRIGHT`](COPYRIGHT).
+
+Two things the licence deliberately does *not* cover:
+
+- **`modules/apps/anki/_lib/vendored/`** — Anki add-ons committed into this tree
+  keep the licences their own authors chose (AGPL-3.0, GPL, Apache-2.0, BSD, MIT,
+  and some bundled media with separate attribution terms). A per-add-on table is
+  in [that directory's README](modules/apps/anki/_lib/vendored/README.md). Read
+  it before redistributing any of them.
+- **Everything behind a flake input** — nixpkgs, niri, stylix, DankMaterialShell,
+  Helium, WinApps and the rest are fetched at build time under their own terms.
+
+The two add-ons written for this repo, `advanced_deck_maker` and
+`efficiency_tracker`, are GPL-3.0 like the rest of the configuration.
 
 ## 📎 Attribution
 
