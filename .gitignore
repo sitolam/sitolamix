@@ -5,3 +5,8 @@ result-*
 backup.txt
 .superpowers/
 .vscode/
+
+# Claude Code session state — machine-local, not part of the config.
+.claude/RESUME.md
+.claude/worktrees/
+.claude/settings.local.json
