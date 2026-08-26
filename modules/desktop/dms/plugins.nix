@@ -444,6 +444,26 @@ let
 in
 {
   config = lib.mkIf config.desktop.dms.enable {
+    # ydotool: key-injection backend for the virtualKeyboard plugin (raw
+    # keycode press/release, so shift/ctrl/alt can be held across separate
+    # taps — see plugins/virtualkeyboard/StartupCheck.qml, which blocks the
+    # plugin from enabling if this isn't reachable). uinput needs a kernel
+    # module and root (or a group with /dev/uinput access) to open, and
+    # nixpkgs ships no dedicated NixOS module for the daemon, so both are
+    # hand-rolled here: load the module, run ydotoold as a system service
+    # with a world-writable socket, and point dms.service at that socket
+    # (added to systemd.user.services.dms.Service.Environment below).
+    boot.kernelModules = [ "uinput" ];
+    environment.systemPackages = [ pkgs.ydotool ];
+    systemd.services.ydotoold = {
+      description = "ydotool daemon";
+      wantedBy = [ "multi-user.target" ];
+      serviceConfig = {
+        ExecStart = "${pkgs.ydotool}/bin/ydotoold --socket-path=/run/ydotoold.socket --socket-perm=0666";
+        Restart = "always";
+      };
+    };
+
     home.extraOptions = {
       # DMS plugins from the registry (github:AvengeMedia/dms-plugin-registry);
       # the registry homeModule (imported in ./default.nix) provides the pinned
@@ -543,6 +563,16 @@ in
           src = lib.mkForce "${inputs.dms-plugins}/plugins/dankmenu";
           settings.menuPath = "${dankMenuFile}";
         };
+        # on-screen keyboard, ported from end-4/dots-hyprland. Not yet in the
+        # registry (unlike dankMenu/mouthGuard above), so no mkForce needed —
+        # this is the only definition. While iterating before it's pushed,
+        # test with `nh os build/switch --override-input dms-plugins
+        # path:/home/otis/Documents/dms-plugins .` (or whatever the working
+        # checkout's path is) so uncommitted edits are picked up.
+        virtualKeyboard = {
+          enable = true;
+          src = "${inputs.dms-plugins}/plugins/virtualkeyboard";
+        };
         usbManager.enable = true; # NordicsSys/dms-usb-manager
         # LuckShiba/DmsDockerManager, via dms-plugin-registry. The status half
         # of the Windows VM controls: running/stopped, ports, logs, stop and
@@ -577,6 +607,15 @@ in
       # HM-managed/read-only — set a plugin's options via plugins.<id>.settings
       # rather than the DMS UI.
       programs.dank-material-shell.managePluginSettings = true;
+
+      # virtualKeyboard's Ydotool.qml spawns `ydotool key ...`, which reads
+      # YDOTOOL_SOCKET to find ydotoold's socket (see the system service
+      # above). List-valued options merge across modules, so this adds to
+      # rather than replaces default.nix's Environment entries for the same
+      # unit.
+      systemd.user.services.dms.Service.Environment = [
+        "YDOTOOL_SOCKET=/run/ydotoold.socket"
+      ];
 
       # The HA plugin keeps its monitored-entity list as plugin *state* (read via
       # pluginService.loadPluginState), not a setting — so declare the state file

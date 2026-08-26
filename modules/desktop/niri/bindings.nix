@@ -267,12 +267,14 @@
               action.toggle-overview = [ ];
             };
             # F11's icon on this keyboard (blank/unlabeled) — raw scancode
-            # confirmed via evtest as KEY_PROG2 -> XF86Launch2. Free key, so it
-            # gets the same action as Mod+O.
-            "XF86Launch2" = {
-              repeat = false;
-              action.toggle-overview = [ ];
-            };
+            # confirmed via evtest as KEY_PROG2 -> XF86Launch2. Was a second
+            # overview toggle (duplicating Mod+O); repurposed for the
+            # virtualKeyboard plugin (see ../dms/plugins.nix) instead, since
+            # Mod+O already covers overview.
+            "XF86Launch2" = spawn (dms [
+              "virtualKeyboard"
+              "toggle"
+            ]);
             "Mod+R" = noArg "switch-preset-column-width";
             "Mod+Shift+R" = noArg "switch-preset-window-height";
             "Mod+Ctrl+R" = noArg "reset-window-height";
