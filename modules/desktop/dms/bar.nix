@@ -71,8 +71,8 @@
           ];
           rightWidgets = [
             # rdannenbring/widget-group. One button holding ambientSound, the
-            # system tray and usbManager; click expands them inline, and they
-            # collapse again once the pointer leaves. The id is
+            # system tray and usbManager; click expands them inline, click again
+            # folds them away (auto-collapse is off). The id is
             # "<pluginId>:<variantId>" — the variant is defined in ./plugins.nix,
             # and its three members are deliberately absent from this list
             # because the group renders them itself.

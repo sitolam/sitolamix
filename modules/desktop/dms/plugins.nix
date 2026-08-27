@@ -608,17 +608,18 @@ in
                 "systemTray"
                 "usbManager"
               ];
-              # This plugin expands on click, not on hover — GroupWidget.qml has
-              # no hover-to-expand path, only hover-hiding of the chevron. The
-              # closest thing to the old hidden-bar hover behaviour is collapsing
-              # again as soon as the pointer leaves the expanded group, which is
-              # what these three do (1s is the minimum delay the plugin accepts).
-              autoCollapse = true;
-              autoCollapseOnLeave = true;
-              autoCollapseSeconds = 1;
+              # The group expands and collapses on click only. This plugin has
+              # no hover-to-expand path in the first place (GroupWidget.qml only
+              # hover-hides the chevron), and auto-collapse is off, so once it is
+              # open it stays open until it is clicked shut — no timer, and no
+              # collapsing out from under the pointer. autoCollapseOnLeave and
+              # autoCollapseSeconds are not set because they are read only while
+              # autoCollapse is true.
+              autoCollapse = false;
               # push neighbours aside when expanding rather than painting over
-              # them: overlayExpand only paints reliably from the centre section
-              # and this group lives on the right.
+              # them. Overlay mode is off by default; set explicitly because it
+              # only paints reliably from the centre section anyway and this
+              # group lives on the right.
               overlayExpand = false;
             }
           ];
