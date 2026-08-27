@@ -32,12 +32,12 @@
     cpu.intel.npu.enable = true;
 
     # Face unlock. Convenience, not a second factor — read the security note at
-    # the top of modules/hardware/gaze.nix. The IR device node is
-    # machine-specific (see README → Face unlock): /dev/video2 here, confirmed
-    # infrared because `v4l2-ctl --list-formats-ext` reports Card type "HP IR
-    # Camera", GREY-only, against video0's colour MJPG/YUYV. Pinned through its
-    # stable by-path symlink — bare /dev/videoN numbering isn't guaranteed
-    # across boots.
+    # the top of modules/hardware/gaze.nix. The IR camera is machine-specific
+    # (see README → Face unlock): the Quanta "HP 5MP Camera" module, whose IR
+    # half is the GREY-only V4L2 node (`v4l2-ctl --list-formats-ext`) next to
+    # the colour MJPG/YUYV one. Given as usb:VID:PID rather than a device node
+    # so gaze resolves the infrared node itself — /dev/videoN numbering isn't
+    # guaranteed across boots, and a by-path symlink is not a form gaze parses.
     #
     # device = "npu": the NPU enabled just above. Face detection and
     # recognition are exactly the small fixed-shape CNNs it exists for, and
@@ -45,7 +45,7 @@
     # prompt cheap enough to run on every unlock, on battery.
     gaze = {
       enable = true;
-      irDevice = "/dev/v4l/by-path/pci-0000:00:14.0-usb-0:3:1.2-video-index0";
+      irDevice = "usb:0408:5494";
       device = "npu";
     };
   };

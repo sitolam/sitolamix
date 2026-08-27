@@ -471,9 +471,9 @@ A Windows Hello module enumerates as two V4L2 devices: the colour webcam and the
 infrared one. Only the IR node works in the dark, which is the entire point.
 
 ```sh
+lsusb                                        # VID:PID of the camera module
 v4l2-ctl --list-devices
 v4l2-ctl -d /dev/videoN --list-formats-ext   # the IR one is GREY-only
-ls -l /dev/v4l/by-path/                      # get the stable path
 gaze doctor                                  # what gaze itself sees
 ```
 
@@ -483,14 +483,22 @@ gaze doctor                                  # what gaze itself sees
 # hosts/omnibook/default.nix
 hardware.gaze = {
   enable = true;
-  irDevice = "/dev/v4l/by-path/pci-0000:00:14.0-usb-0:3:1.2-video-index0";
+  irDevice = "usb:0408:5494";
   device = "npu";
 };
 ```
 
-Prefer the `by-path` symlink over a bare `/dev/video2` — the numbering shifts
-when another camera is plugged in, and gaze pointed at the wrong node just fails
-every scan. Then `just rebuild`.
+Give it the `usb:VVVV:PPPP` hex VID:PID from `lsusb`, not a device node: gaze
+resolves that to the module's infrared node itself, so it survives the
+`/dev/videoN` renumbering that happens when another camera is plugged in.
+
+> [!CAUTION]
+> A `/dev/v4l/by-path/…` symlink does **not** work here, even though it was the
+> right answer for howdy. Gaze special-cases only literal `/dev/video<number>`,
+> `usb:VVVV:PPPP` and `primary`; anything else goes to `gst_parse_launch` as a
+> source element, and enrollment dies with `no source element for URI …`.
+
+Then `just rebuild`.
 
 > [!NOTE]
 > `/etc/gaze/config.toml` is seeded from the Nix `settings` on first boot and

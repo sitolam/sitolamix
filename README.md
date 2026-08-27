@@ -790,6 +790,11 @@ The chain that makes this work, none of which needs anything built specially:
   OpenVINO provider to register and the CLI and GUI only know `device = "cpu"`.
   That override is `hardware.gaze.openvino.enable`, implied by any `device`
   other than `"cpu"`.
+- the module puts `level-zero` and `/run/opengl-driver/lib` on `gazed`'s
+  `LD_LIBRARY_PATH`. OpenVINO's NPU plugin dlopens `libze_loader.so.1` by bare
+  name rather than linking it, and the loader then looks for the driver's
+  `libze_intel_npu.so`; neither is on a system daemon's link path by default, so
+  without this OpenVINO enumerates no NPU at all.
 
 If OpenVINO ever fails to come up, gaze logs the reason and **falls back to the
 ONNX Runtime CPU provider** rather than failing the login. Check which one is
@@ -807,6 +812,7 @@ A Windows Hello module enumerates as *two* V4L2 devices — the colour webcam an
 the infrared one. Only the IR node works in the dark, which is the whole point.
 
 ```sh
+lsusb                                        # VID:PID of the camera module
 v4l2-ctl --list-devices
 v4l2-ctl -d /dev/videoN --list-formats-ext   # the IR one is GREY-only
 gaze doctor                                  # what gaze itself sees
@@ -818,15 +824,24 @@ gaze doctor                                  # what gaze itself sees
 # hosts/omnibook/default.nix
 hardware.gaze = {
   enable = true;
-  irDevice = "/dev/v4l/by-path/pci-0000:00:14.0-usb-0:3:1.2-video-index0";
+  irDevice = "usb:0408:5494";
   device = "npu";
 };
 ```
 
-Prefer a `/dev/v4l/by-path/…` symlink over a bare `/dev/video2`: the numbering
-shifts when another camera is plugged in, and gaze pointed at the wrong node
-just fails every scan. Get the stable path with `ls -l /dev/v4l/by-path/`. Then
-`just rebuild`.
+Give it the **`usb:VVVV:PPPP`** hex VID:PID from `lsusb`, not a device node:
+gaze resolves that to the module's infrared V4L2 node itself, so it survives the
+`/dev/videoN` renumbering that happens when another camera is plugged in. A bare
+`/dev/video2` also works.
+
+> [!CAUTION]
+> A `/dev/v4l/by-path/…` symlink does **not** work, even though it is the stable
+> path howdy wanted. Gaze special-cases only literal `/dev/video<number>`,
+> `usb:VVVV:PPPP` and `primary`; anything else is passed to `gst_parse_launch`
+> as a source element, and enrollment dies with
+> `no source element for URI "/dev/v4l/by-path/…"`.
+
+Then `just rebuild`.
 
 Leave `irDevice` unset and gaze authenticates off the colour camera alone
 (`cameras.rgb = "primary"`, resolved through PipeWire at runtime).

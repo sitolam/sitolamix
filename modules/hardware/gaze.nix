@@ -75,13 +75,23 @@ in
     irDevice = lib.mkOption {
       type = lib.types.nullOr lib.types.str;
       default = null;
-      example = "/dev/v4l/by-path/pci-0000:00:14.0-usb-0:3:1.2-video-index0";
+      example = "usb:0408:5494";
       description = ''
-        The *IR* camera node — not the colour one. `/dev/videoN` numbering is
-        not stable across boots; prefer a `/dev/v4l/by-path/...` symlink once
-        you know which device it is. Find it on the machine with:
+        The *IR* camera — not the colour one. Prefer `usb:VVVV:PPPP` (hex
+        VID:PID, `lsusb`): gaze resolves that to the camera's infrared V4L2
+        node itself, lowest-numbered first, so it survives the `/dev/videoN`
+        renumbering that happens when another camera is plugged in.
+
+        A bare `/dev/video<number>` also works. A
+        `/dev/v4l/by-path/...` symlink does **not**: gaze only special-cases
+        literal `/dev/video<number>`, `usb:VVVV:PPPP` and `primary`, and
+        passes anything else through to `gst_parse_launch` as a source
+        element, which fails with `no source element for URI ...`.
+
+        Find it on the machine with:
 
         ```sh
+        lsusb                                        # VID:PID of the camera
         v4l2-ctl --list-devices
         v4l2-ctl -d /dev/videoN --list-formats-ext   # the IR one is GREY-only
         gaze doctor                                  # what gaze itself sees
@@ -166,6 +176,18 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    assertions = [
+      {
+        assertion = cfg.device != "npu" || config.hardware.cpu.intel.npu.enable;
+        message = ''
+          hardware.gaze.device = "npu" needs hardware.cpu.intel.npu.enable —
+          without it there is no ivpu driver, no /dev/accel/accel0 and no
+          libze_intel_npu.so, so OpenVINO enumerates no NPU and gaze silently
+          runs every model on the CPU instead.
+        '';
+      }
+    ];
+
     services.gaze = {
       enable = true;
       package = gazePackage;
@@ -201,6 +223,20 @@ in
         simultaneous = lib.elem name cfg.simultaneousServices;
       };
     });
+
+    # OpenVINO's NPU (and GPU) plugin dlopens the Level Zero loader by bare
+    # name — `libze_loader.so.1` is not a DT_NEEDED of
+    # libopenvino_intel_npu_plugin.so — and the loader in turn looks for the
+    # kernel driver's userspace half, libze_intel_npu.so, which
+    # hardware.cpu.intel.npu.enable puts in /run/opengl-driver/lib via
+    # hardware.graphics.extraPackages. Neither is on a system daemon's link
+    # path, so without this OpenVINO enumerates no NPU at all and every model
+    # falls back to the CPU provider with "[OpenVINO] Device NPU is not
+    # available" — visible only as "Failed to load shared library" in gazed's
+    # log, because ort collapses the provider error.
+    systemd.services.gazed.environment.LD_LIBRARY_PATH = lib.mkIf cfg.openvino.enable (
+      lib.makeLibraryPath [ pkgs.level-zero ] + ":/run/opengl-driver/lib"
+    );
 
     # v4l-utils: `v4l2-ctl --list-devices`, to find the IR node in the first
     # place. gaze itself is installed by its own module.
