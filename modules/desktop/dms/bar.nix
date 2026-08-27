@@ -70,9 +70,15 @@
             "weather"
           ];
           rightWidgets = [
-            # ambient-sound widget (bar-only plugin — no control-center variant,
-            # so it can't be moved there; it stays a normal bar widget). The
-            # hidden-bar collapser and the simple-audio-control mixer were removed.
+            # ── collapsed by the hidden-bar plugin ───────────────────────────
+            # These three live at the head of the right section and are hidden
+            # behind the "hiddenBar" trigger that follows them. The order is
+            # load-bearing: the plugin manages only widgets left of its trigger
+            # within the same section, so the trigger must come last of the four
+            # (see the hiddenBar block in ./plugins.nix).
+            #
+            # ambient-sound is a bar-only plugin — no control-center variant, so
+            # it can't be moved there; it stays a normal bar widget.
             {
               id = "ambientSound";
               enabled = true;
@@ -82,13 +88,20 @@
               enabled = true;
             }
             {
-              id = "dankKDEConnect";
-              enabled = true;
-            } # AvengeMedia DankKDEConnect
-            {
               id = "usbManager";
               enabled = true;
             }
+            # hthienloc/dms-hidden-bar trigger. Hover expands, click toggles,
+            # right-click pins the expansion open.
+            {
+              id = "hiddenBar";
+              enabled = true;
+            }
+            # ── always visible ──────────────────────────────────────────────
+            {
+              id = "dankKDEConnect";
+              enabled = true;
+            } # AvengeMedia DankKDEConnect
             # webcam mouth-closure tracker (local plugin, see plugins.nix).
             # left click = popout, middle = start/stop, right = mute alerts.
             {
