@@ -70,14 +70,15 @@
             "weather"
           ];
           rightWidgets = [
-            # rdannenbring/widget-group. One button holding ambientSound, the
-            # system tray and usbManager; click expands them inline, click again
-            # folds them away (auto-collapse is off). The id is
-            # "<pluginId>:<variantId>" — the variant is defined in ./plugins.nix,
-            # and its three members are deliberately absent from this list
-            # because the group renders them itself.
+            # barDropdown (local plugin, see plugins.nix). One button holding
+            # ambientSound, the system tray and usbManager; click drops them in
+            # a panel below the bar, click again closes it. Its three members
+            # are deliberately absent from this list — the panel renders them
+            # itself. Nothing here expands sideways, so unlike the two
+            # collapsers this replaced, the button's position on the bar is
+            # free.
             {
-              id = "widgetGroup:tray";
+              id = "barDropdown";
               enabled = true;
             }
             {

@@ -574,55 +574,45 @@ in
           src = "${inputs.dms-plugins}/plugins/virtualkeyboard";
         };
         usbManager.enable = true; # NordicsSys/dms-usb-manager
-        # collapsible widget group (rdannenbring/widget-group, via
-        # dms-plugin-registry). One bar button that expands to reveal its
-        # members inline, each keeping its own live pill and popout. Replaces
-        # hthienloc/dms-hidden-bar, which hid neighbouring bar widgets in place
-        # and could therefore only ever manage widgets sitting on one specific
-        # side of its trigger.
+        # barDropdown — local, see the dms-plugins checkout. One bar button that
+        # drops a panel of real bar widgets *below* the bar.
         #
-        # The members below are NOT listed in rightWidgets — the group renders
-        # them itself, so a member left on the bar as well would appear twice.
-        # Only the group's own id goes in ./bar.nix.
+        # This is the third attempt at collapsing this cluster, and the first
+        # that can work. hthienloc/dms-hidden-bar and rdannenbring/widget-group
+        # both collapse widgets along the bar and reveal them the same way, and
+        # in a side section that reveal has nowhere to go: DankBarContent.qml
+        # anchors the three sections independently (left to parent.left, right
+        # to parent.right, centre to parent.horizontalCenter), so a wider
+        # right-section widget only pushes its own section's left edge into the
+        # empty middle of the bar. The centre widgets never move, and because
+        # the centre section paints last, a wide enough expansion ends up
+        # underneath the clock. No plugin setting changes that.
         #
-        # A "variant" is one group: DMS reads plugins.<id>.settings.variants and
-        # builds a bar widget id of "<pluginId>:<variant.id>" for each entry
-        # (PluginService.getPluginVariants / WidgetHost's widgetId.split(":")).
-        # The id is written out by hand here rather than left to the settings UI,
-        # which would generate a "variant_<timestamp>" this file could not
-        # predict.
-        widgetGroup = {
+        # barDropdown does not expand along the bar at all: the members go in a
+        # popout that DMS anchors under the trigger and paints over the windows
+        # below. Nothing on the bar moves and nothing overlaps.
+        #
+        # As with virtualKeyboard below, the src is the plugin subtree of the
+        # dms-plugins input rather than a registry entry — this one is ours and
+        # is not in the registry.
+        barDropdown = {
           enable = true;
-          settings.variants = [
-            {
-              id = "tray";
-              name = "Tray group";
-              icon = "widgets";
-              display = "icon"; # icon only, no label text on the button
-              # member bar-widget ids, in the order they expand. Mixed
-              # third-party plugins and DMS built-ins are both fine: systemTray
-              # resolves against GroupMember's built-in component table, the
-              # other two against PluginService.pluginWidgetComponents.
-              targets = [
-                "ambientSound"
-                "systemTray"
-                "usbManager"
-              ];
-              # The group expands and collapses on click only. This plugin has
-              # no hover-to-expand path in the first place (GroupWidget.qml only
-              # hover-hides the chevron), and auto-collapse is off, so once it is
-              # open it stays open until it is clicked shut — no timer, and no
-              # collapsing out from under the pointer. autoCollapseOnLeave and
-              # autoCollapseSeconds are not set because they are read only while
-              # autoCollapse is true.
-              autoCollapse = false;
-              # push neighbours aside when expanding rather than painting over
-              # them. Overlay mode is off by default; set explicitly because it
-              # only paints reliably from the centre section anyway and this
-              # group lives on the right.
-              overlayExpand = false;
-            }
-          ];
+          src = "${inputs.dms-plugins}/plugins/bardropdown";
+          settings = {
+            # member bar-widget ids, left to right in the panel. They are
+            # deliberately absent from rightWidgets in ./bar.nix: the panel
+            # instantiates them itself, so a member left on the bar too would be
+            # rendered twice. systemTray resolves against the plugin's built-in
+            # component table, the other two through PluginService.
+            targets = [
+              "ambientSound"
+              "systemTray"
+              "usbManager"
+            ];
+            icon = "widgets";
+            display = "icon"; # no text label beside the icon
+            showChevron = true;
+          };
         };
         # LuckShiba/DmsDockerManager, via dms-plugin-registry. The status half
         # of the Windows VM controls: running/stopped, ports, logs, stop and
