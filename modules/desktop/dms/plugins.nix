@@ -574,6 +574,41 @@ in
           src = "${inputs.dms-plugins}/plugins/virtualkeyboard";
         };
         usbManager.enable = true; # NordicsSys/dms-usb-manager
+        # bartender-style bar collapser (hthienloc/dms-hidden-bar, via
+        # dms-plugin-registry). The "hiddenBar" trigger widget in ./bar.nix
+        # collapses the widgets listed below into a single pill and reveals them
+        # again on hover.
+        #
+        # Placement is not free: HiddenBarWidget.qml only manages widgets that
+        # sit in the *same bar section* as the trigger and, in the right
+        # section, only those whose position is left of it (`widgetPos < myPos`).
+        # So the trigger has to come immediately *after* the three widgets it
+        # hides, and that group is placed at the head of rightWidgets — a
+        # trigger placed first would have nothing to its left and would manage
+        # nothing at all.
+        #
+        # NB: DMS must be restarted (`dms restart` / relogin) after adding or
+        # moving any of the managed widgets before the plugin picks them up.
+        hiddenBar = {
+          enable = true;
+          settings = {
+            # whitelist = hide ONLY these ids (auto/blacklist would hide more).
+            # The ids are the bar-widget ids from ./bar.nix; excludeTray and
+            # excludeClock exist only in "auto" mode and are ignored here.
+            widgetSelectionMode = "whitelist";
+            widgetWhitelist = [
+              "ambientSound"
+              "systemTray"
+              "usbManager"
+            ];
+            # hover to expand (the plugin's headline feature), no delay before
+            # revealing; auto-collapse again once the pointer leaves. Right-click
+            # pins the expansion so it survives auto-collapse.
+            autoExpand = true;
+            hoverDelay = 0;
+            autoCollapse = true;
+          };
+        };
         # LuckShiba/DmsDockerManager, via dms-plugin-registry. The status half
         # of the Windows VM controls: running/stopped, ports, logs, stop and
         # restart. It cannot *start* the VM — NixOS runs oci-containers with
