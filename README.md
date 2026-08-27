@@ -99,7 +99,7 @@ Things this config does that a stock desktop does not:
 
 - 🦷 **Mouth guard** — a webcam watches whether your mouth stays closed and nags
   from the bar when it doesn't ([`dms-plugins/mouthguard`](https://github.com/sitolam/dms-plugins/tree/main/plugins/mouthguard),
-  dlib + OpenCV, built straight from the flake input).
+  MediaPipe Face Mesh on OpenVINO, built straight from the flake input).
 - 🗂️ **One key to everything** — `Mod+Space` opens an omarchy-style root menu:
   drill in with `Enter`, out with `Esc`, or just type and it searches every
   command in the tree *and* every installed app
@@ -213,7 +213,7 @@ hosts/<name>/          per-host: default.nix (suite toggles) + hardware.nix
 modules/
   hm.nix               home-manager bridge — the `home.extraOptions` mechanism
   system/              always-on baseline (base, nix, locale, users, boot, sops, openssh …)
-  hardware/            audio / bluetooth / graphics baseline; nvidia + howdy gated
+  hardware/            audio / bluetooth / graphics baseline; nvidia + gaze gated
   desktop/             niri, dms, greetd, kanata, xdg (gated on the desktop suite)
   theming/             stylix — `theming.stylix.*`
   services/            kde-connect, docker, rclone, nas, printing, winapps … (gated)
@@ -285,7 +285,7 @@ It's a `deferredModule`, so every file's contribution merges into
 > [!TIP]
 > Installing `omnibook` specifically? [`docs/omnibook-install.md`](docs/omnibook-install.md)
 > is the same procedure written end-to-end for that machine — encrypted layout,
-> firmware settings, BitLocker warning, howdy enrollment, and what to do on
+> firmware settings, BitLocker warning, face enrollment, and what to do on
 > `gamingpc` first.
 
 ### 1. Boot the installer
@@ -602,7 +602,7 @@ rclone config              # only if you kept services.rclone
 ```
 
 On `omnibook`, face unlock still needs a one-off enrollment on the machine —
-see [Face unlock](#-face-unlock-howdy) below.
+see [Face unlock](#-face-unlock-gaze) below.
 
 The checkout is already at `~/sitolamix`, which is what the dankMenu
 `Update ▸ Rebuild` rows assume (`flakeDir` in
@@ -725,37 +725,81 @@ and replace the value — the old ciphertext is overwritten.
 
 </details>
 
-## 🙂 Face unlock (howdy)
+## 🙂 Face unlock (gaze)
 
 <details>
-<summary><code>omnibook</code> only — the laptop's Windows Hello IR camera used as a login shortcut, via <a href="https://github.com/boltgolt/howdy">howdy</a>. Convenience, <b>not</b> a security upgrade: read the warning first.</summary>
+<summary><code>omnibook</code> only — the laptop's Windows Hello IR camera used as a login shortcut, via <a href="https://github.com/GunduLabs/gaze">gaze</a>, running its models on the NPU. Convenience, <b>not</b> a full security upgrade: read the warning first.</summary>
 
 <br>
 
 > [!WARNING]
-> **Howdy is weaker than Windows Hello.** Hello does a depth / structured-light
-> liveness check; howdy compares a flat IR image and can be fooled by a
-> well-printed photo or a phone screen. Upstream says outright: do not use it as
-> your only authentication method.
+> **Gaze is still not Windows Hello.** It does more than howdy did — a local
+> MiniFASNet-V2 presentation-attack model runs on every detected face crop
+> (`[liveness]`, on by default), so a photo held up to the camera is rejected
+> rather than accepted — but it is one camera, not Hello's structured-light
+> depth sensor.
 >
-> `modules/hardware/howdy.nix` is wired accordingly:
+> `modules/hardware/gaze.nix` is wired accordingly:
 >
-> - `control = "sufficient"` — a face match unlocks, a miss falls *silently
+> - the PAM rule is `sufficient` — a face match unlocks, a miss falls *silently
 >   through to the password prompt*. Your password never stops working.
-> - scoped to **three** PAM services: `login` (which is what the DMS lock screen
->   authenticates against — DMS has no PAM service of its own), `greetd` (the
->   dms-greeter login screen) and `sudo`. Not `sshd`, not everything else —
->   enabling `services.howdy` on its own would default `security.pam.howdy` to
->   *every* service.
-> - howdy's own `abort_if_ssh` and `abort_if_lid_closed` guards stay on.
+> - scoped to the services in `hardware.gaze.pamServices`: `login` (what the DMS
+>   lock screen authenticates against — DMS mirrors it into a user-local
+>   `dankshell` service at first lock rather than shipping a PAM file of its
+>   own), `greetd` (the dms-greeter login screen), `sudo` and `polkit-1`. Gaze's
+>   own default list is *replaced*, not extended, so nothing reaches `sshd`.
+> - gaze's own `abort_if_ssh` and `abort_if_lid_closed` guards stay on.
 >
-> Want it as a real second factor instead? Set
-> `hardware.howdy.control = "required"` on the host — then a failed scan
-> **blocks** the login rather than falling back.
+> Want it as a real second factor instead? There is no `control` knob on this
+> module; set `security.pam.services.<svc>.gaze.control = "required"` on the
+> host — then a failed scan **blocks** the login rather than falling back.
 
-The config is declarative, the enrollment is not: face models are per-machine
-data in `/var/lib/howdy/models`, so they are a post-install step and never live
-in the repo.
+### Why gaze replaced howdy
+
+Two reasons, both structural:
+
+- **The password prompt is no longer blocked.** PAM runs auth modules one at a
+  time, in stack order, and howdy sat ahead of `pam_unix` — so the password
+  field could not even appear until its scan returned, and its timeout had to be
+  cut to 1s to keep that bearable. Gaze ships `pam_gaze_grosshack.so`, which
+  runs the scan *concurrently* with the password prompt, the way DMS already
+  races the fingerprint reader against the password. It is used for `login` and
+  `greetd` (`hardware.gaze.simultaneousServices`); `sudo` and `polkit-1` stay
+  sequential, where the scan is short and there is nothing to race.
+- **Liveness detection**, described in the warning above.
+
+It is also a smaller machine: the dlib / `face-recognition` / Python stack howdy
+dragged in left the closure along with it (−2.1 GiB).
+
+### Inference runs on the NPU
+
+`hardware.gaze.device = "npu"` on this host. Face detection and recognition are
+exactly the small fixed-shape CNNs Panther Lake's NPU exists for, and keeping
+them off the CPU is what makes a scan that races the password prompt cheap
+enough to run on every unlock, on battery.
+
+The chain that makes this work, none of which needs anything built specially:
+
+- `hardware.cpu.intel.npu.enable` on the host ships `intel-npu-driver` and
+  `level-zero`, and the `ivpu` kernel driver exposes `/dev/accel/accel0`.
+- nixpkgs' `onnxruntime` is built with the OpenVINO execution provider
+  (`libonnxruntime_providers_openvino.so`), and nixpkgs' `openvino` carries
+  `libopenvino_intel_npu_plugin.so`.
+- the module rebuilds gaze, its CLI and its GUI with the `openvino` Cargo
+  feature, which the stock packages do not set — without it the daemon has no
+  OpenVINO provider to register and the CLI and GUI only know `device = "cpu"`.
+  That override is `hardware.gaze.openvino.enable`, implied by any `device`
+  other than `"cpu"`.
+
+If OpenVINO ever fails to come up, gaze logs the reason and **falls back to the
+ONNX Runtime CPU provider** rather than failing the login. Check which one is
+live with `gaze doctor`.
+
+The config is declarative, the enrollment is not: face templates are per-machine
+data under `/var/lib/gaze`, so they are a post-install step and never live in
+the repo. The recognition models themselves are downloaded by the daemon into
+`/var/cache/gaze` on first use, so the first scan after a fresh install needs
+network.
 
 ### 1. Find the IR camera
 
@@ -764,46 +808,50 @@ the infrared one. Only the IR node works in the dark, which is the whole point.
 
 ```sh
 v4l2-ctl --list-devices
+v4l2-ctl -d /dev/videoN --list-formats-ext   # the IR one is GREY-only
+gaze doctor                                  # what gaze itself sees
 ```
-
-The IR device is usually the second `/dev/videoN` of the same USB camera. Test a
-candidate — this opens a preview and tells you what it sees:
-
-```sh
-sudo howdy -U otis test
-```
-
-Black frame with the lights off, or "dark image" complaints, means you picked
-the colour node (or the emitter is not firing — see step 4).
 
 ### 2. Point the config at it
 
-`/etc/howdy/config.ini` is a read-only symlink into the nix store, so
-`howdy set` **cannot** work here. Set it in Nix instead:
-
 ```nix
 # hosts/omnibook/default.nix
-hardware.howdy = {
+hardware.gaze = {
   enable = true;
-  device = "/dev/v4l/by-path/pci-0000:00:14.0-usb-0:8:1.0-video-index2";
+  irDevice = "/dev/v4l/by-path/pci-0000:00:14.0-usb-0:3:1.2-video-index0";
+  device = "npu";
 };
 ```
 
 Prefer a `/dev/v4l/by-path/…` symlink over a bare `/dev/video2`: the numbering
-shifts when another camera is plugged in, and a howdy pointed at the wrong node
-just fails every scan. Get the stable path with
-`ls -l /dev/v4l/by-path/`. Then `just rebuild`.
+shifts when another camera is plugged in, and gaze pointed at the wrong node
+just fails every scan. Get the stable path with `ls -l /dev/v4l/by-path/`. Then
+`just rebuild`.
+
+Leave `irDevice` unset and gaze authenticates off the colour camera alone
+(`cameras.rgb = "primary"`, resolved through PipeWire at runtime).
+
+> [!NOTE]
+> `/etc/gaze/config.toml` is **seeded** from the Nix `settings`, not owned by
+> them: `services.gaze.mutableConfig` is true so the GUI's settings page can
+> write to it. Changing the module afterwards does not rewrite an existing file.
+> Either change it in the GUI, or `sudo rm /etc/gaze/config.toml` and
+> `just rebuild` to re-seed.
 
 ### 3. Enrol a face
 
 ```sh
-sudo howdy -U otis add        # repeat a few times: glasses on, glasses off, dim room
-sudo howdy -U otis list       # what is enrolled
-sudo howdy -U otis remove 0   # drop one model
+gaze add-face default          # guided multi-angle capture
+gaze refine-face default       # add captures: glasses on, glasses off, dim room
+gaze list-faces                # what is enrolled
+gaze remove-face default       # drop one
+gaze auth --verbose            # test a scan without locking anything
 ```
 
-Lock the session (`Super+L`) to try it. It should unlock on sight, and drop to
-the password field if it does not recognise you.
+No `sudo`: enrollment goes through the daemon over D-Bus and is authorized by
+polkit. Lock the session (`Super+L`) to try it for real — it should unlock on
+sight, and drop to the password field if it does not recognise you. The GTK4
+settings app (`hardware.gaze` installs it) does the same thing with a preview.
 
 ### 4. If the image is black
 
@@ -811,24 +859,18 @@ Some Windows Hello modules need their IR LEDs kicked on explicitly. Symptom: the
 device is right, but every frame comes back dark.
 
 ```nix
-hardware.howdy.irEmitter.enable = true;
-```
-
-`just rebuild`, then run the one-off probe — it cycles the camera's vendor
-commands until the emitter lights up, and saves what worked:
-
-```sh
-sudo linux-enable-ir-emitter configure
+hardware.gaze.irEmitter.enable = true;
 ```
 
 ### Turning it off
 
 ```nix
-hardware.howdy.enable = false;
+hardware.gaze.enable = false;
 ```
 
-`just rebuild`, and PAM goes back to password-only immediately. Enrolled models
-are left in `/var/lib/howdy/models`; delete the directory if you want them gone.
+`just rebuild`, and PAM goes back to password-only immediately. Enrolled
+templates are left under `/var/lib/gaze`; `gaze clear-user` (or deleting the
+directory) removes them.
 
 </details>
 

@@ -183,6 +183,17 @@
       flake = false;
     };
 
+    # GunduLabs/gaze — Windows Hello-style face authentication (daemon + PAM
+    # modules); replaced howdy here, see modules/hardware/gaze.nix. Not in
+    # nixpkgs. Follows our nixpkgs deliberately: gaze links whatever
+    # onnxruntime that revision has, and it needs >= 1.21 (unstable is at
+    # 1.27) plus that build's OpenVINO execution provider — pinning gaze's own
+    # nixpkgs would link a second, unrelated ONNX Runtime.
+    gaze = {
+      url = "github:GunduLabs/gaze";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     sops-nix = {
       url = "github:Mic92/sops-nix";
       inputs.nixpkgs.follows = "nixpkgs";

@@ -39,13 +39,13 @@ and face unlock on the IR camera.
 ### 0.1 Commit and push the host config
 
 The installer clones from GitHub, so anything uncommitted does not exist as far
-as the laptop is concerned. The `omnibook` host, the howdy module, and the
+as the laptop is concerned. The `omnibook` host, the face-unlock module, and the
 `amd_pstate` move are currently staged but not committed.
 
 ```sh
 cd ~/sitolamix
 git status                 # confirm what you are about to commit
-git commit -m "feat(hosts): add omnibook — HP laptop, LUKS+LVM, howdy face unlock"
+git commit -m "feat(hosts): add omnibook — HP laptop, LUKS+LVM, gaze face unlock"
 git push
 ```
 
@@ -67,7 +67,7 @@ just build omnibook        # optional but recommended: actually builds it
 ```
 
 `just build omnibook` needs a few GB free — most of the closure is shared with
-`gamingpc`, the delta is the Intel media stack, howdy and dlib. Check with
+`gamingpc`, the delta is the Intel media stack, gaze and ONNX Runtime. Check with
 `df -h /nix/store` first; this box runs tight on storage, which is why
 `programs.nh.clean` is set to run daily.
 
@@ -439,23 +439,31 @@ nmcli device status                      # Wi-Fi actually works now
 
 ## Part 9 — Face unlock
 
-Declarative config, machine-specific enrollment. `hardware.howdy.enable` is
-already on; the camera node and the face models are not something that can be
+Declarative config, machine-specific enrollment. `hardware.gaze.enable` is
+already on; the camera node and the face templates are not something that can be
 committed.
 
 > [!WARNING]
-> **Howdy is weaker than Windows Hello.** Hello does a depth / structured-light
-> liveness check; howdy compares a flat infrared image and can be fooled by a
-> well-printed photo or a phone screen.
+> **Gaze is not Windows Hello.** It does run a liveness pass — a local
+> MiniFASNet-V2 presentation-attack model on each detected face crop, on by
+> default — so a printed photo is rejected, but it is still one camera, not
+> Hello's structured-light depth sensor.
 >
-> It is wired as convenience, not as a security upgrade:
-> `control = "sufficient"` means a match unlocks and a miss falls silently
-> through to the password prompt, and it is scoped to three PAM services —
-> `login` (what the DMS lock screen authenticates against), `greetd`, and
-> `sudo`. Not `sshd`. Your password keeps working everywhere.
+> It is wired as convenience, not as a security upgrade: the PAM rule is
+> `sufficient`, so a match unlocks and a miss falls silently through to the
+> password prompt, and it is scoped to `login` (what the DMS lock screen
+> authenticates against), `greetd`, `sudo` and `polkit-1`. Not `sshd`. Your
+> password keeps working everywhere.
 >
-> For face-as-second-factor instead, set `hardware.howdy.control = "required"` —
-> then a failed scan *blocks* login rather than falling back.
+> For face-as-second-factor instead, set
+> `security.pam.services.<svc>.gaze.control = "required"` — then a failed scan
+> *blocks* login rather than falling back.
+
+Inference runs on the NPU here (`hardware.gaze.device = "npu"`, which implies
+the OpenVINO-featured build). If OpenVINO cannot come up, gaze logs why and
+falls back to the ONNX Runtime CPU provider rather than failing the login —
+`gaze doctor` says which one is live. The recognition models download into
+`/var/cache/gaze` on first use, so the first scan needs network.
 
 ### 1. Find the IR camera
 
@@ -464,72 +472,60 @@ infrared one. Only the IR node works in the dark, which is the entire point.
 
 ```sh
 v4l2-ctl --list-devices
-sudo howdy -U otis test        # opens a preview; check it is the IR one
-ls -l /dev/v4l/by-path/        # get the stable path
+v4l2-ctl -d /dev/videoN --list-formats-ext   # the IR one is GREY-only
+ls -l /dev/v4l/by-path/                      # get the stable path
+gaze doctor                                  # what gaze itself sees
 ```
-
-> [!NOTE]
-> Plain `sudo howdy ... test` can fail with `Authorization required, but no
-> authorization protocol specified` / `Can't initialize GTK backend` — `sudo`
-> resets the environment, so the preview window's OpenCV/GTK backend loses
-> `WAYLAND_DISPLAY` and `XDG_RUNTIME_DIR`, falls back to X11, and hits
-> XWayland with no auth cookie (there's no `~/.Xauthority` under niri). Forward
-> them explicitly and force the Wayland backend instead:
->
-> ```sh
-> sudo XDG_RUNTIME_DIR=/run/user/1000 WAYLAND_DISPLAY=$WAYLAND_DISPLAY GDK_BACKEND=wayland howdy -U otis test
-> ```
 
 ### 2. Point the config at it
 
-`/etc/howdy/config.ini` is a read-only symlink into the nix store, so
-`howdy set` **cannot** work. Set it in Nix:
-
 ```nix
 # hosts/omnibook/default.nix
-hardware.howdy = {
+hardware.gaze = {
   enable = true;
-  device = "/dev/v4l/by-path/pci-0000:00:14.0-usb-0:8:1.0-video-index2";
+  irDevice = "/dev/v4l/by-path/pci-0000:00:14.0-usb-0:3:1.2-video-index0";
+  device = "npu";
 };
 ```
 
 Prefer the `by-path` symlink over a bare `/dev/video2` — the numbering shifts
-when another camera is plugged in, and a howdy pointed at the wrong node just
-fails every scan. Then `just rebuild`.
+when another camera is plugged in, and gaze pointed at the wrong node just fails
+every scan. Then `just rebuild`.
+
+> [!NOTE]
+> `/etc/gaze/config.toml` is seeded from the Nix `settings` on first boot and
+> then left writable, because the GTK4 settings app edits it
+> (`services.gaze.mutableConfig`, true by default). Later changes to the module
+> do **not** rewrite an existing file: change it in the app, or
+> `sudo rm /etc/gaze/config.toml` and `just rebuild` to re-seed it.
 
 ### 3. Enrol
 
-`add` and `list`/`remove` don't open a preview window, so they aren't
-affected by the sudo/GTK issue above — only `test` needs the env-var
-workaround.
+No `sudo`: enrollment goes through the daemon over D-Bus, authorized by polkit.
 
 ```sh
-sudo howdy -U otis add        # repeat: glasses on, glasses off, dim room
-sudo howdy -U otis list
-sudo howdy -U otis remove 0
+gaze add-face default        # guided multi-angle capture
+gaze refine-face default     # repeat: glasses on, glasses off, dim room
+gaze list-faces
+gaze remove-face default
+gaze auth --verbose          # test a scan without locking anything
 ```
 
-Lock with `Super+L` to try it.
+Lock with `Super+L` to try it for real.
 
 ### 4. If every frame is black
 
 Some Windows Hello modules need their IR LEDs switched on explicitly.
 
 ```nix
-hardware.howdy.irEmitter.enable = true;
-```
-
-`just rebuild`, then the one-off probe:
-
-```sh
-sudo linux-enable-ir-emitter configure
+hardware.gaze.irEmitter.enable = true;
 ```
 
 ### Turning it off
 
-`hardware.howdy.enable = false;` and `just rebuild` — PAM goes back to
-password-only immediately. Models stay in `/var/lib/howdy/models`; delete the
-directory to remove them.
+`hardware.gaze.enable = false;` and `just rebuild` — PAM goes back to
+password-only immediately. Templates stay under `/var/lib/gaze`; `gaze
+clear-user` removes them.
 
 ---
 
@@ -544,7 +540,7 @@ directory to remove them.
 | Passphrase rejected on first boot, correct on the installer | Keyboard layout — the initrd prompt is US-QWERTY |
 | Hibernate writes then cold-boots | `boot.resumeDevice` unset. It is set in `hardware.nix`; check `cat /proc/cmdline` for `resume=/dev/vg0/swap` |
 | No Wi-Fi after install | `dmesg \| grep iwlwifi`; tether over USB in the meantime |
-| Black frames in `howdy test` | Wrong video node, or the IR emitter — Part 9 steps 1 and 4 |
+| Black frames in `gaze auth --verbose` | Wrong video node, or the IR emitter — Part 9 steps 1 and 4 |
 | Face never matches | Almost always the colour camera instead of the IR one |
 
 ## Checklist
@@ -560,4 +556,4 @@ directory to remove them.
 - [ ] 6 `.sops.yaml` updated, `updatekeys` run, pushed, pulled on the laptop
 - [ ] 7 `passwd otis` before reboot
 - [ ] 8 hibernate tested
-- [ ] 9 howdy device path committed
+- [ ] 9 gaze IR device path committed

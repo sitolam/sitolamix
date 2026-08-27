@@ -31,17 +31,22 @@
     # module for us. /dev/accel/accel0 is the resulting device node.
     cpu.intel.npu.enable = true;
 
-    # Face unlock on the IR camera. Convenience, not a second factor — read the
-    # security note at the top of modules/hardware/howdy.nix. The IR device node
-    # is machine-specific; set `hardware.howdy.device` here once you have found
-    # it (see README → Face unlock).
-    # /dev/video2 (confirmed IR: `v4l2-ctl --list-formats-ext` reports Card
-    # type "HP IR Camera", GREY-only, vs video0's color MJPG/YUYV) via its
+    # Face unlock. Convenience, not a second factor — read the security note at
+    # the top of modules/hardware/gaze.nix. The IR device node is
+    # machine-specific (see README → Face unlock): /dev/video2 here, confirmed
+    # infrared because `v4l2-ctl --list-formats-ext` reports Card type "HP IR
+    # Camera", GREY-only, against video0's colour MJPG/YUYV. Pinned through its
     # stable by-path symlink — bare /dev/videoN numbering isn't guaranteed
     # across boots.
-    howdy = {
+    #
+    # device = "npu": the NPU enabled just above. Face detection and
+    # recognition are exactly the small fixed-shape CNNs it exists for, and
+    # keeping them off the CPU is what makes a scan that races the password
+    # prompt cheap enough to run on every unlock, on battery.
+    gaze = {
       enable = true;
-      device = "/dev/v4l/by-path/pci-0000:00:14.0-usb-0:3:1.2-video-index0";
+      irDevice = "/dev/v4l/by-path/pci-0000:00:14.0-usb-0:3:1.2-video-index0";
+      device = "npu";
     };
   };
 
