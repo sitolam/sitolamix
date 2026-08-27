@@ -574,40 +574,54 @@ in
           src = "${inputs.dms-plugins}/plugins/virtualkeyboard";
         };
         usbManager.enable = true; # NordicsSys/dms-usb-manager
-        # bartender-style bar collapser (hthienloc/dms-hidden-bar, via
-        # dms-plugin-registry). The "hiddenBar" trigger widget in ./bar.nix
-        # collapses the widgets listed below into a single pill and reveals them
-        # again on hover.
+        # collapsible widget group (rdannenbring/widget-group, via
+        # dms-plugin-registry). One bar button that expands to reveal its
+        # members inline, each keeping its own live pill and popout. Replaces
+        # hthienloc/dms-hidden-bar, which hid neighbouring bar widgets in place
+        # and could therefore only ever manage widgets sitting on one specific
+        # side of its trigger.
         #
-        # Placement is not free: HiddenBarWidget.qml only manages widgets that
-        # sit in the *same bar section* as the trigger and, in the right
-        # section, only those whose position is left of it (`widgetPos < myPos`).
-        # So the trigger has to come immediately *after* the three widgets it
-        # hides, and that group is placed at the head of rightWidgets — a
-        # trigger placed first would have nothing to its left and would manage
-        # nothing at all.
+        # The members below are NOT listed in rightWidgets — the group renders
+        # them itself, so a member left on the bar as well would appear twice.
+        # Only the group's own id goes in ./bar.nix.
         #
-        # NB: DMS must be restarted (`dms restart` / relogin) after adding or
-        # moving any of the managed widgets before the plugin picks them up.
-        hiddenBar = {
+        # A "variant" is one group: DMS reads plugins.<id>.settings.variants and
+        # builds a bar widget id of "<pluginId>:<variant.id>" for each entry
+        # (PluginService.getPluginVariants / WidgetHost's widgetId.split(":")).
+        # The id is written out by hand here rather than left to the settings UI,
+        # which would generate a "variant_<timestamp>" this file could not
+        # predict.
+        widgetGroup = {
           enable = true;
-          settings = {
-            # whitelist = hide ONLY these ids (auto/blacklist would hide more).
-            # The ids are the bar-widget ids from ./bar.nix; excludeTray and
-            # excludeClock exist only in "auto" mode and are ignored here.
-            widgetSelectionMode = "whitelist";
-            widgetWhitelist = [
-              "ambientSound"
-              "systemTray"
-              "usbManager"
-            ];
-            # hover to expand (the plugin's headline feature), no delay before
-            # revealing; auto-collapse again once the pointer leaves. Right-click
-            # pins the expansion so it survives auto-collapse.
-            autoExpand = true;
-            hoverDelay = 0;
-            autoCollapse = true;
-          };
+          settings.variants = [
+            {
+              id = "tray";
+              name = "Tray group";
+              icon = "widgets";
+              display = "icon"; # icon only, no label text on the button
+              # member bar-widget ids, in the order they expand. Mixed
+              # third-party plugins and DMS built-ins are both fine: systemTray
+              # resolves against GroupMember's built-in component table, the
+              # other two against PluginService.pluginWidgetComponents.
+              targets = [
+                "ambientSound"
+                "systemTray"
+                "usbManager"
+              ];
+              # This plugin expands on click, not on hover — GroupWidget.qml has
+              # no hover-to-expand path, only hover-hiding of the chevron. The
+              # closest thing to the old hidden-bar hover behaviour is collapsing
+              # again as soon as the pointer leaves the expanded group, which is
+              # what these three do (1s is the minimum delay the plugin accepts).
+              autoCollapse = true;
+              autoCollapseOnLeave = true;
+              autoCollapseSeconds = 1;
+              # push neighbours aside when expanding rather than painting over
+              # them: overlayExpand only paints reliably from the centre section
+              # and this group lives on the right.
+              overlayExpand = false;
+            }
+          ];
         };
         # LuckShiba/DmsDockerManager, via dms-plugin-registry. The status half
         # of the Windows VM controls: running/stopped, ports, logs, stop and
