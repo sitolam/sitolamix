@@ -122,8 +122,18 @@
               showBrightnessIcon = false;
               showBrightnessPercent = false;
               showMicIcon = false;
-              showBatteryIcon = true;
+              # battery icon off: the batteryPlus widget to the right of this
+              # pill is the battery readout now, so the pill drawing one too was
+              # the same information twice.
+              showBatteryIcon = false;
               showIdleInhibitorIcon = true; # show the keep-awake icon when active
+            }
+            # arcatva/dms-battery-plus (plugins.nix) — far right of the bar.
+            # Charge-history popout + power profiles; replaces the pill's
+            # battery icon above.
+            {
+              id = "batteryPlus";
+              enabled = true;
             }
           ];
           spacing = 8;
