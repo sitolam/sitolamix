@@ -600,6 +600,12 @@ in
         # node, no UPower KbdBacklight D-Bus object — so that plugin was inert
         # and got dropped.)
         batteryOSD.enable = true;
+        # arcatva/dms-battery-plus, via dms-plugin-registry. Bar widget with a
+        # charge-history popout plus the power-profile switcher; needs upower,
+        # already on in ./default.nix. It sits at the far right of the bar
+        # (../dms/bar.nix) and is why the control-center pill no longer draws a
+        # battery icon of its own — two battery readouts side by side.
+        batteryPlus.enable = true;
       };
 
       # write plugin_settings.json marking each enabled plugin active, so they
