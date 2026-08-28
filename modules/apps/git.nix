@@ -14,7 +14,7 @@ in
           settings = {
             user = {
               name = "sitolam";
-              email = "janlammertyn@duck.com";
+              email = "79202140+sitolam@users.noreply.github.com";
             };
 
             alias = {
