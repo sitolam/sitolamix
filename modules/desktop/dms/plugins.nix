@@ -521,6 +521,12 @@ in
           settings = {
             overlayOpacity = 80;
             preWarningOpacity = 80;
+            # Rarer and shorter than the plugin defaults (20m / 20s / 3 / 5m):
+            # the 20-minute cadence interrupted too often.
+            shortBreakInterval = 45; # minutes between short breaks
+            shortBreakDuration = 10; # seconds per short break
+            shortBreaksBeforeLong = 4; # so a long break lands every 3h
+            longBreakDuration = 2; # minutes
           };
         };
         homeAssistantMonitor = {
