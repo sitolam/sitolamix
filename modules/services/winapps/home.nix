@@ -39,21 +39,58 @@ let
         exit 1
       fi
 
-      # A cold boot of an installed Windows is well under a minute; the ceiling
-      # is generous because the very first boot installs the OS. Poll the RDP
-      # port rather than the unit, since the unit is active long before Windows
-      # is listening.
+      # Wait until the guest can actually *run* a RemoteApp. Nothing cheaper is
+      # a real readiness signal, and connecting early does not merely fail:
+      #
+      #   - Docker publishes 3389 the instant the container starts, so a TCP
+      #     probe answers about a second in, before QEMU has booted anything.
+      #   - Authentication starts working roughly 80 seconds before RemoteApp
+      #     launches do (measured: `/auth-only` at +11s, a RemoteApp that runs
+      #     and returns at +97s).
+      #   - A connection made in that gap wedges the session. Windows 11 client
+      #     editions have exactly one, so every later connection joins the
+      #     wedged one and hangs too — including the ones a user makes by
+      #     clicking the launcher again — until the first client gives up. That
+      #     is the "it said it was starting and then nothing ever opened".
+      #
+      # So the gate is the thing we need: a RemoteApp that runs `echo` into a
+      # redirected drive. Each attempt is capped, and a capped attempt takes
+      # its own half-built session down with it, so probing too early costs
+      # twenty seconds instead of poisoning everything after it.
+      #
+      # shellcheck source=/dev/null
+      . /home/otis/.config/winapps/winapps.conf
+      probe="''${XDG_RUNTIME_DIR:-/tmp}/winapps-probe"
+      ${pkgs.coreutils}/bin/mkdir -p "$probe"
+      ${pkgs.coreutils}/bin/rm -f "$probe/ready"
+
       waited=0
-      until timeout 1 bash -c '</dev/tcp/127.0.0.1/3389' 2>/dev/null; do
-        sleep 2
-        waited=$((waited + 2))
+      until [ -e "$probe/ready" ]; do
+        # Under Xvfb, not the real display: FreeRDP maps a "RemoteApp Marker
+        # Window" for every RAIL connection, and on niri that window appears
+        # and takes focus. Harmless but it steals your keyboard mid-typing,
+        # once per probe attempt, while you wait for the app you asked for.
+        ${pkgs.xvfb-run}/bin/xvfb-run -a \
+          ${pkgs.coreutils}/bin/timeout 20 ${pkgs.freerdp}/bin/xfreerdp \
+          /v:127.0.0.1:3389 /u:"$RDP_USER" /p:"$RDP_PASS" /cert:ignore \
+          /drive:probe,"$probe" \
+          "/app:program:C:\\Windows\\System32\\cmd.exe,cmd:/c echo ok > \\\\tsclient\\probe\\ready" \
+          >/dev/null 2>&1 || true
+
+        [ -e "$probe/ready" ] && break
+
+        sleep 5
+        # One attempt plus its pause; the ceiling is generous because the very
+        # first boot installs the OS.
+        waited=$((waited + 25))
         if [ "$waited" -ge 300 ]; then
           ${pkgs.libnotify}/bin/notify-send --app-name="Windows" --icon=dialog-error \
             --urgency=critical "Windows did not come up" \
-            "No RDP after 5 minutes. Watch it at http://127.0.0.1:8006"
+            "No RemoteApp after 5 minutes. Watch it at http://127.0.0.1:8006"
           exit 1
         fi
       done
+      ${pkgs.coreutils}/bin/rm -f "$probe/ready"
     fi
 
     exec ${winappsPkg}/bin/winapps "$@"

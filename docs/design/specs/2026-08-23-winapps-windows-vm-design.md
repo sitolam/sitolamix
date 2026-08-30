@@ -317,9 +317,22 @@ thing it grants access to.
   instead of at runtime.
 - **No KVM.** `--device=/dev/kvm` fails the container start loudly. Both hosts
   have it; nothing to do beyond letting the unit fail visibly.
-- **VM not running when a launcher is clicked.** WinApps with
-  `WAFLAVOR="manual"` fails the port check and sends a desktop notification.
-  Acceptable: the menu shows state, and the failure is legible.
+- **VM not running when a launcher is clicked.** With on-demand off, WinApps
+  with `WAFLAVOR="manual"` fails its port check and sends a desktop
+  notification. Acceptable: the menu shows state, and the failure is legible.
+  With on-demand on, `winapps-run` starts the unit and waits for the guest.
+  What it waits on is a RemoteApp that actually runs — a `cmd /c echo` into a
+  redirected drive — because the cheaper signals are all wrong. TCP 3389
+  answers about a second in, since Docker publishes the port before QEMU has
+  booted anything. Authentication (`/auth-only`) starts working roughly 80
+  seconds before RemoteApp launches do. And a connection made in that gap does
+  not just fail: it wedges the guest's single session, so every later
+  connection joins the wedged one and hangs too, until the first client gives
+  up. Each probe attempt is capped at 20 seconds and takes its own half-built
+  session down with it, which is what makes an early probe cheap instead of
+  poisonous. The probe runs under `xvfb-run`: FreeRDP maps a "RemoteApp Marker
+  Window" per RAIL connection, which on niri appears and takes focus.
+  Measured on omnibook: app window up about 30 seconds after a cold start.
 - **Office install fails on first boot.** The OEM script is idempotent enough to
   re-run by hand from inside the VM. Not automated — a retry loop around a
   40-minute download hides more than it fixes.
