@@ -191,11 +191,22 @@ in
     services.gaze = {
       enable = true;
       package = gazePackage;
-      # The GTK4 settings/enrollment UI. It writes through the daemon into
-      # /etc/gaze/config.toml, which is why mutableConfig stays at its default
-      # of true — the file is seeded from `settings` once, then left editable.
-      # Consequence: changing `settings` here does *not* rewrite an existing
-      # /etc/gaze/config.toml. Edit it in the GUI, or delete it and rebuild.
+      # `settings` below is the only writer of /etc/gaze/config.toml. Upstream
+      # defaults mutableConfig to true, which seeds the file from `settings`
+      # once (a tmpfiles `C` rule, copy-if-absent) and then never touches it
+      # again — so every later change to `settings` is silently a no-op against
+      # the live file, and the machine keeps running whatever was seeded on the
+      # day gaze was first enabled. That bit on 2026-08-30: a setting was added
+      # here, reverted here, and the daemon went on reading the reverted value
+      # across reboots.
+      #
+      # false makes it a read-only symlink to the store. The cost is that the
+      # GTK4 GUI's *settings* page can no longer save — its writes go through
+      # the daemon into this file. Enrollment is unaffected: face templates and
+      # the user DB live in /var/lib/gaze. Same trade as the other files this
+      # repo owns that an app also wants to write — change the Nix, not the app.
+      mutableConfig = false;
+      # The GTK4 settings/enrollment UI.
       gui = {
         enable = true;
         package = guiPackage;
@@ -205,25 +216,24 @@ in
       pam.defaultServices = [ ];
 
       settings = {
-        # Keyring. gaze can only hand PAM a password on the *fallback* path —
-        # pam-gaze-core's stash_password_and_fallback() sets PAM_AUTHTOK from
-        # what you typed after the face missed. A face match produces no
-        # password at all, so pam_gnome_keyring (auth, inside login's stack,
-        # which greetd substacks) has nothing to unlock login.keyring with: the
-        # session comes up with the daemon running and the keyring locked, and
-        # the first app wanting a secret pops a password dialog.
+        # Keyring: left alone on purpose. gaze can only hand PAM a password
+        # on the *fallback* path — pam-gaze-core's stash_password_and_fallback()
+        # sets PAM_AUTHTOK from what you typed after the face missed. A face
+        # match produces no password at all, so pam_gnome_keyring (auth, in
+        # login's stack, which greetd substacks) has nothing to unlock
+        # login.keyring with, and the first app wanting a secret prompts once
+        # per boot. Upstream Howdy closed the same report wontfix
+        # (boltgolt/howdy#438): it is structural, not a bug.
         #
-        # abort_before_first_resume refuses face auth until logind has reported
-        # one PrepareForSleep cycle, so the first authentication of every boot
-        # falls through to the password — which unlocks the keyring — and every
-        # unlock after the first suspend is face again. It is gazed-local state,
-        # not persisted: restarting the daemon re-arms the gate, and `gaze auth`
-        # or the GUI's test button will fail until the machine has suspended
-        # once. That is the whole cost, and it is the only fix that keeps the
-        # keyring's own password: the alternative is storing that password
-        # somewhere readable (sops secret, or a blank keyring) and unlocking
-        # from a session service.
-        auth.abort_before_first_resume = true;
+        # Every fix costs more than the prompt. `auth.abort_before_first_resume
+        # = true` was tried here and reverted on 2026-08-30 — it refuses face
+        # auth until logind reports a PrepareForSleep cycle, but that gate is
+        # daemon-local state, so it re-arms on every `nixos-rebuild switch` and
+        # left face auth dead everywhere until the machine had suspended once.
+        # The other two both move the keyring's password somewhere readable: a
+        # blank keyring (the file then travels in any $HOME copy) or a sops
+        # secret plus a session service. The prompt is cheaper. Do not "fix"
+        # this again without reading this paragraph.
 
         inference = {
           execution_provider = if cfg.openvino.enable then "openvino" else "cpu";
