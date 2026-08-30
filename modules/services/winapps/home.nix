@@ -219,11 +219,28 @@ let
 
   # ── winapps-status ────────────────────────────────────────────────────────
   # One line for the menu's `labelCmd`. Reads "Stopped", or
-  # "Running  ·  CPU 4%  ·  RAM 2.1GiB / 4GiB" when it is up.
+  # "Running  ·  CPU 4%  ·  RAM 2.1GiB" when it is up.
   #
-  # `docker stats --no-stream` is a single sample rather than a stream, which is
-  # what a menu row wants — but it still costs a moment, so it only runs when
-  # the VM is actually up.
+  # The numbers come out of the container's cgroup rather than out of
+  # `docker stats`. `docker stats --no-stream` is one sample, which is what a
+  # menu row wants, but it costs ~1.1s: the daemon samples twice a second apart
+  # to have a CPU percentage to report. dankMenu blocks nothing on this, but the
+  # row still sits there saying "Status" for that whole second, and a menu that
+  # settles a second after it opens reads as a slow menu.
+  #
+  # Reading the cgroup directly is the same two samples with an interval we
+  # choose: 200ms is long enough for a stable percentage and short enough to be
+  # invisible. Total cost is ~250ms, the `docker inspect` for the container id
+  # included.
+  #
+  # Semantics are kept identical to docker's: CPU% is cpu-time over wall-time,
+  # so 100% means one core fully busy and a 4-vCPU guest can read 400%; memory
+  # is `memory.current` less `inactive_file`, which is exactly what the daemon
+  # subtracts before reporting MemUsage.
+  #
+  # The `docker stats` path stays as the fallback for a host whose cgroup layout
+  # this does not find — rootless docker, a cgroup namespace, cgroup v1. Drop
+  # the fallback only if this is ever the last such host.
   winapps-status = pkgs.writeShellScriptBin "winapps-status" ''
     set -u
 
@@ -232,24 +249,68 @@ let
       exit 0
     fi
 
-    stats=$(${pkgs.docker}/bin/docker stats --no-stream \
-      --format '{{.CPUPerc}}\t{{.MemUsage}}' windows 2>/dev/null) || stats=""
-
-    if [ -z "$stats" ]; then
-      # Up, but the container is not answering yet — during boot, or while it
-      # is being torn down.
+    # Up, but the container is not answering yet — during boot, or while it is
+    # being torn down.
+    starting_up() {
       echo "Running  ·  starting up"
       exit 0
-    fi
+    }
 
-    cpu=''${stats%%	*}
-    mem=''${stats#*	}
-    # docker reports MemUsage as "used / limit", but no memory limit is set on
-    # this container, so the limit half is the host's total RAM — nothing to do
-    # with the VM's own RAM_SIZE, and actively misleading next to it. Keep the
-    # used half only.
-    mem=''${mem%% /*}
-    echo "Running  ·  CPU $cpu  ·  RAM $mem"
+    # ~1.1s, and only reached when the cgroup is not where this expects it.
+    slow_path() {
+      stats=$(${pkgs.docker}/bin/docker stats --no-stream \
+        --format '{{.CPUPerc}}\t{{.MemUsage}}' windows 2>/dev/null) || stats=""
+      [ -n "$stats" ] || starting_up
+
+      cpu=''${stats%%	*}
+      mem=''${stats#*	}
+      # docker reports MemUsage as "used / limit", but no memory limit is set
+      # on this container, so the limit half is the host's total RAM — nothing
+      # to do with the VM's own RAM_SIZE, and actively misleading next to it.
+      # Keep the used half only.
+      mem=''${mem%% /*}
+      echo "Running  ·  CPU $cpu  ·  RAM $mem"
+      exit 0
+    }
+
+    cid=$(${pkgs.docker}/bin/docker inspect -f '{{.Id}}' windows 2>/dev/null) || cid=""
+    [ -n "$cid" ] || starting_up
+
+    cg=/sys/fs/cgroup/system.slice/docker-$cid.scope
+    [ -r "$cg/cpu.stat" ] && [ -r "$cg/memory.current" ] || slow_path
+
+    read_cpu() {
+      ${pkgs.gawk}/bin/awk '$1 == "usage_usec" { print $2 }' "$cg/cpu.stat"
+    }
+
+    t0=$EPOCHREALTIME
+    c0=$(read_cpu)
+    sleep 0.2
+    t1=$EPOCHREALTIME
+    c1=$(read_cpu)
+
+    [ -n "$c0" ] && [ -n "$c1" ] || slow_path
+
+    mem=$(cat "$cg/memory.current")
+    # memory.current counts page cache the kernel would drop under pressure;
+    # docker subtracts the inactive part of it before reporting, so this does
+    # too. Absent (an older kernel), the raw figure is close enough.
+    inactive=$(${pkgs.gawk}/bin/awk '$1 == "inactive_file" { print $2 }' "$cg/memory.stat" 2>/dev/null)
+
+    ${pkgs.gawk}/bin/awk -v c0="$c0" -v c1="$c1" -v t0="$t0" -v t1="$t1" \
+      -v mem="$mem" -v inactive="$inactive" '
+      BEGIN {
+        elapsed = (t1 - t0) * 1000000
+        cpu = elapsed > 0 ? (c1 - c0) / elapsed * 100 : 0
+        if (cpu < 0) cpu = 0
+
+        used = mem - (inactive == "" ? 0 : inactive)
+        if (used < 0) used = 0
+        gib = used / 1073741824
+        ram = gib >= 1 ? sprintf("%.3fGiB", gib) : sprintf("%.1fMiB", used / 1048576)
+
+        printf "Running  ·  CPU %.2f%%  ·  RAM %s\n", cpu, ram
+      }'
   '';
 
   # WinApps ships one directory per supported application, each with an `info`
