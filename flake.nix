@@ -102,6 +102,19 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # nix-community/nix-vscode-extensions — a daily-regenerated mirror of the
+    # VS Code Marketplace and Open VSX, surfaced as `pkgs.vscode-marketplace.*`.
+    # modules/apps/vscode.nix takes all but five of its extensions from nixpkgs
+    # (cached, versioned with the rest of the tree) and reaches in here only for
+    # the handful nixpkgs has no derivation for. Those five are fetched from
+    # Microsoft's CDN at build time, so they are not in any binary cache.
+    # `nix flake update nix-vscode-extensions` moves every marketplace
+    # extension at once — expect a real rebuild, not a no-op.
+    nix-vscode-extensions = {
+      url = "github:nix-community/nix-vscode-extensions";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     dms-plugin-registry = {
       url = "github:AvengeMedia/dms-plugin-registry";
       inputs.nixpkgs.follows = "nixpkgs";

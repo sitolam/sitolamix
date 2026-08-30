@@ -73,9 +73,16 @@ statix enforces this.
 | Vendoring third-party code | Keep its licence files. Anki add-ons also need a row in `modules/apps/anki/_lib/vendored/README.md` — the repo is GPL-3.0 but vendored code is not |
 
 **Files this repo owns that applications also write:** Claude Code's plugin
-manifests, DMS's `outputs.kdl`, Anki's `meta.json`. Changing these in the app's
-own UI will not stick, or will be overwritten on the next rebuild. Change the
-Nix, not the app.
+manifests, DMS's `outputs.kdl`, Anki's `meta.json`, VS Code's `keybindings.json`
+(and its `settings.json`, which stylix owns). Changing these in the app's own UI
+will not stick, or will be overwritten on the next rebuild. Change the Nix, not
+the app.
+
+VS Code's *extensions* are the exception: `mutableExtensionsDir = true` keeps
+`~/.vscode/extensions` writable so Claude Code's CLI and stylix can drop their
+own extensions in. Anything you install from the marketplace by hand therefore
+survives a rebuild — and is invisible to this repo. Add it to
+`modules/apps/vscode.nix` or it is not part of the config.
 
 ## Comments are the deliverable
 
