@@ -454,7 +454,16 @@ in
     # with a world-writable socket, and point dms.service at that socket
     # (added to systemd.user.services.dms.Service.Environment below).
     boot.kernelModules = [ "uinput" ];
-    environment.systemPackages = [ pkgs.ydotool ];
+    environment.systemPackages = [
+      pkgs.ydotool
+      # calculator: its qalcCommand below is an absolute store path, so the
+      # plugin does not need this — but QalcService.qml spawns its default
+      # bare `qalc` once on load, before Component.onCompleted has applied the
+      # setting, and that spawn dies ("qalc process died, retrying (1/3)") and
+      # leaves the launcher stuck on "Calculating..." for the second or so the
+      # retry takes. Having qalc on PATH makes that first spawn succeed.
+      pkgs.libqalculate
+    ];
     systemd.services.ydotoold = {
       description = "ydotool daemon";
       wantedBy = [ "multi-user.target" ];
@@ -475,7 +484,26 @@ in
           settings.refreshInterval = 2;
         };
         emojiLauncher.enable = true; # devnullvoid/dms-emoji-launcher
-        calculator.enable = true; # rochacbruno/DankCalculator — launcher plugin, trigger "=" in spotlight
+        calculator = {
+          enable = true; # rochacbruno/DankCalculator — launcher plugin
+          settings = {
+            # libqalculate instead of the plugin's built-in JavaScript engine:
+            # it does units, currencies and hex. QalcService.qml splits this
+            # string itself and prepends `stdbuf -oL`, so it must be a plain
+            # argv line — the store path avoids needing qalc on the shell's
+            # PATH. Flags are the plugin's own defaults: -i interactive,
+            # -t terse output, -c 0 no colour.
+            calcEngine = "qalc";
+            qalcCommand = "${pkgs.libqalculate}/bin/qalc -i -t -set \"decimal comma off\" -c 0";
+            # keep the "=" prefix rather than answering every query: both are
+            # spelled out because noTrigger is only the settings-UI toggle and
+            # trigger is what the launcher actually reads (CalculatorSettings
+            # .qml clears one from the other, and that binding never runs when
+            # the settings come from Nix).
+            noTrigger = false;
+            trigger = "=";
+          };
+        };
         dankKDEConnect.enable = true; # AvengeMedia/dms-plugins DankKDEConnect (bar widget; kdeconnect via kde-connect.nix)
         # unified system monitor (Dadangdut33/dms-plugins) — replaces the
         # built-in memUsage + diskUsage bar widgets with one widget showing
