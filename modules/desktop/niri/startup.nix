@@ -39,7 +39,7 @@ in
         ];
       }
       # niri-scratchpad-rs daemon: backs the dynamic registers used by the
-      # Mod+M (stash) / Mod+S (show) binds in bindings.nix.
+      # Mod+M scratchpad bind in bindings.nix.
       {
         command = [
           "${scratchpad}/bin/niri-scratchpad"

@@ -39,7 +39,7 @@ enable-switch, side by side.
 
 ![dank dash](assets/screenshots/dash.png)
 
-**`Mod+Ctrl+S` — control center**: network, bluetooth, audio, brightness and the plugin toggles
+**`Mod+Ctrl+D` — control center**: network, bluetooth, audio, brightness and the plugin toggles
 
 ![control center](assets/screenshots/control.png)
 
@@ -47,7 +47,7 @@ enable-switch, side by side.
 
 ![keybinds](assets/screenshots/keybinds.png)
 
-**`Mod+Ctrl+M` — system monitor**: processes, performance, disks
+**`Mod+Shift+D` — system monitor**: processes, performance, disks
 
 ![system monitor](assets/screenshots/sysmon.png)
 
@@ -111,8 +111,8 @@ Things this config does that a stock desktop does not:
 - ⌨️ **Home-row mods** — kanata turns `asdf`/`jkl;` into modifiers on hold, caps
   into Esc on tap, and holding `v` into a vim arrow layer — all of it below the
   compositor, so every app obeys.
-- 🗃 **Scratchpad** — `Mod+M` stashes the focused window away, `Mod+S` floats it
-  back (`niri-scratchpad`).
+- 🗃 **Scratchpad** — `Mod+M` stashes the focused window away, and floats it
+  back on the second press (`niri-scratchpad`).
 - 💡 **DDC brightness** — the brightness keys drive the *external* monitors over
   i2c, one `dms ipc` call per panel.
 - 🤖 **Claude Code, two ways** — a bar widget that tracks API usage, and `ccl`,
@@ -134,47 +134,73 @@ Things this config does that a stock desktop does not:
 
 ## ⌨️ Keybinds
 
+Every bind follows one grammar, so a bind you have never pressed is guessable:
+
+| Modifier | Meaning |
+|---|---|
+| `Mod` | act on the focused thing, or open the thing named by the key |
+| `Mod+Shift` | move the focused thing |
+| `Mod+Ctrl` | act one scope up — the monitor, or the workspace itself |
+| `Mod+Alt` | on a nav key: move **without following**. On a letter: run a tool |
+
+And `Shift+X` / `Ctrl+X` are always variants of `Mod+X` — nothing hides an
+unrelated launcher behind a modifier.
+
 <details>
 <summary><code>Mod</code> is Super. <code>Mod+Slash</code> opens DMS's own searchable cheat sheet — this is the short version.</summary>
 
 <br>
 
-| Shell | |
+| Navigation | |
 |---|---|
-| `Mod+Space` | dankMenu — root menu; `Enter`/`Esc` in and out, `Ctrl+HJKL` for vim navigation, type to search everything below |
-| `Mod+D` | dashboard / dank dash |
-| `Mod+V` · `Mod+P` · `Mod+N` | clipboard · notepad · notifications |
-| `Mod+Ctrl+S` · `Mod+Ctrl+M` | control center · process list |
-| `Mod+Shift+Period` | emoji picker |
-| `Mod+Shift+T` · `Mod+Shift+W` · `Mod+Alt+N` | theme · wallpaper · night mode |
-| `Mod+Space`, then `=` / `\` | calculator · keybind search — launcher-plugin triggers, see § Party tricks |
+| `Mod+←/→` · `Mod+↑/↓` | focus column · focus window in column (`HJKL` too, everywhere below) |
+| `Mod+Shift+←/→/↑/↓` | move it |
+| `Mod+Ctrl+←/→/↑/↓` | focus that monitor; add `Shift` to send the column there |
+| `Mod+U` / `Mod+I` | focus workspace up / down (`PgUp`/`PgDn` too) |
+| `Mod+1`…`Mod+0` | focus workspaces 1–10 |
+| `Mod+Shift+<n>` · `Mod+Alt+<n>` | send column to workspace *n*, following it · **staying put** |
+| `Mod+Ctrl+<n>` · `Mod+Ctrl+U/I` | move the workspace itself — to index *n* · up/down |
+| `Mod+Wheel` · `Mod+Shift+Wheel` | focus · move, same axes |
 
 | Windows | |
 |---|---|
-| `Mod+←/→` · `Mod+↑/↓` | focus column · focus window in column |
-| `Mod+Ctrl+←/→/↑/↓` | move it |
 | `Mod+Q` · `Mod+F` · `Mod+Shift+F` | close · maximise column · fullscreen |
-| `Mod+W` · `Mod+A` · `Mod+C` | float · tabbed column · center column |
-| `Mod+[` / `Mod+]` | consume / expel a window sideways |
-| `Mod+R` · `Mod+-` / `Mod+=` | preset widths · resize by 10% |
-| `Mod+O` · `Mod+Tab` | overview · previous workspace |
-| `Mod+M` / `Mod+S` | scratchpad: stash / bring back |
+| `Mod+W` · `Mod+Shift+W` · `Mod+Ctrl+W` | float · focus across float↔tiling · sticky |
+| `Mod+A` · `Mod+C` | tabbed column · center column |
+| `Mod+[` / `Mod+]` · `Mod+,` / `Mod+.` | consume / expel a window sideways · into / out of the column |
+| `Mod+R` · `Mod+-` / `Mod+=` | preset widths · resize by 10% (`Shift` for height) |
+| `Mod+O` · `Mod+Tab` · `Mod+M` | overview · previous workspace · scratchpad |
+
+| Shell | |
+|---|---|
+| `Mod+Space` | dankMenu — root menu; `Enter`/`Esc` in and out, `Ctrl+HJKL` for vim navigation, type to search everything below |
+| `Mod+D` · `Mod+Shift+D` · `Mod+Ctrl+D` | dank dash · process list · control center |
+| `Mod+V` · `Mod+P` · `Mod+N` | clipboard · notepad · notifications |
+| `Mod+Space`, then `=` / `\` | calculator · keybind search — launcher-plugin triggers, see § Party tricks |
 
 | Apps & capture | |
 |---|---|
 | `Mod+T` · `Mod+B` · `Mod+E` | ghostty · helium · files |
-| `Mod+Shift+G` · `Mod+Shift+M` | lazygit · btop, in a terminal |
-| `Mod+Shift+S` · `Print` | capture toolbar · full screenshot |
-| `Mod+Print` · `Mod+Shift+O` · `Mod+Shift+C` | region → clipboard · region **OCR** → clipboard · colour pick |
+| `Mod+S` · `Print` | capture toolbar · full screenshot |
+| `Mod+Shift+S` · `Mod+Ctrl+S` | region → clipboard · region **OCR** → clipboard |
+
+| `Mod+Alt+<letter>` — run a tool | |
+|---|---|
+| `G` · `M` · `A` | lazygit · btop · phone mirror |
+| `S` · `E` | colour pick · emoji picker (also `Mod+F2`) |
+| `T` · `W` · `N` | theme · wallpaper · night mode |
 
 | Session | |
 |---|---|
 | `Mod+BackSpace` | lock |
 | `Mod+Shift+BackSpace` | lock + suspend |
 | `Mod+Ctrl+BackSpace` | power menu |
-| `Mod+Shift+P` | monitors off |
+| `Mod+Alt+BackSpace` | monitors off |
+| `Ctrl+Alt+Delete` | quit niri — the only bind that does |
 
-Defined in `modules/desktop/niri/bindings.nix`.
+Defined in `modules/desktop/niri/bindings.nix`. The full table, the two places
+the grammar deliberately bends, and the rules for adding a bind are in
+[`modules/desktop/niri/KEYBINDINGS.md`](modules/desktop/niri/KEYBINDINGS.md).
 
 </details>
 

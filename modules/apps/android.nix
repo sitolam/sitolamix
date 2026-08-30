@@ -298,7 +298,10 @@ in
       # the whole feature stays in one file; both option types merge across
       # modules.
       programs.niri.settings = lib.mkIf config.desktop.niri.enable {
-        binds."Mod+Shift+A".action.spawn = "screen";
+        # Mod+Alt+<letter> is the "run a tool" plane — see
+        # ../desktop/niri/KEYBINDINGS.md. It was Mod+Shift+A, which read as a
+        # variant of Mod+A (tabbed columns) and was not one.
+        binds."Mod+Alt+A".action.spawn = "screen";
 
         window-rules = lib.mkAfter [
           {
