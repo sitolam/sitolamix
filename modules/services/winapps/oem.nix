@@ -47,6 +47,22 @@ let
 
       netsh advfirewall firewall set rule group="remote desktop" new enable=Yes
 
+      rem AutoAdminLogon: dockurr/windows' unattended answer file signs the
+      rem account in on the emulated console at every boot. Windows 11 client
+      rem editions allow exactly one interactive session, so that console
+      rem session owns the only slot and every WinApps logon has to take it
+      rem over. The server asks the client to confirm that takeover
+      rem (LOGON_MSG_BUMP_OPTIONS); FreeRDP has no UI to answer in RemoteApp
+      rem mode, so the connection stalls and then dies mid-handover — which
+      rem surfaces as "another user is still signed in". Leaving the console
+      rem at the sign-in screen makes the RDP session the only session, and
+      rem the prompt never happens.
+      rem
+      rem Only affects a *fresh* install: /oem runs once, at the end of setup.
+      rem An already-installed guest needs the same key set by hand — see
+      rem docs/design/specs/2026-08-23-winapps-windows-vm-design.md.
+      reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon" /v AutoAdminLogon /t REG_SZ /d 0 /f
+
       rem ── Office 365 ──────────────────────────────────────────────────────
       rem officecdn.microsoft.com/pr/wsus/setup.exe is Microsoft's evergreen
       rem Office Deployment Tool: always current, no version to pin and go

@@ -185,9 +185,28 @@ It does three things, in order:
    RemoteApp instead of only ones on an allow-list. Without it every
    `winapps <app>` fails, and the failure looks like a connection problem
    rather than a permissions one.
-2. **Fetch the Office Deployment Tool** from Microsoft's official download URL
+2. **Disable the console autologon** (`AutoAdminLogon = 0`). dockur's answer
+   file signs the account in on the emulated console at every boot. Windows 11
+   client editions allow one interactive session, so that console session holds
+   the only slot and every WinApps logon has to take it over; the server asks
+   the client to confirm the takeover (`LOGON_MSG_BUMP_OPTIONS`), FreeRDP has
+   no way to answer that in RemoteApp mode, and the connection stalls and then
+   dies mid-handover. What the user sees is "another user is still signed in,
+   sign out there first" — with no other window to sign out of. Leaving the
+   console at the sign-in screen makes the RDP session the only session.
+
+   **This step only runs on a fresh install.** `/oem` executes once, at the end
+   of setup, so a guest installed before this was added keeps autologning in.
+   Fix an existing guest by signing the console out once (via the web viewer on
+   `127.0.0.1:8006`) and then setting the key from an elevated shell in the
+   guest:
+
+   ```bat
+   reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon" /v AutoAdminLogon /t REG_SZ /d 0 /f
+   ```
+3. **Fetch the Office Deployment Tool** from Microsoft's official download URL
    and extract `setup.exe`.
-3. **Run `setup.exe /configure configuration.xml`**, where `configuration.xml`
+4. **Run `setup.exe /configure configuration.xml`**, where `configuration.xml`
    is also Nix-generated: product `O365ProPlusRetail`, x64, Current channel,
    `Groove` and `Lync` excluded, display level none, `AcceptEULA` true.
 
