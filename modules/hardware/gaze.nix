@@ -205,6 +205,26 @@ in
       pam.defaultServices = [ ];
 
       settings = {
+        # Keyring. gaze can only hand PAM a password on the *fallback* path —
+        # pam-gaze-core's stash_password_and_fallback() sets PAM_AUTHTOK from
+        # what you typed after the face missed. A face match produces no
+        # password at all, so pam_gnome_keyring (auth, inside login's stack,
+        # which greetd substacks) has nothing to unlock login.keyring with: the
+        # session comes up with the daemon running and the keyring locked, and
+        # the first app wanting a secret pops a password dialog.
+        #
+        # abort_before_first_resume refuses face auth until logind has reported
+        # one PrepareForSleep cycle, so the first authentication of every boot
+        # falls through to the password — which unlocks the keyring — and every
+        # unlock after the first suspend is face again. It is gazed-local state,
+        # not persisted: restarting the daemon re-arms the gate, and `gaze auth`
+        # or the GUI's test button will fail until the machine has suspended
+        # once. That is the whole cost, and it is the only fix that keeps the
+        # keyring's own password: the alternative is storing that password
+        # somewhere readable (sops secret, or a blank keyring) and unlocking
+        # from a session service.
+        auth.abort_before_first_resume = true;
+
         inference = {
           execution_provider = if cfg.openvino.enable then "openvino" else "cpu";
           inherit (cfg) device;
