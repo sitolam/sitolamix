@@ -183,6 +183,24 @@
       flake = false;
     };
 
+    # Two more single-plugin repos, pinned directly because no marketplace we
+    # track lists them.
+    #
+    # mattpocock/skills is a Claude plugin at the repo root, nothing special.
+    claude-plugin-mattpocock = {
+      url = "github:mattpocock/skills";
+      flake = false;
+    };
+
+    # cursor/plugins is Cursor's plugin monorepo; we take `pstack` out of it.
+    # It is a *Cursor* plugin — its manifest is .cursor-plugin/plugin.json,
+    # which Claude does not read — so claude-code.nix bolts a Claude manifest
+    # onto the tree. Drop that shim if upstream ever ships .claude-plugin/.
+    claude-plugin-pstack = {
+      url = "github:cursor/plugins";
+      flake = false;
+    };
+
     # GunduLabs/gaze — Windows Hello-style face authentication (daemon + PAM
     # modules); replaced howdy here, see modules/hardware/gaze.nix. Not in
     # nixpkgs. Follows our nixpkgs deliberately: gaze links whatever

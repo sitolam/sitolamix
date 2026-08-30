@@ -54,6 +54,35 @@ let
     version = src.shortRev or src.rev or "nix";
   };
 
+  # cursor/plugins ships pstack with a Cursor manifest
+  # (.cursor-plugin/plugin.json) and no .claude-plugin/. Everything else about
+  # the tree is already what Claude expects — skills/ and agents/ at the plugin
+  # root are auto-discovered — so the only thing missing is the manifest, and a
+  # store tree of symlinks plus a generated plugin.json is enough. Contents are
+  # symlinked, not copied, for the same reason the marketplace tree is.
+  # Remove this and use `mkPlugin inputs.claude-plugin-pstack "pstack"` if
+  # upstream ever ships a Claude manifest of its own.
+  mkCursorPlugin =
+    name: src: subdir:
+    let
+      tree = if subdir == "" then "${src}" else "${src}/${subdir}";
+      version = src.shortRev or src.rev or "nix";
+      manifest = pkgs.writers.writeJSON "plugin.json" {
+        inherit name version;
+        description = "Cursor plugin ${name}, re-manifested for Claude Code by this flake.";
+      };
+    in
+    {
+      inherit version;
+      path = pkgs.runCommand "claude-plugin-${name}" { } ''
+        mkdir -p "$out/.claude-plugin"
+        cp ${manifest} "$out/.claude-plugin/plugin.json"
+        for entry in ${tree}/*; do
+          ln -s "$entry" "$out/$(basename "$entry")"
+        done
+      '';
+    };
+
   plugins = {
     # anthropics/claude-plugins-official
     frontend-design = mkPlugin inputs.claude-marketplace-official "plugins/frontend-design";
@@ -78,6 +107,13 @@ let
 
     flutter-all = mkPlugin inputs.claude-marketplace-flutter "flutter-all";
     ui-ux-pro-max = mkPlugin inputs.claude-marketplace-ui-ux "";
+
+    # mattpocock/skills — the whole repo is the plugin; upstream's own
+    # marketplace.json calls it `mattpocock-skills`.
+    mattpocock-skills = mkPlugin inputs.claude-plugin-mattpocock "";
+
+    # cursor/plugins — see mkCursorPlugin above.
+    pstack = mkCursorPlugin "pstack" inputs.claude-plugin-pstack "pstack";
   };
 
   pluginNames = lib.attrNames plugins;
