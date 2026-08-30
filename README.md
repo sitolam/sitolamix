@@ -119,6 +119,11 @@ Things this config does that a stock desktop does not:
   which points Claude Code at a model running locally in LM Studio.
 - 🎧 **Bar full of plugins** — typing sounds, take-a-break, ambient sound, USB
   manager, KDE Connect, Home Assistant, emoji launcher, calculator.
+- 🔣 **Launcher triggers** — type `=` for a calculator running on
+  [libqalculate](https://qalculate.github.io) (units, currencies, hex, result
+  to the clipboard) or `\` to search every keybind the compositor has loaded.
+  Both work in spotlight *and* in dankMenu, because the menu drives DMS's
+  launcher plugins rather than reimplementing them.
 - 🎨 **Theming that goes inside apps** — stylix paints the desktop, but spicetify
   rebuilds Spotify's own CSS and a generated `meta.json` recolors Anki, both from
   the same `themes/catppuccin-mocha.nix` palette. Change the theme, they follow.
@@ -142,6 +147,7 @@ Things this config does that a stock desktop does not:
 | `Mod+Ctrl+S` · `Mod+Ctrl+M` | control center · process list |
 | `Mod+Shift+Period` | emoji picker |
 | `Mod+Shift+T` · `Mod+Shift+W` · `Mod+Alt+N` | theme · wallpaper · night mode |
+| `Mod+Space`, then `=` / `\` | calculator · keybind search — launcher-plugin triggers, see § Party tricks |
 
 | Windows | |
 |---|---|

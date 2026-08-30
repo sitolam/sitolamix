@@ -505,6 +505,11 @@ in
           };
         };
         dankKDEConnect.enable = true; # AvengeMedia/dms-plugins DankKDEConnect (bar widget; kdeconnect via kde-connect.nix)
+        # searchable list of the compositor's keybinds, under the "\" trigger.
+        # It reads them from `dms keybinds show niri`, so what it lists is
+        # whatever niri has loaded — ../niri/bindings.nix plus the generated
+        # dms/*.kdl includes — not a second copy to keep in step.
+        dankLauncherKeys.enable = true; # AvengeMedia/dms-plugins DankLauncherKeys
         # unified system monitor (Dadangdut33/dms-plugins) — replaces the
         # built-in memUsage + diskUsage bar widgets with one widget showing
         # cpu/ram/disk as gauges.
