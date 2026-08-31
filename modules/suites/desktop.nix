@@ -12,6 +12,8 @@ in
       greetd.enable = true;
       kanata.enable = true;
     };
+    # keyboard-shortcut trainer, drilled against niri's own binds
+    apps.keydrill.enable = true;
     theming.stylix.enable = true;
     services.kde-connect.enable = true;
   };

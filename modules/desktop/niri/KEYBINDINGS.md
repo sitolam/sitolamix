@@ -71,12 +71,10 @@ workspaces — so the next scope up is the workspace as an object.
 `workspace-auto-back-and-forth` is on (`layout.nix`), so pressing the number
 of the workspace you are already on returns you to the previous one.
 
-### Column ends, wheel, misc
+### Wheel, and the odds and ends
 
 | Bind | Action |
 | --- | --- |
-| `Mod+Home` / `Mod+End` | focus first / last column |
-| `Mod+Shift+Home` / `Mod+Shift+End` | move column to first / last |
 | `Mod+Tab` | previous workspace |
 | `Mod+Wheel` ↑↓ | focus workspace up / down |
 | `Mod+Wheel` ←→ | focus column left / right |
@@ -139,6 +137,11 @@ not a pair of binds.
 | `Ctrl+Print` / `Alt+Print` | screenshot screen / window |
 | `Mod+Print` | region screenshot → clipboard |
 
+The `Print` rows need an external keyboard. The omnibook's internal keyboard
+sends no Print keycode — the scissors key is a Windows "snip" key that emits
+`Super+Shift+S` in firmware, so it lands on `Mod+Shift+S` and copies a region.
+That is the intended result, so `Mod+Shift+S` should stay where it is.
+
 ## Apps
 
 `Mod+T` terminal · `Mod+B` browser · `Mod+E` files.
@@ -159,6 +162,7 @@ launcher.
 | `Mod+Alt+W` | wallpaper picker |
 | `Mod+Alt+N` | night light |
 | `Mod+Alt+E` | emoji / unicode picker (also `Mod+F2`) |
+| `Mod+Alt+P` | keydrill, with niri's own binds switched off while it runs |
 
 **Bend #2:** `Mod+Alt+S` is a colour picker while `Mod+S` is capture. The
 tool plane wins over the family rule when a key does both — the tool plane is
@@ -177,11 +181,33 @@ not in the table above.
 | `Mod+Ctrl+BackSpace` | power menu |
 | `Mod+Alt+BackSpace` | power off monitors |
 | `Mod+Escape` | toggle keyboard-shortcut inhibiting (works even while inhibited) |
+| `Mod+Shift+Escape` | toggle practice mode — see below |
 | `Ctrl+Alt+Delete` | quit niri |
 
 `Ctrl+Alt+Delete` is the **only** bind that quits the compositor. There used
 to be a `Mod+Shift+E` as well, one `Shift` away from `Mod+E` (the file
 manager). It is gone.
+
+## Practice mode
+
+`Mod+Shift+Escape` switches every bind in this file off, so a shortcut
+trainer sees the keys instead of the compositor. Press it again to switch
+them back on — it is the one bind practice mode keeps, so you cannot strand
+yourself. `Mod+Alt+P` does the same around keydrill and restores the binds
+however it exits.
+
+It works by config swap, not by inhibiting: `niri msg action load-config-file`
+loads `~/.config/niri/practice.kdl`, which is this config with the binds
+section replaced. Everything else — layout, input, window rules — is
+identical, so nothing visibly rearranges.
+
+`Mod+Escape` is a different thing and will not do this. It toggles the
+Wayland keyboard-shortcuts-inhibit protocol, which only works for a client
+that asked for an inhibitor; niri looks the focused surface up in
+`keyboard_shortcuts_inhibiting_surfaces` and does nothing when it is absent.
+Electron apps do not ask.
+
+Owned by `practice.nix` and `_lib/practice-mode.sh`, not by `bindings.nix`.
 
 ## Hardware keys
 
@@ -199,6 +225,22 @@ keyboard.
 flag for **floating** windows, so moving a float still drags you to the
 target workspace — [niri#1805](https://github.com/YaLTeR/niri/issues/1805).
 Tiled windows are unaffected. Drop this section when the issue closes.
+
+## Drilling these binds
+
+`Mod+Alt+P` opens [keydrill](https://github.com/sitolam/keydrill) with the
+binds switched off. It reads *this* config at runtime — there is no exported
+deck to go stale — asks what a bind does, and waits for you to press it.
+
+```sh
+keydrill run --from niri              # everything
+keydrill run --from niri -c Workspaces -n 15
+keydrill stats --from niri            # learned, due, most forgotten
+```
+
+Wheel binds and the `XF86` keys are skipped; you cannot drill a scroll
+gesture. An action keydrill has no phrasing for keeps its raw name as the
+prompt, so a gap shows up rather than going missing.
 
 ## Changing a bind
 

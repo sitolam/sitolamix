@@ -379,6 +379,13 @@
             # S is the capture family. The bare Print key keeps niri's own
             # built-in screenshot UI; Mod+S reaches DMS's capture/record
             # toolbar, and the two variants are the grim pipelines.
+            #
+            # The Print binds below only fire from an external keyboard. The
+            # omnibook's internal keyboard has no Print keycode: the key
+            # printed with the scissors icon is a Windows "snip" key and emits
+            # Super+Shift+S in firmware, which lands on Mod+Shift+S here. That
+            # happens to be the region-to-clipboard bind, so the key does the
+            # right thing by accident -- do not "fix" it by moving Mod+Shift+S.
             "Mod+S" = spawn (dms [
               "screenCaptureToolbar"
               "toggle"
@@ -403,11 +410,10 @@
             ];
 
             # --- workspace nav that has no family -------------------------
+            # Home/End used to focus and move a column to the first/last
+            # position. Unused in practice, so they are gone rather than
+            # sitting in the cheat sheet as noise.
             "Mod+Tab" = noArg "focus-workspace-previous";
-            "Mod+Home" = noArg "focus-column-first";
-            "Mod+End" = noArg "focus-column-last";
-            "Mod+Shift+Home" = noArg "move-column-to-first";
-            "Mod+Shift+End" = noArg "move-column-to-last";
           }
 
           # --- direction keys: arrows and hjkl ----------------------------

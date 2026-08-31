@@ -44,6 +44,14 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # keydrill — our own keyboard-shortcut trainer (Rust/ratatui), drilled
+    # against niri's own binds. Nothing in nixpkgs does this: the field is
+    # KeyCombiner and ShortcutFoo, both closed and hosted.
+    keydrill = {
+      url = "github:sitolam/keydrill";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # niri scratchpad (Rust). packages.default = the `niri-scratchpad` binary.
     niri-scratchpad = {
       url = "github:argosnothing/niri-scratchpad-rs";

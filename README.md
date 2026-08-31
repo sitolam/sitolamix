@@ -113,6 +113,13 @@ Things this config does that a stock desktop does not:
   compositor, so every app obeys.
 - 🗃 **Scratchpad** — `Mod+M` stashes the focused window away, and floats it
   back on the second press (`niri-scratchpad`).
+- 🎹 **Drill your own keybinds** — `Mod+Alt+P` opens
+  [keydrill](https://github.com/sitolam/keydrill), a TUI trainer written for
+  this config: it reads these binds live, asks what one does, and waits for
+  you to *press* it. `Mod+Shift+Escape` switches every niri bind off on its
+  own, which is what lets the terminal see `Mod+…` at all.
+
+  <img src="assets/screenshots/keydrill.png" alt="keydrill" width="600">
 - 💡 **DDC brightness** — the brightness keys drive the *external* monitors over
   i2c, one `dms ipc` call per panel.
 - 🤖 **Claude Code, two ways** — a bar widget that tracks API usage, and `ccl`,
@@ -188,6 +195,7 @@ unrelated launcher behind a modifier.
 |---|---|
 | `G` · `M` · `A` | lazygit · btop · phone mirror |
 | `S` · `E` | colour pick · emoji picker (also `Mod+F2`) |
+| `P` | keydrill, with niri's binds off while it runs |
 | `T` · `W` · `N` | theme · wallpaper · night mode |
 
 | Session | |
@@ -196,11 +204,15 @@ unrelated launcher behind a modifier.
 | `Mod+Shift+BackSpace` | lock + suspend |
 | `Mod+Ctrl+BackSpace` | power menu |
 | `Mod+Alt+BackSpace` | monitors off |
+| `Mod+Shift+Escape` | practice mode: all binds off, same key back on |
 | `Ctrl+Alt+Delete` | quit niri — the only bind that does |
 
 Defined in `modules/desktop/niri/bindings.nix`. The full table, the two places
-the grammar deliberately bends, and the rules for adding a bind are in
+the grammar deliberately bends, practice mode, and the rules for adding a bind
+are in
 [`modules/desktop/niri/KEYBINDINGS.md`](modules/desktop/niri/KEYBINDINGS.md).
+`Mod+Alt+P` drills them with [keydrill](https://github.com/sitolam/keydrill),
+which reads this config at runtime rather than an exported copy.
 
 </details>
 

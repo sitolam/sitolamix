@@ -586,6 +586,26 @@
         "type": "github"
       }
     },
+    "keydrill": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1788200974,
+        "narHash": "sha256-mXcMoeslfS08np/suuoy6KwaJrw89orltAefPX2nBY8=",
+        "owner": "sitolam",
+        "repo": "keydrill",
+        "rev": "cc5356a2f437c62b9a7bcfcce916111e56ca4773",
+        "type": "github"
+      },
+      "original": {
+        "owner": "sitolam",
+        "repo": "keydrill",
+        "type": "github"
+      }
+    },
     "niri": {
       "inputs": {
         "niri-stable": "niri-stable",
@@ -858,6 +878,7 @@
         "helium": "helium",
         "home-manager": "home-manager",
         "import-tree": "import-tree",
+        "keydrill": "keydrill",
         "niri": "niri",
         "niri-scratchpad": "niri-scratchpad",
         "niri-tweaks": "niri-tweaks",
