@@ -60,6 +60,10 @@ let
       name = "Zotero Connector";
       pin = true;
     };
+    "elfaihghhjjoknimpccccmkioofjjfkf" = {
+      name = "StayFree - Website Blocker & Web Analytics";
+      pin = false;
+    };
     "fcoeoabgfenejglbffodgkkbkcdhcgfn" = {
       name = "Claude";
       pin = false;
