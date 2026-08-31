@@ -81,6 +81,31 @@
   stylix.cursor.size = 16;
 
   services = {
+    # Not in suites.ai: that suite is written for gamingpc's discrete 8 GB card,
+    # where LM Studio's offload slider is the right tool. This is the opposite
+    # machine — a UMA iGPU with 30 GB of shared RAM — and the model, the context
+    # size and the ubatch below are all sized to *this* box's measured limits,
+    # which is exactly the kind of host-specific call that belongs here.
+    #
+    # modelPath is a bare string, not a Nix path, so the 14 GB GGUF stays out of
+    # the store. Fetch it once with:
+    #   curl -L --create-dirs -o ~/.lmstudio/models/peculiar-ragdoll/Dirk-Qwen3.8-27B-GGUF/Dirk-Qwen3.8-27B-UD-IQ4_XS.gguf \
+    #     https://huggingface.co/peculiar-ragdoll/Dirk-Qwen3.8-27B-GGUF/resolve/main/Dirk-Qwen3.8-27B-UD-IQ4_XS.gguf
+    #
+    # Why this file: IQ4_XS is 13.26 GiB resident, which leaves room for a 128k
+    # q8_0/q4_0 KV cache inside the 23 GiB the Vulkan heap will hand out. Q4_K_S
+    # and up do not, once a desktop session is also running. Dirk is the stock
+    # Unsloth UD quant with one thing changed — the chat template — and the two
+    # files differ by 19 KB out of 14.25 GB. It matters anyway: the stock template
+    # pins reasoning_effort to 'xhigh' on every single call, and at ~7 tok/s that
+    # is minutes of thinking nobody asked for. Dirk leaves it at 'medium'.
+    llama-server = {
+      enable = true;
+      modelPath = "/home/otis/.lmstudio/models/peculiar-ragdoll/Dirk-Qwen3.8-27B-GGUF/Dirk-Qwen3.8-27B-UD-IQ4_XS.gguf";
+      contextSize = 131072;
+      ubatch = 1024;
+    };
+
     # cloud mounts — the remotes themselves are created with `rclone config`
     # (see README → Cloud mounts), only *which* ones to mount lives here.
     rclone = {

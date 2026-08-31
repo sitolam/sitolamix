@@ -1,14 +1,22 @@
 # shellcheck shell=bash
 #
-# ccl — launch Claude Code against a model served by LM Studio.
+# ccl — launch Claude Code against a locally served model.
 #
-# LM Studio speaks the OpenAI API; Claude Code speaks Anthropic's. claude-code-router
+# The server speaks the OpenAI API; Claude Code speaks Anthropic's. claude-code-router
 # sits between the two and translates. This script picks a model, points the router at
 # it, makes sure the router is up, then hands off to Claude Code.
+#
+# Two servers are supported, probed in that order: LM Studio, and llama.cpp's
+# llama-server (services.llama-server). They differ only in how you ask them what
+# they are serving — LM Studio has a richer /api/v0/models with load state and
+# context length, llama-server has plain OpenAI /v1/models plus /props. Everything
+# downstream of candidates()/effective_ctx() is identical, because both serve
+# /v1/chat/completions.
 #
 # NOTE: writeShellApplication supplies the shebang and `set -euo pipefail`.
 
 LMSTUDIO_URL="${CCL_LMSTUDIO_URL:-http://127.0.0.1:1234}"
+LLAMA_URL="${CCL_LLAMA_URL:-http://127.0.0.1:18080}"
 ROUTER_PORT="${CCL_ROUTER_PORT:-4141}"
 ROUTER_URL="http://127.0.0.1:${ROUTER_PORT}"
 CONFIG_DIR="${HOME}/.claude-code-router"
@@ -17,6 +25,10 @@ OWNED="${CONFIG_DIR}/.ccl-owned"
 STATE_DIR="${XDG_CACHE_HOME:-${HOME}/.cache}/ccl"
 MIN_CONTEXT=32768
 
+# Set by detect_backend, read by everything that has to speak to the server.
+BACKEND=""
+BASE_URL=""
+
 die() {
   printf 'ccl: %s\n' "$*" >&2
   exit 1
@@ -24,7 +36,7 @@ die() {
 
 usage() {
   cat <<'EOF'
-ccl — launch Claude Code against an LM Studio model
+ccl — launch Claude Code against a locally served model
 
 Usage:
   ccl                            pick a model interactively, then launch
@@ -35,21 +47,60 @@ Usage:
 
 Environment:
   CCL_LMSTUDIO_URL   LM Studio base URL (default http://127.0.0.1:1234)
+  CCL_LLAMA_URL      llama-server base URL (default http://127.0.0.1:18080)
   CCL_ROUTER_PORT    claude-code-router port (default 4141)
 EOF
+}
+
+# Probing is what picks the backend: there is no flag for it, because the answer is
+# never ambiguous in practice — whichever server is actually up is the one to use.
+# LM Studio goes first so that starting it always wins over a llama-server left
+# running in the background.
+detect_backend() {
+  if curl -fs --max-time 5 -o /dev/null "${LMSTUDIO_URL}/api/v0/models"; then
+    BACKEND="lmstudio"
+    BASE_URL="$LMSTUDIO_URL"
+    return 0
+  fi
+  if curl -fs --max-time 5 -o /dev/null "${LLAMA_URL}/v1/models"; then
+    BACKEND="llamacpp"
+    BASE_URL="$LLAMA_URL"
+    return 0
+  fi
+  die "No model server is answering.
+     LM Studio:     ${LMSTUDIO_URL} — start it and turn on the local server
+                    (Developer tab -> Status: Running)
+     llama-server:  ${LLAMA_URL} — systemctl --user start llama-server"
 }
 
 models_json() {
   # No `-S`: curl's own "Failed to connect" would print before, and read as louder
   # than, the explanation below, which already says everything the user can act on.
-  curl -fs --max-time 5 "${LMSTUDIO_URL}/api/v0/models" \
-    || die "LM Studio is not answering at ${LMSTUDIO_URL}.
-     Start LM Studio and turn on the local server (Developer tab -> Status: Running)."
+  if [[ "$BACKEND" == "lmstudio" ]]; then
+    curl -fs --max-time 5 "${BASE_URL}/api/v0/models" || die "LM Studio stopped answering at ${BASE_URL}."
+  else
+    curl -fs --max-time 5 "${BASE_URL}/v1/models" || die "llama-server stopped answering at ${BASE_URL}."
+  fi
 }
 
 # TSV rows for every model that can serve chat. Embeddings models are dropped:
 # they have no chat endpoint, so offering them would only produce confusing errors.
 candidates() {
+  # llama-server serves exactly one model and has no notion of loading it on demand,
+  # so the state and capability columns LM Studio fills in are constant here. They
+  # are still emitted, so that list_models and pick_model stay one code path.
+  if [[ "$BACKEND" == "llamacpp" ]]; then
+    local ctx
+    # /v1/models does not carry the context size, so borrow the one effective_ctx
+    # reads. A server that cannot answer still lists, it just says "? ctx".
+    ctx="$(curl -fs --max-time 5 "${BASE_URL}/props" | jq -r '.default_generation_settings.n_ctx // empty')"
+    printf '%s' "$1" | jq -r --arg ctx "${ctx:-?}" '
+      .data[]
+      | [ .id, ($ctx + " ctx"), "tools", "● loaded" ]
+      | @tsv
+    '
+    return 0
+  fi
   printf '%s' "$1" | jq -r '
     .data[]
     | select(.type != "embeddings")
@@ -87,6 +138,15 @@ validate_model() {
 # A loaded model reports the context it was actually loaded with, which is what
 # constrains the session. Fall back to the model's ceiling when it is not loaded.
 effective_ctx() {
+  # llama-server's /v1/models says nothing about the context it was started with;
+  # /props is the only endpoint that reports it, and it reports the real figure
+  # (the --ctx-size the server is running with), which is exactly what constrains
+  # the session.
+  if [[ "$BACKEND" == "llamacpp" ]]; then
+    curl -fs --max-time 5 "${BASE_URL}/props" \
+      | jq -r '.default_generation_settings.n_ctx // 0'
+    return 0
+  fi
   printf '%s' "$1" | jq -r --arg id "$2" '
     .data[] | select(.id == $id) | (.loaded_context_length // .max_context_length // 0)
   '
@@ -98,6 +158,11 @@ effective_ctx() {
 # would otherwise just look like it is hanging on the first prompt.
 note_not_loaded() {
   local state
+  # llama-server loads its model at startup and refuses connections until it is
+  # ready, so by the time we can query it there is nothing left to warn about.
+  if [[ "$BACKEND" == "llamacpp" ]]; then
+    return 0
+  fi
   state="$(printf '%s' "$1" | jq -r --arg id "$2" '.data[] | select(.id == $id) | .state')"
   if [[ "$state" == "loaded" ]]; then
     return 0
@@ -112,23 +177,24 @@ gen_config() {
   local model="$1" ctx="$2"
   jq -n \
     --arg model "$model" \
-    --arg url "${LMSTUDIO_URL}/v1/chat/completions" \
+    --arg url "${BASE_URL}/v1/chat/completions" \
+    --arg provider "$BACKEND" \
     --argjson port "$ROUTER_PORT" \
     --argjson threshold "$(( ctx * 60 / 100 ))" \
     '{
       HOST: "127.0.0.1",
       PORT: $port,
       Providers: [ {
-        name: "lmstudio",
+        name: $provider,
         api_base_url: $url,
-        api_key: "lm-studio",
+        api_key: "local",
         models: [ $model ]
       } ],
       Router: {
-        default: "lmstudio,\($model)",
-        background: "lmstudio,\($model)",
-        think: "lmstudio,\($model)",
-        longContext: "lmstudio,\($model)",
+        default: "\($provider),\($model)",
+        background: "\($provider),\($model)",
+        think: "\($provider),\($model)",
+        longContext: "\($provider),\($model)",
         longContextThreshold: $threshold
       }
     }'
@@ -146,7 +212,8 @@ warn_small_context() {
 ccl: WARNING — this model's context is ${ctx} tokens, below the ${MIN_CONTEXT} ccl expects.
      Claude Code's system prompt and tool definitions alone will exceed it, so the
      session will most likely fail on the first request.
-     Fix: in LM Studio, open the model's settings, raise "Context Length", reload it.
+     Fix: LM Studio — open the model's settings, raise "Context Length", reload it.
+          llama-server — raise services.llama-server.contextSize and rebuild.
      Continuing anyway.
 EOF
 }
@@ -315,14 +382,15 @@ main() {
   done
 
   local json rows
+  detect_backend
   json="$(models_json)"
   # Every mode needs the same candidate rows, and an empty set is a dead end on all
   # of them — computing it here is what makes that true of the picker too, which used
   # to open empty on a fresh LM Studio and exit 0 without a word when dismissed.
   rows="$(candidates "$json")"
   if [[ -z "$rows" ]]; then
-    die "LM Studio returned no chat-capable models (embeddings models cannot be used).
-     Load a model in LM Studio first."
+    die "${BACKEND} returned no chat-capable models (embeddings models cannot be used).
+     Load a model first."
   fi
 
   if [[ "$mode" == "list" ]]; then
@@ -351,8 +419,8 @@ main() {
   # the long-context threshold against, and the arithmetic below would fail with a
   # raw bash error rather than anything the user could act on.
   if (( ctx == 0 )); then
-    die "LM Studio reports no context length for ${model}.
-     Load the model in LM Studio, then try again."
+    die "${BACKEND} reports no context length for ${model}.
+     Load the model, then try again."
   fi
   config="$(gen_config "$model" "$ctx")"
 
