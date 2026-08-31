@@ -104,19 +104,87 @@ in
       { pkgs, ... }:
       let
         llama = pkgs.llama-cpp.override { vulkanSupport = true; };
+
+        # One entry point for "is it up, bring it up, take it down", so ccl and
+        # the dankMenu rows agree about what those mean instead of each open
+        # coding systemctl and a health probe. Named llama-ctl rather than
+        # llama-server-ctl because llama.cpp already ships a `llama-server`
+        # binary and two similar names on PATH invites picking the wrong one.
+        llamaCtl = pkgs.writeShellApplication {
+          name = "llama-ctl";
+          runtimeInputs = with pkgs; [
+            curl
+            jq
+            coreutils
+            systemd
+          ];
+          text = ''
+                        url="http://127.0.0.1:${toString cfg.port}"
+
+                        # Sleeping counts as up: the unit is running and one request wakes it.
+                        # Only a refused connection means there is nothing to talk to.
+                        up() { curl -fsS --max-time 2 "$url/health" >/dev/null 2>&1; }
+
+                        case "''${1:-status}" in
+                          status)
+                            if ! up; then
+                              echo "Stopped"
+                              exit 0
+                            fi
+                            props="$(curl -fsS --max-time 2 "$url/props" || echo '{}')"
+                            ctx="$(printf '%s' "$props" | jq -r '.default_generation_settings.n_ctx // 0')"
+                            if [ "$(printf '%s' "$props" | jq -r '.is_sleeping // false')" = "true" ]; then
+                              printf 'Sleeping · %sk ctx
+            ' "$(( ctx / 1024 ))"
+                            else
+                              printf 'Loaded · %sk ctx
+            ' "$(( ctx / 1024 ))"
+                            fi
+                            ;;
+                          start)
+                            if up; then
+                              exit 0
+                            fi
+                            systemctl --user start llama-server
+                            # The unit is "active" the moment the process execs, which is
+                            # minutes before it will answer — every caller wants the model
+                            # loaded, not the process spawned, so wait for /health.
+                            for _ in $(seq 1 180); do
+                              if up; then
+                                exit 0
+                              fi
+                              sleep 2
+                            done
+                            echo "llama-ctl: server did not become healthy within 6 minutes" >&2
+                            exit 1
+                            ;;
+                          stop)
+                            systemctl --user stop llama-server
+                            ;;
+                          *)
+                            echo "usage: llama-ctl [status|start|stop]" >&2
+                            exit 1
+                            ;;
+                        esac
+          '';
+        };
       in
       {
-        home.packages = [ llama ];
+        home.packages = [
+          llama
+          llamaCtl
+        ];
 
         systemd.user.services.llama-server = {
           Unit = {
             Description = "llama.cpp server (Vulkan)";
             After = [ "graphical-session.target" ];
           };
-          # Started at login rather than on demand by ccl. Pairing autostart with
-          # --sleep-idle-seconds gets both halves: ccl always finds a server to
-          # talk to, and an unused one is asleep rather than holding the weights.
-          Install.WantedBy = [ "default.target" ];
+          # Deliberately no [Install] section, so this never starts at login.
+          # Loading 14 GB to sit idle is the wrong default on a laptop that
+          # spends most of its life not talking to a language model. `llama-ctl
+          # start` brings it up — ccl does that for you, and the dankMenu rows in
+          # ../../desktop/dms/plugins.nix expose it as a button.
           Service = {
             # Loading 14 GB off disk into the GPU heap takes well over a minute
             # cold, and systemd's default 90 s start timeout would kill it midway.

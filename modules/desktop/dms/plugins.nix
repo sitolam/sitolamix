@@ -54,6 +54,7 @@ let
   flakeDir = "/home/otis/sitolamix";
 
   winappsCfg = config.services.winapps;
+  llamaCfg = config.services.llama-server;
 
   dankMenuRows = [
     # Root
@@ -90,6 +91,20 @@ let
       # The whole subtree disappears on a host without the VM, rather than
       # offering rows that would fail.
       when = if winappsCfg.enable then "true" else "false";
+    }
+    {
+      id = "ai";
+      icon = "neurology";
+      label = "AI";
+      aliases = [
+        "llm"
+        "model"
+        "llama"
+        "qwen"
+      ];
+      # Same treatment as the Windows subtree: gone entirely on a host without
+      # the service, rather than present and broken.
+      when = if llamaCfg.enable then "true" else "false";
     }
     {
       id = "style";
@@ -288,6 +303,43 @@ let
     }
 
     # Style
+    # The local model is deliberately not started at login (see
+    # ../../services/llama-server.nix), so these rows are the button that
+    # replaces the autostart. All three go through llama-ctl rather than
+    # systemctl, so the menu's idea of "running" is the same health probe ccl
+    # uses — a unit that has exec'd but is still loading reads as stopped here,
+    # which is what somebody looking at this menu actually wants to know.
+    {
+      id = "ai.status";
+      icon = "memory";
+      label = "Status";
+      # Reads "Stopped", "Sleeping · 128k ctx" or "Loaded · 128k ctx". Sampled
+      # when the menu opens, not live.
+      labelCmd = "llama-ctl status";
+      # A readout, not a control — without this an action-less row would be
+      # treated as a submenu to descend into.
+      disabled = "true";
+    }
+    # One button, two definitions, made mutually exclusive by `when`, exactly as
+    # the Windows VM rows above do it.
+    {
+      id = "ai.start";
+      icon = "play_arrow";
+      label = "Start Model";
+      aliases = [ "load" ];
+      when = "! systemctl --user is-active --quiet llama-server";
+      # Loading 14 GB takes a minute or two; llama-ctl start blocks until the
+      # server actually answers, so the menu row stays busy until it is usable.
+      action = "llama-ctl start";
+    }
+    {
+      id = "ai.stop";
+      icon = "stop";
+      label = "Stop Model";
+      aliases = [ "unload" ];
+      when = "systemctl --user is-active --quiet llama-server";
+      action = "llama-ctl stop";
+    }
     {
       id = "style.theme";
       icon = "colorize";

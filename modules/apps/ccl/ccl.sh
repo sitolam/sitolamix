@@ -67,10 +67,22 @@ detect_backend() {
     BASE_URL="$LLAMA_URL"
     return 0
   fi
+  # services.llama-server does not start at login, so the common case for
+  # "nothing is answering" is simply that nobody has started it yet. Start it and
+  # wait, rather than telling the user to run one command and then rerun ccl.
+  # llama-ctl only exists when that module is enabled, hence the guard.
+  if command -v llama-ctl >/dev/null 2>&1; then
+    printf 'ccl: starting llama-server and waiting for the model to load...\n' >&2
+    if llama-ctl start; then
+      BACKEND="llamacpp"
+      BASE_URL="$LLAMA_URL"
+      return 0
+    fi
+  fi
   die "No model server is answering.
      LM Studio:     ${LMSTUDIO_URL} — start it and turn on the local server
                     (Developer tab -> Status: Running)
-     llama-server:  ${LLAMA_URL} — systemctl --user start llama-server"
+     llama-server:  ${LLAMA_URL} — llama-ctl start"
 }
 
 models_json() {
