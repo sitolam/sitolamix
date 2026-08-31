@@ -12,8 +12,13 @@ in
       greetd.enable = true;
       kanata.enable = true;
     };
-    # keyboard-shortcut trainer, drilled against niri's own binds
-    apps.keydrill.enable = true;
+    apps = {
+      # keyboard-shortcut trainer, drilled against niri's own binds
+      keydrill.enable = true;
+      # screen-time tracking for the desktop; the browser half of it is the
+      # StayFree extension in apps.helium.
+      stayfree.enable = true;
+    };
     theming.stylix.enable = true;
     services.kde-connect.enable = true;
   };

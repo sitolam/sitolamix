@@ -156,6 +156,17 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # sitolam/stayfree-nix — our own repack of StayFree's AppImage. The app is
+    # proprietary, ships only a .deb/AppImage and is not in nixpkgs
+    # (NixOS/nixpkgs#338978). That flake's daily workflow bumps its src.json
+    # from upstream releases, so `nix flake update stayfree` is the version
+    # bump here. We consume `overlays.default` so it builds against our
+    # nixpkgs.
+    stayfree = {
+      url = "github:sitolam/stayfree-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # ── Claude Code plugins ───────────────────────────────────────────────
     # modules/apps/claude-code.nix wires these into ~/.claude/plugins itself
     # rather than letting Claude clone and self-update them, so the plugin set

@@ -888,6 +888,7 @@
         "nixpkgs-stable": "nixpkgs-stable_2",
         "sops-nix": "sops-nix",
         "spicetify-nix": "spicetify-nix",
+        "stayfree": "stayfree",
         "stylix": "stylix",
         "wallpapers": "wallpapers",
         "winapps": "winapps",
@@ -950,6 +951,26 @@
       "original": {
         "owner": "Gerg-L",
         "repo": "spicetify-nix",
+        "type": "github"
+      }
+    },
+    "stayfree": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1788214691,
+        "narHash": "sha256-O7jUA8fLv5UWWpNGUwFHQeOglaBpDQbvER7UP+9qqcE=",
+        "owner": "sitolam",
+        "repo": "stayfree-nix",
+        "rev": "c2921e9a709ad4f44bee4131dc26162275d34eba",
+        "type": "github"
+      },
+      "original": {
+        "owner": "sitolam",
+        "repo": "stayfree-nix",
         "type": "github"
       }
     },
