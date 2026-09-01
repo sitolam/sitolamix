@@ -127,6 +127,22 @@ let
       action = "dms ipc call keybinds open niri";
     }
     {
+      id = "learn.keydrill";
+      icon = "keyboard_command_key";
+      label = "Keydrill";
+      aliases = [
+        "drill"
+        "shortcuts"
+      ];
+      # Disappears on a host without apps.keydrill — same pattern as the
+      # windows subtree above.
+      when = if config.apps.keydrill.enable then "true" else "false";
+      # Same launch as Mod+Alt+P in apps.keydrill: practiceCommand releases
+      # niri's key grabs first, ghostty is required for the Kitty keyboard
+      # protocol keydrill needs.
+      action = "${config.desktop.niri.practiceCommand} run ghostty -e keydrill run --from niri";
+    }
+    {
       id = "learn.niri";
       icon = "grid_view";
       label = "Niri";

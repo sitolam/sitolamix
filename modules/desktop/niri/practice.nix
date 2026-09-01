@@ -24,6 +24,13 @@ in
     description = ''
       Path to the practice-mode script, for modules that want to run
       something with niri's keybinds switched off — see apps.keydrill.
+
+      Known upstream bug (niri-wm/niri#4515): after enough on/off toggles
+      accumulate in one compositor session, `load-config-file` can stop
+      actually clearing a removed keybind — it still fires even though the
+      just-loaded config has no such bind, and no error is logged. Reloading
+      again does not clear it; only a fresh niri session does. Nothing to fix
+      here until upstream does — drop this paragraph once #4515 closes.
     '';
   };
 
