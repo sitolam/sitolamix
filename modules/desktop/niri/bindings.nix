@@ -377,8 +377,15 @@
 
             # --- screen capture ------------------------------------------
             # S is the capture family. The bare Print key keeps niri's own
-            # built-in screenshot UI; Mod+S reaches DMS's capture/record
-            # toolbar, and the two variants are the grim pipelines.
+            # built-in screenshot UI; Mod+S opens a region capture in DMS's
+            # quickCapture annotation editor, and the two variants are the
+            # grim pipelines that bypass any editor.
+            #
+            # `edit` is quickCapture's action argument: it opens the shot in
+            # the annotator. `float` is the other one — the shot becomes an
+            # always-on-top window with no editor — and there is no keybind
+            # for it because the editor's Ctrl+F does the same thing once the
+            # shot is up.
             #
             # The Print binds below only fire from an external keyboard. The
             # omnibook's internal keyboard has no Print keycode: the key
@@ -387,8 +394,10 @@
             # happens to be the region-to-clipboard bind, so the key does the
             # right thing by accident -- do not "fix" it by moving Mod+Shift+S.
             "Mod+S" = spawn (dms [
-              "screenCaptureToolbar"
-              "toggle"
+              "quickCapture"
+              "screenshot"
+              "region"
+              "edit"
             ]);
             "Mod+Shift+S" = spawn [
               "sh"

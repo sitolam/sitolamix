@@ -37,9 +37,14 @@ in
       "i2c"
     ];
 
-    # screen *recording* for the screenCaptureToolbar plugin. The NixOS module
-    # (not just the package) installs the setcap-wrapped binary gpu-screen-recorder
-    # needs to capture; screenshots themselves use grim/slurp/satty.
+    # screen *recording*, CLI only. It used to back the screenCaptureToolbar
+    # plugin's record button; quickCapture, which replaced that plugin, only
+    # does screenshots, so nothing in the shell drives this any more and there
+    # is no keybind for it — `gpu-screen-recorder` is run by hand. Kept because
+    # the NixOS module (not just the package) installs the setcap-wrapped
+    # binary that capture needs, which a bare systemPackages entry would not.
+    # Drop this and ./plugins.nix's note about it if a recorder plugin ever
+    # takes the job back.
     programs.gpu-screen-recorder.enable = true;
 
     services = {
@@ -77,7 +82,15 @@ in
       exfatprogs # usb-manager
       udisks # usb-manager
       util-linux # usb-manager (lsblk)
-      satty # screenCaptureToolbar (annotation editor; grim/slurp/wl-clipboard via niri, gpu-screen-recorder via media suite)
+      # quickCapture. It annotates in-shell and captures through `dms
+      # screenshot`, so it needs no external editor (satty, which the
+      # screenCaptureToolbar plugin used, went with that plugin) — these are
+      # the optional extras its registry entry lists, one feature each.
+      # tesseract, the fourth, is already in ../niri/default.nix for the
+      # Mod+Ctrl+S OCR bind, and the plugin's OCR button uses the same binary.
+      imagemagick # webp/jpeg export, and the crop feeding OCR/QR
+      img2pdf # pdf export
+      zbar # QR scanning (zbarimg)
       wl-mirror # niriDS (mirror profile)
     ];
 

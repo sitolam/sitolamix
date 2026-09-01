@@ -130,7 +130,7 @@ not a pair of binds.
 
 | Bind | Action |
 | --- | --- |
-| `Mod+S` | DMS capture / record toolbar |
+| `Mod+S` | region screenshot → DMS quickCapture annotation editor |
 | `Mod+Shift+S` | region screenshot → clipboard (`grim`+`slurp`) |
 | `Mod+Ctrl+S` | region OCR → clipboard (`tesseract`) |
 | `Print` | niri's own screenshot UI |

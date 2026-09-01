@@ -158,9 +158,11 @@ let
       label = "Capture";
       aliases = [
         "screenshot"
-        "screenrecord"
+        "annotate"
       ];
-      action = "dms ipc call screenCaptureToolbar toggle";
+      # region capture straight into the annotation editor; the plugin's other
+      # modes (full, window, output, scroll) are reachable from its own UI.
+      action = "dms ipc call quickCapture screenshot region edit";
     }
     {
       id = "trigger.clipboard";
@@ -538,10 +540,27 @@ in
             diskPartitionUsageUseValueColors = false;
           };
         };
-        # IPC-only screenshot + screen-record toolbar; opened via keybind
-        # (dms ipc call screenCaptureToolbar toggle). Deps: gpu-screen-recorder
-        # (media suite), grim/slurp/wl-clipboard (niri), satty (added below).
-        screenCaptureToolbar.enable = true; # JDKamalakar/DMS-ScreenCapture_Toolbar
+        # screenshot + annotation editor, opened by keybind (Mod+S in
+        # ../niri/bindings.nix) or from its control-center tile. Replaced
+        # JDKamalakar/DMS-ScreenCapture_Toolbar, which paired grim/slurp with
+        # satty as an external editor; this one captures through DMS's own
+        # `dms screenshot` and annotates in-shell, so neither is needed here.
+        # It does not record the screen — see programs.gpu-screen-recorder in
+        # ./default.nix for what is left of that.
+        # Deps (imagemagick/img2pdf/tesseract/zbar) are in ./default.nix.
+        quickCapture = {
+          enable = true; # hthienloc/dms-quick-capture, in dms-plugin-registry
+          settings = {
+            # "dms" (the default) captures via the `dms screenshot` CLI that
+            # ships with the shell. The alternative, "rust", runs a backend the
+            # plugin expects to download from its GitHub releases into its own
+            # directory at runtime — under Nix that directory is a read-only
+            # store path, so that install can never happen and every capture
+            # would fail. Pinned rather than left to the default so a change of
+            # default upstream cannot silently break capture.
+            screenshotBackend = "dms";
+          };
+        };
         # control-center plugin (no bar widget, so NOT hideable by the hidden
         # bar): a break reminder, surfaces as a control-center toggle.
         # niriDS below is its own bar-widget control-center tile instead.
