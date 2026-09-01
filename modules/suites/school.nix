@@ -18,6 +18,10 @@ in
           antimicrox
           zotero
           onlyoffice-desktopeditors
+          # GUI front-end for libqalculate — the same engine the DMS launcher's
+          # calculator plugin shells out to (modules/desktop/dms/plugins.nix),
+          # for the sums that outgrow a one-line launcher field.
+          qalculate-gtk
           typst
           tinymist # Typst language server (LSP for editors)
         ];
