@@ -222,6 +222,23 @@ let
       action = "dms ipc call inhibit toggle";
     }
     {
+      id = "trigger.toggle.kanata";
+      icon = "keyboard";
+      label = "Home-row Mods";
+      aliases = [
+        "kanata"
+        "homerow"
+      ];
+      # Disappears on a host without desktop.kanata — same pattern as the
+      # keydrill row above.
+      when = if config.desktop.kanata.enable then "true" else "false";
+      # Games and tap-hold mods do not mix (see ../kanata/default.nix). Launching
+      # through gamemode already stops kanata by itself; this row is the manual
+      # path for everything that does not go through gamemode.
+      checked = "systemctl is-active --quiet kanata-default.service";
+      action = "kanata-toggle";
+    }
+    {
       id = "trigger.toggle.night";
       icon = "nightlight";
       label = "Night Mode";
