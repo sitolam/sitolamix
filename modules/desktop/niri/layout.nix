@@ -18,7 +18,10 @@
           tap = true;
           tap-button-map = "left-right-middle";
           middle-emulation = true;
-          disabled-on-external-mouse = true;
+          # keep the touchpad live even with a mouse connected: the bluetooth
+          # mouse is often out of reach and libinput counts it as external,
+          # so the default true left the laptop with no pointer at all.
+          disabled-on-external-mouse = false;
           scroll-method = "two-finger";
         };
         focus-follows-mouse = {
