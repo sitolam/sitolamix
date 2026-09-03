@@ -35,13 +35,25 @@ in
       in
       {
         home.packages = [
-          # unstable's anki 25.09.4 fails to build: its offline uv resolve dies
-          # with "iniconfig was not found in the cache" (nixpkgs packaging bug,
-          # not ours). The stable set has the same 25.09.4 and builds — it
-          # substitutes straight from cache.nixos.org. See
-          # modules/system/nixpkgs-stable.nix; drop the `stable.` once unstable
-          # is fixed.
-          pkgs.stable.anki
+          # Deliberately the unstable package, not pkgs.stable.anki. It was on
+          # stable from 2026-08-05, when unstable's anki 25.09.4 failed its
+          # offline uv resolve ("iniconfig was not found in the cache"); that
+          # is fixed upstream and unstable is on 26.08, so the pin is gone.
+          #
+          # Keeping it would now break Anki outright rather than merely cost a
+          # second closure. Anki is a Qt app and this desktop themes Qt through
+          # QT_PLUGIN_PATH (kvantum + qt6ct, which stylix's own Qt support puts
+          # there — no file in this repo sets them): those style plugins are
+          # built against the *unstable* qtbase, and stable's anki
+          # carried its own older one (6.11.1 against the system's 6.11.2 on
+          # 2026-09-03). Loading a style plugin linked to a second Qt into the
+          # process sends QProxyStyle::standardPalette into infinite recursion
+          # and Anki dies on startup with SIGSEGV before showing a window.
+          #
+          # So if anki ever has to go back to pkgs.stable, the two qtbase
+          # versions have to match, or the theming env has to be stripped for
+          # this one app.
+          pkgs.anki
         ];
 
         # Deploys every addon in ankiAddons.addons into the real addons21
