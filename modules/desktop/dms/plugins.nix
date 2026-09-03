@@ -11,9 +11,11 @@ let
 
   # ── MouthGuard ────────────────────────────────────────────────────────────
   # MouthGuard lives in sitolam/dms-plugins. The registry has since adopted it
-  # (plugins/sitolam-mouthguard.json), but we still hand the same plugins.<id>
-  # option a `src` assembled here from that input's plugins/mouthguard subtree
-  # — see the mkForce note at the option itself for why ours has to win.
+  # (plugins/sitolam-mouthguard.json), and every other plugin of ours now takes
+  # the registry's build — but this one still hands plugins.<id> a `src`
+  # assembled here from that input's plugins/mouthguard subtree, because the
+  # registry's copy of the tree alone would not run. See the mkForce note at
+  # the option itself.
   #
   # StartupCheck.qml and MouthGuardDaemon.qml both resolve the detector as
   # "<pluginDir>/result/bin/mouthguard-detector" — the artifact of running
@@ -631,39 +633,33 @@ in
           # every plugin's `src` at normal priority, not mkDefault — so without
           # this the two definitions conflict and evaluation fails outright.
           #
-          # Ours has to win for two reasons. The registry would install the
-          # plugin tree alone, without the `result` symlink to the detector its
-          # QML resolves (see the `let` block above). And this is our own
-          # plugin: sourcing it from the dms-plugins input means a push to that
-          # repo plus `nix flake update dms-plugins` lands here immediately,
-          # instead of waiting on the registry's prefetch to catch up — which
-          # is the whole point when iterating on it.
+          # This is the one plugin of ours that still overrides src at all.
+          # The registry would install the plugin tree alone, without the
+          # `result` symlink to the detector its QML resolves (see the `let`
+          # block above), and the plugin would not start. Every other one of
+          # ours is now registry-built.
           src = lib.mkForce mouthGuardPlugin;
         };
         # omarchy-style root menu, bound to Mod+Space in ../niri/bindings.nix.
         # The tree is generated below rather than taken from the plugin's own
         # menu.jsonc so rows can reference this checkout; the bundled file is
         # only the default for a standalone install.
+        # No `src` here: the registry has adopted this one
+        # (plugins/sitolam-dankmenu.json) and its build of the plugin tree is
+        # exactly what a src pointing at the dms-plugins input would give, so
+        # taking the registry's is one pin fewer to keep current. Iterating on
+        # the plugin does not go through this input either — test a working
+        # checkout with `nh os build/switch --override-input dms-plugins
+        # path:/home/otis/Documents/dms-plugins .`. Only mouthGuard below still
+        # sets a src, and for a reason the registry cannot cover.
         dankMenu = {
           enable = true;
-          # mkForce for the same reason as mouthGuard above — the registry
-          # adopted this one too (plugins/sitolam-dankmenu.json), and its `src`
-          # is not mkDefault, so the two definitions conflict without this.
-          # Also ours: kept on the dms-plugins input so testing a change is a
-          # push plus `nix flake update dms-plugins`, not a registry refresh.
-          src = lib.mkForce "${inputs.dms-plugins}/plugins/dankmenu";
           settings.menuPath = "${dankMenuFile}";
         };
-        # on-screen keyboard, ported from end-4/dots-hyprland. Not yet in the
-        # registry (unlike dankMenu/mouthGuard above), so no mkForce needed —
-        # this is the only definition. While iterating before it's pushed,
-        # test with `nh os build/switch --override-input dms-plugins
-        # path:/home/otis/Documents/dms-plugins .` (or whatever the working
-        # checkout's path is) so uncommitted edits are picked up.
-        virtualKeyboard = {
-          enable = true;
-          src = "${inputs.dms-plugins}/plugins/virtualkeyboard";
-        };
+        # on-screen keyboard, ported from end-4/dots-hyprland. Registry-built
+        # (plugins/sitolam-virtualkeyboard.json), no src — same as dankMenu
+        # above.
+        virtualKeyboard.enable = true;
         usbManager.enable = true; # NordicsSys/dms-usb-manager
         # barDropdown — local, see the dms-plugins checkout. One bar button that
         # drops a panel of real bar widgets *below* the bar.
@@ -683,12 +679,10 @@ in
         # popout that DMS anchors under the trigger and paints over the windows
         # below. Nothing on the bar moves and nothing overlaps.
         #
-        # As with virtualKeyboard below, the src is the plugin subtree of the
-        # dms-plugins input rather than a registry entry — this one is ours and
-        # is not in the registry.
+        # Registry-built (plugins/sitolam-bardropdown.json), no src — same as
+        # dankMenu and virtualKeyboard above.
         barDropdown = {
           enable = true;
-          src = "${inputs.dms-plugins}/plugins/bardropdown";
           settings = {
             # member bar-widget ids, left to right in the panel. They are
             # deliberately absent from rightWidgets in ./bar.nix: the panel

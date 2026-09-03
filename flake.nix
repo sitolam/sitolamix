@@ -128,11 +128,14 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # sitolam/dms-plugins — home-grown DMS plugins (mouthGuard, dankMenu), none
-    # of them in dms-plugin-registry, so the repo is pinned as its own input.
-    # Tracks the repo's default branch; local edits over in the working checkout
-    # are picked up only once they are pushed and `nix flake update dms-plugins`
-    # is run.
+    # sitolam/dms-plugins — home-grown DMS plugins. dms-plugin-registry has
+    # adopted all of them, and modules/desktop/dms/plugins.nix takes the
+    # registry's build for each; this input stays for mouthGuard alone, which
+    # needs the plugin subtree plus this flake's own `mouthguard-detector`
+    # package wrapped together (see the `let` block there). Testing a working
+    # checkout does not go through the pin either — use `--override-input
+    # dms-plugins path:…` — so this only has to be current enough for
+    # mouthGuard.
     dms-plugins = {
       url = "github:sitolam/dms-plugins";
       inputs.nixpkgs.follows = "nixpkgs";
