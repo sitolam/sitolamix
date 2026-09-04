@@ -6,8 +6,11 @@ in
   options.suites.media.enable = lib.mkEnableOption "media creation + playback apps";
 
   config = lib.mkIf cfg.enable {
-    apps.gpu-screen-recorder.enable = true;
-    apps.spotify.enable = true; # spotify via spicetify (themed + extensions)
+    apps = {
+      gpu-screen-recorder.enable = true;
+      spotify.enable = true; # spotify via spicetify (themed + extensions)
+      cliamp.enable = true; # Winamp 2.x TUI — config, Spotify provider, Mod+Alt+C
+    };
 
     home.extraOptions =
       { pkgs, ... }:
@@ -44,10 +47,6 @@ in
           obs-studio
           noisetorch
 
-          # cliamp: Winamp 2.x redrawn as a TUI music player (playlists,
-          # visualiser modes, themes, Lua plugins, Spotify/Qobuz). Its own
-          # `cliamp upgrade` cannot work on a read-only store — bump nixpkgs.
-          cliamp
           # cava: audio visualiser. DMS already pulls it in for the bar widget,
           # declared here so it does not depend on someone else's module.
           cava

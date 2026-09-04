@@ -164,7 +164,7 @@ unrelated launcher behind a modifier.
 | `Mod+Shift+←/→/↑/↓` | move it |
 | `Mod+Ctrl+←/→/↑/↓` | focus that monitor; add `Shift` to send the column there |
 | `Mod+U` / `Mod+I` | focus workspace up / down (`PgUp`/`PgDn` too) |
-| `Mod+1`…`Mod+0` | focus workspaces 1–10 |
+| `Mod+1`…`Mod+0` | focus workspaces 1–10 — `Mod+1` is the named `music` workspace, `Mod+2` the scratchpad's `stash` |
 | `Mod+Shift+<n>` · `Mod+Alt+<n>` | send column to workspace *n*, following it · **staying put** |
 | `Mod+Ctrl+<n>` · `Mod+Ctrl+U/I` | move the workspace itself — to index *n* · up/down |
 | `Mod+Wheel` · `Mod+Shift+Wheel` | focus · move, same axes |
@@ -194,6 +194,7 @@ unrelated launcher behind a modifier.
 | `Mod+Alt+<letter>` — run a tool | |
 |---|---|
 | `G` · `M` · `A` | lazygit · btop · phone mirror |
+| `C` · `F` | cliamp · Spotify — both floating and centred on the `music` workspace, see § cliamp |
 | `S` · `E` | colour pick · emoji picker (also `Mod+F2`) |
 | `P` | keydrill, with niri's binds off while it runs |
 | `T` · `W` · `N` | theme · wallpaper · night mode |
@@ -232,7 +233,7 @@ animations and clocks ride along with the CLI tools in `modules/apps/cli.nix`;
 | `cbonsai -l` | grows a bonsai, live |
 | `cmatrix -ab` | the green rain |
 | `asciiquarium` | fish tank |
-| `cliamp` | Winamp 2.x as a TUI — playlists, visualiser modes, themes, Lua plugins, Spotify/Qobuz |
+| `cliamp` | Winamp 2.x as a TUI — playlists, visualiser modes, themes, Lua plugins, Spotify/Qobuz. Configured declaratively, see § cliamp |
 
 ## 🖥 Hosts
 
@@ -1464,6 +1465,99 @@ definition for that id at build time, so nothing is hand-maintained here.
 **Ports are loopback-only** (`127.0.0.1:3389` and `127.0.0.1:8006`). Do not drop
 those prefixes — the VM has an RDP host with a fixed password, and Docker's
 default would publish it on every network the laptop joins.
+
+</details>
+
+## 🎵 cliamp (declarative Winamp TUI)
+
+<details>
+<summary>Winamp 2.x as a terminal player: one config written from Nix, the Spotify provider on a sops-held client ID, and <code>Mod+Alt+C</code> to float it on workspace 10. <code>modules/apps/cliamp.nix</code>.</summary>
+
+<br>
+
+![cliamp](assets/screenshots/cliamp.png)
+
+Enabled by `suites.media`. The module is the whole feature — package wrapper,
+`config.toml`, the sops secret and the two niri bits.
+
+### The config
+
+`~/.config/cliamp/config.toml` is **written by an activation script, not
+symlinked**. cliamp rewrites that file itself every time you toggle shuffle or
+repeat, pick a theme, cycle the visualiser or save an EQ curve, so a read-only
+store symlink would either break those writes or be silently replaced by a real
+file. Instead the file is installed writable (0600) on every rebuild: your
+runtime toggles hold until the next `just rebuild`, then the Nix values win
+again. It is one of the files in CLAUDE.md's "this repo owns them" list.
+
+What it sets:
+
+| Key | Value | Why |
+|---|---|---|
+| `sample_rate` | `192000` | the highest cliamp accepts |
+| `resample_quality` | `4` | best of 1–4 |
+| `bit_depth` | `32` | lossless PCM for FFmpeg-decoded formats (default is 16) |
+| `buffer_ms` | `250` | upstream's default, left alone on purpose: this one is latency, not quality — the 5000 maximum would mean ~5s before playback starts or a seek lands. Raise it toward `2000` only if a radio stream underruns |
+| `visualizer` | `"BarsDot"` | |
+| `provider` | `"spotify"` | the provider selected on startup |
+| `[spotify] bitrate` | `320` | the top bitrate Spotify serves |
+
+### Spotify
+
+The `[spotify]` section is what registers the provider at all; `client_id` only
+swaps cliamp's built-in fallback (the librespot keymaster ID, whose rate-limit
+quota is shared with every librespot client) for our own developer app.
+**Playback needs Spotify Premium.**
+
+The ID lives in `secrets/cliamp.yaml` as `cliamp_spotify_client_id`, never in
+the store. cliamp expands a value of exactly `"${NAME}"` from the environment,
+so the config file only ever contains `client_id = "${CLIAMP_SPOTIFY_CLIENT_ID}"`
+and a `makeWrapper` wrapper exports that variable from `/run/secrets/…` at
+launch. If the secret is missing the expansion yields `""` and cliamp falls back
+to the built-in ID — degraded, not broken.
+
+To register your own app (`just secret secrets/cliamp.yaml` to store the
+result):
+
+1. Go to [developer.spotify.com/dashboard](https://developer.spotify.com/dashboard) and sign in.
+2. **Create app**, give it a name (`cliamp`) and a description.
+3. Add `http://127.0.0.1:19872/login` as a Redirect URI.
+4. Tick **Web API** under "Which API/SDKs are you planning to use?".
+5. **Save**, then copy the Client ID out of the app's Settings.
+
+First sign-in happens in the browser and completes two steps in one tab: the
+Web API grant for library/playlist/search, and Spotify's own identity for
+playback.
+
+### The binds, and the music workspace
+
+`Mod+Alt+C` — the "run a tool" plane. Its sibling `Mod+Alt+F` does the same for
+Spotify (`modules/apps/spotify.nix`). Both focus the named **`music`**
+workspace and then launch, and both have an `open-on-workspace "music"` window
+rule, so the window lands there however it was started — from the bind, a
+terminal, or the app launcher.
+
+The workspace itself is declared in `modules/desktop/niri/layout.nix`, not in
+either app module: two features share it, and a named workspace is a property
+of the desktop rather than of whatever lands on it. Named workspaces always
+exist and sort before the dynamic ones, so `music` is `Mod+1` and `stash` (the
+scratchpad's) is `Mod+2` — the order is alphabetical, since `workspaces` is an
+attribute set.
+
+cliamp opens floating and centred at 60% × 60%, Spotify at 75% × 80% — it is a
+full GUI client with a sidebar, not a 24-row TUI.
+
+![cliamp floating on the music workspace](assets/screenshots/cliamp-workspace.png)
+ cliamp's rule matches on
+`com.mitchellh.ghostty.cliamp`, an app-id the bind sets with ghostty's
+`--class` so it never catches an ordinary terminal.
+
+### Also installed
+
+`pactl` (from `pulseaudio`). cliamp's audio-device picker shells out to it —
+nothing else on this system did, since the niri volume binds deliberately use
+`wpctl`. pipewire-pulse answers `pactl` fine; only the client binary was
+missing.
 
 </details>
 

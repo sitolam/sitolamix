@@ -71,6 +71,13 @@ workspaces — so the next scope up is the workspace as an object.
 `workspace-auto-back-and-forth` is on (`layout.nix`), so pressing the number
 of the workspace you are already on returns you to the previous one.
 
+Two workspaces are **named**, and named workspaces always exist and always sort
+before the dynamic ones — so they take the first two numbers: `Mod+1` is
+`music` (cliamp and Spotify open there, see the tool plane below) and `Mod+2` is
+`stash` (the scratchpad's holding pen). The numbering is alphabetical by name,
+not by declaration order, because `workspaces` is an attribute set. Your own
+workspaces start at `Mod+3`.
+
 ### Wheel, and the odds and ends
 
 | Bind | Action |
@@ -163,6 +170,8 @@ launcher.
 | `Mod+Alt+N` | night light |
 | `Mod+Alt+E` | emoji / unicode picker (also `Mod+F2`) |
 | `Mod+Alt+P` | keydrill, with niri's own binds switched off while it runs |
+| `Mod+Alt+C` | cliamp, floating and centred on the `music` workspace (`modules/apps/cliamp.nix`) |
+| `Mod+Alt+F` | Spotify, floating and centred on the `music` workspace (`modules/apps/spotify.nix`) |
 
 **Bend #2:** `Mod+Alt+S` is a colour picker while `Mod+S` is capture. The
 tool plane wins over the family rule when a key does both — the tool plane is

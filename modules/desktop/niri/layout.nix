@@ -36,6 +36,15 @@
       # by the tool; see bindings.nix Mod+M/Mod+S and startup.nix daemon).
       workspaces."stash" = { };
 
+      # The music workspace: cliamp (Mod+Alt+C) and Spotify (Mod+Alt+F) both
+      # open here, pinned by open-on-workspace rules in their own modules.
+      # Declared here rather than in either app module because two features
+      # share it — and because a named workspace is a property of the desktop,
+      # not of the app that happens to land on it. Named workspaces always
+      # exist and sort before the dynamic ones, so this one costs an index in
+      # the Mod+<n> row, same as "stash" already does.
+      workspaces."music" = { };
+
       layout = {
         gaps = 20;
         center-focused-column = "never";
