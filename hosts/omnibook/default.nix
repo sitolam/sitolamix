@@ -81,6 +81,18 @@
   stylix.cursor.size = 16;
 
   services = {
+    # KDE Connect run-commands, remote-triggerable from the paired phone.
+    # deviceId is this machine's own kdeconnect identity (see
+    # modules/services/kde-connect.nix) — find it as the UUID dir under
+    # ~/.config/kdeconnect/ if it ever needs to be regenerated.
+    kde-connect = {
+      deviceId = "a1064e6b61e148d4857dc698990e06e2";
+      commands = {
+        "Lock Screen" = "loginctl lock-session";
+        "Suspend" = "systemctl suspend";
+      };
+    };
+
     # cloud mounts — the remotes themselves are created with `rclone config`
     # (see README → Cloud mounts), only *which* ones to mount lives here.
     rclone = {
