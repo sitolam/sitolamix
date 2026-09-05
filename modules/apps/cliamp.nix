@@ -89,15 +89,14 @@ in
         # so the whole feature stays in one file; both option types merge.
         programs.niri.settings = lib.mkIf config.desktop.niri.enable {
           # Mod+Alt+<letter> is the "run a tool" plane — see
-          # ../desktop/niri/KEYBINDINGS.md. The window rule below pins cliamp to
-          # the "music" workspace (declared in ../desktop/niri/layout.nix)
-          # wherever it is launched from; the bind focuses that workspace too,
-          # so pressing it takes you there rather than leaving the window
-          # somewhere off-screen.
+          # ../desktop/niri/KEYBINDINGS.md. Just opens cliamp as a small
+          # floating window wherever you currently are — no workspace
+          # switching or pinning.
           binds."Mod+Alt+C".action.spawn = [
-            "sh"
-            "-c"
-            "niri msg action focus-workspace music; exec ghostty --class=com.mitchellh.ghostty.cliamp -e cliamp"
+            "ghostty"
+            "--class=com.mitchellh.ghostty.cliamp"
+            "-e"
+            "cliamp"
           ];
 
           window-rules = lib.mkAfter [
@@ -105,7 +104,6 @@ in
               # --class above is the only reason this matches: every other
               # ghostty window is com.mitchellh.ghostty.
               matches = [ { app-id = "^com\\.mitchellh\\.ghostty\\.cliamp$"; } ];
-              open-on-workspace = "music";
               open-floating = true;
               # niri centres a floating window it opens with no stored position,
               # so size is all we set.

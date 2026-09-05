@@ -1529,28 +1529,19 @@ First sign-in happens in the browser and completes two steps in one tab: the
 Web API grant for library/playlist/search, and Spotify's own identity for
 playback.
 
-### The binds, and the music workspace
+### The binds
 
 `Mod+Alt+C` — the "run a tool" plane. Its sibling `Mod+Alt+F` does the same for
-Spotify (`modules/apps/spotify.nix`). Both focus the named **`music`**
-workspace and then launch, and both have an `open-on-workspace "music"` window
-rule, so the window lands there however it was started — from the bind, a
-terminal, or the app launcher.
-
-The workspace itself is declared in `modules/desktop/niri/layout.nix`, not in
-either app module: two features share it, and a named workspace is a property
-of the desktop rather than of whatever lands on it. Named workspaces always
-exist and sort before the dynamic ones, so `music` is `Mod+1` and `stash` (the
-scratchpad's) is `Mod+2` — the order is alphabetical, since `workspaces` is an
-attribute set.
+Spotify (`modules/apps/spotify.nix`). Both just launch: no workspace switching
+or pinning, the window opens floating wherever you currently are.
 
 cliamp opens floating and centred at 60% × 60%, Spotify at 75% × 80% — it is a
 full GUI client with a sidebar, not a 24-row TUI.
 
-![cliamp floating on the music workspace](assets/screenshots/cliamp-workspace.png)
- cliamp's rule matches on
-`com.mitchellh.ghostty.cliamp`, an app-id the bind sets with ghostty's
-`--class` so it never catches an ordinary terminal.
+![cliamp floating over the desktop](assets/screenshots/cliamp-workspace.png)
+
+cliamp's window rule matches on `com.mitchellh.ghostty.cliamp`, an app-id the
+bind sets with ghostty's `--class` so it never catches an ordinary terminal.
 
 ### Also installed
 

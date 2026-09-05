@@ -84,14 +84,10 @@ in
         programs.niri.settings = lib.mkIf osConfig.desktop.niri.enable {
           # Mod+Alt+<letter> is the "run a tool" plane — see
           # ../desktop/niri/KEYBINDINGS.md. F because S (colour picker), P
-          # (keydrill) and T (theme) are taken. Same shape as cliamp's
-          # Mod+Alt+C: focus the music workspace, then launch — the rule below
-          # pins the window there wherever it was started from.
-          binds."Mod+Alt+F".action.spawn = [
-            "sh"
-            "-c"
-            "niri msg action focus-workspace music; exec spotify"
-          ];
+          # (keydrill) and T (theme) are taken. Just opens Spotify as a
+          # floating window wherever you currently are — no workspace
+          # switching or pinning.
+          binds."Mod+Alt+F".action.spawn = [ "spotify" ];
 
           window-rules = lib.mkAfter [
             {
@@ -101,7 +97,6 @@ in
                 { app-id = "^spotify$"; }
                 { app-id = "^Spotify$"; }
               ];
-              open-on-workspace = "music";
               open-floating = true;
               # bigger than cliamp's float (0.6 × 0.6): this one is a full GUI
               # client with a sidebar, not a 24-row TUI.
