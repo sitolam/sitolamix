@@ -24,13 +24,6 @@ in
     description = ''
       Path to the practice-mode script, for modules that want to run
       something with niri's keybinds switched off — see apps.keydrill.
-
-      Known upstream bug (niri-wm/niri#4515): after enough on/off toggles
-      accumulate in one compositor session, `load-config-file` can stop
-      actually clearing a removed keybind — it still fires even though the
-      just-loaded config has no such bind, and no error is logged. Reloading
-      again does not clear it; only a fresh niri session does. Nothing to fix
-      here until upstream does — drop this paragraph once #4515 closes.
     '';
   };
 
@@ -65,6 +58,12 @@ in
           // is on. Absolute, because niri resolves a relative include against
           // the including file — and this one lives in the store.
           include optional=true "${hm.config.home.homeDirectory}/.config/niri/dms/outputs.kdl"
+
+          // recent-windows (Alt/Mod+Tab) is a separate hardcoded-default
+          // section, not part of \`binds\` above — niri-wm/niri#4515. Absent
+          // from config means ON with its own Mod+Tab binding, which is
+          // exactly the key practice mode exists to free up.
+          recent-windows { off; }
 
           binds {
               Mod+Shift+Escape allow-inhibiting=false { spawn "${cfg.practiceCommand}" "off"; }
