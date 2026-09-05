@@ -111,6 +111,29 @@ nix shell nixpkgs#statix nixpkgs#deadnix --command sh -c \
 anything claiming to be a pure refactor, run `just build` then `just diff` and
 confirm the closure delta is empty or is exactly what you intended.
 
+## Testing a change to a flake input's own repo (e.g. dms-plugins)
+
+Several flake inputs are this user's own repos, checked out separately under
+`~/Documents/<repo>` (not a subtree of this repo — `flake.nix`'s comment on
+each such input says where). Editing files there does **nothing** to this
+system on its own: the input is pinned in `flake.lock` to a GitHub rev, so a
+build here still uses the old, unpushed code.
+
+To test local edits before pushing, build/switch with an override, never by
+committing+pushing first just to get a rev to point at:
+
+```sh
+nix build .#nixosConfigurations.$(hostname).config.system.build.toplevel \
+  --override-input <input-name> path:/home/otis/Documents/<repo>
+nh os switch . -- --override-input <input-name> path:/home/otis/Documents/<repo>
+```
+
+Only once that's confirmed working does the normal flow apply: commit + push
+in the other repo, `nix flake update <input-name>` here, then `just rebuild`.
+Do not push or update `flake.lock` before local verification — and do not
+switch the live system on an override build without asking first, same as
+any other `nixos-rebuild switch`.
+
 ## Common mistakes
 
 - Adding an `imports = [ ... ]` for a new module. import-tree already found it.
