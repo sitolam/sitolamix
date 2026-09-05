@@ -6,6 +6,38 @@
         noArg = action: { action.${action} = [ ]; };
         withArg = action: value: { action.${action} = value; };
         spawn = command: { action.spawn = command; };
+        # set-window-width only touches width, which is fine for a tiled
+        # column but leaves a float looking stretched instead of scaled — so
+        # on a float, grow/shrink height by the same step too. niri anchors
+        # a resize at the top-left corner, which would drift the float off
+        # whatever position it was at, so shift it back by half the pixel
+        # delta on both axes to resize symmetrically in place.
+        mkFloatAwareResize =
+          pct:
+          spawn [
+            "sh"
+            "-c"
+            ''
+              before=$(niri msg -j focused-window)
+              niri msg action set-window-width ${pct}
+              if [ "$(echo "$before" | jq -r .is_floating)" = "true" ]; then
+                niri msg action set-window-height ${pct}
+                before_w=$(echo "$before" | jq -r '.layout.window_size[0]')
+                before_h=$(echo "$before" | jq -r '.layout.window_size[1]')
+                after=$(niri msg -j focused-window)
+                after_w=$(echo "$after" | jq -r '.layout.window_size[0]')
+                after_h=$(echo "$after" | jq -r '.layout.window_size[1]')
+                # move-floating-window's -x/-y use the same +/- convention
+                # as set-window-width: a signless number is an absolute
+                # position, not a delta. printf forces the sign so a
+                # non-negative shift still moves relatively instead of
+                # jumping the window to that literal coordinate.
+                niri msg action move-floating-window \
+                  -x "$(printf '%+d' $(( (before_w - after_w) / 2 )))" \
+                  -y "$(printf '%+d' $(( (before_h - after_h) / 2 )))"
+              fi
+            ''
+          ];
         dms =
           command:
           [
@@ -353,13 +385,29 @@
             "Mod+Ctrl+F" = noArg "expand-column-to-available-width";
             "Mod+C" = noArg "center-column";
             "Mod+Ctrl+C" = noArg "center-visible-columns";
-            "Mod+Minus" = withArg "set-window-width" "-10%";
-            "Mod+Equal" = withArg "set-window-width" "+10%";
+            "Mod+Minus" = mkFloatAwareResize "-10%";
+            "Mod+Equal" = mkFloatAwareResize "+10%";
             "Mod+Shift+Minus" = withArg "set-window-height" "-10%";
             "Mod+Shift+Equal" = withArg "set-window-height" "+10%";
             # W is the floating family: float it, cross to the other layer,
-            # pin it above every workspace.
-            "Mod+W" = noArg "toggle-window-floating";
+            # pin it above every workspace. Floating in needs its own nice
+            # size and position — niri keeps whatever size/place the window
+            # last had, which after a fresh toggle is usually its tiled
+            # column size in the corner — so only on tiled->float do we set
+            # a size and center; float->tiled leaves the tiling layout alone.
+            "Mod+W" = spawn [
+              "sh"
+              "-c"
+              ''
+                was_floating=$(niri msg -j focused-window | jq -r .is_floating)
+                niri msg action toggle-window-floating
+                if [ "$was_floating" = "false" ]; then
+                  niri msg action set-window-width 55%
+                  niri msg action set-window-height 65%
+                  niri msg action center-window
+                fi
+              ''
+            ];
             "Mod+Shift+W" = noArg "switch-focus-between-floating-and-tiling";
             "Mod+Ctrl+W" = spawn [
               "nsticky"
