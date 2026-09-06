@@ -75,10 +75,11 @@ in
       settings = {
         general = {
           renice = 10;
-          # RT scheduling for the game's own threads when the CPU has cores to
-          # spare — "auto" makes gamemode decide per machine rather than forcing
-          # it on the 16 threads of a laptop part.
-          softrealtime = "auto";
+
+          # Deliberately no softrealtime here. It asks for SCHED_ISO, which no
+          # upstream kernel implements (gamemode's own shipped gamemode.ini
+          # says so) — it was set to "auto" and did nothing on either host.
+          # Revisit if a kernel this flake pins ever grows the policy.
 
           # Deliberately no igpu_power_threshold override here. gamemode's
           # iGPU heuristic (swap the governor to igpu_desiredgov=powersave
