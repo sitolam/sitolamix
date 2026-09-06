@@ -10,6 +10,13 @@ let
   inherit (pkgs.stable) anki-utils;
 in
 {
+  # AnkiConnect — the localhost HTTP API (port 8765) that Obsidian_to_Anki
+  # talks to, so flashcards written in the vault land in this collection.
+  # Enabled here rather than in modules/apps/obsidian because it is an Anki
+  # addon: without it that plugin's "Scan Vault" silently does nothing.
+  # nixpkgs packages it, so no recipe of our own.
+  "2055492159" = pkgs.ankiAddons.anki-connect;
+
   "1374772155" = anki-utils.buildAnkiAddon (finalAttrs: {
     pname = "image-occlusion-enhanced";
     version = "1.4.0";

@@ -54,6 +54,10 @@ let
   recolorMetaFile = (pkgs.formats.json { }).generate "recolor-meta.json" {
     mod = 0;
     disabled = false;
+    # Same reason as the update_enabled line in mkActivationScript: this file
+    # replaces meta.json wholesale on every activation, so it has to carry the
+    # flag itself or Anki puts the addon back in its update prompt.
+    update_enabled = false;
     config = {
       colors = recolorColors;
       version = {
@@ -107,6 +111,13 @@ let
     "111623432" # HyperTTS
     "1247171202"
     "1708250053"
+    # AnkiConnect. This seed exists only to widen webCorsOriginList: the
+    # stock list is ["http://localhost"], while Obsidian's renderer sends
+    # Origin: app://obsidian.md, so every request from Obsidian_to_Anki is
+    # refused. The failure is invisible from the outside -- that plugin's
+    # onload() returns early and registers no commands at all, so it looks
+    # like the plugin never installed. Still bound to loopback only.
+    "2055492159"
     "175794613" # Anki Leaderboard
     "24411424"
     "805891399"
@@ -160,6 +171,24 @@ in
           else
             ""
         }
+        # Every addon here is deployed from the Nix store, so Anki must never
+        # update one: its updater would overwrite repo-managed code, and the
+        # next activation would silently revert that -- meanwhile Anki nags
+        # with an "add-ons have updates available" dialog on every launch,
+        # listing exactly these ids. `update_enabled` is set on every run
+        # rather than seeded once, because Anki writes the key itself (as
+        # true) for any addon folder it finds without a meta.json.
+        # `disabled` is left alone, so enabling or disabling an addon from
+        # Anki's own UI still works.
+        if [ -e "${addonsDir}/${id}/meta.json" ]; then
+          ${pkgs.jq}/bin/jq '.update_enabled = false' "${addonsDir}/${id}/meta.json" \
+            > "${addonsDir}/${id}/meta.json.tmp"
+          mv "${addonsDir}/${id}/meta.json.tmp" "${addonsDir}/${id}/meta.json"
+        else
+          ${pkgs.jq}/bin/jq -n '{mod: 0, disabled: ${
+            if lib.elem id disabledIds then "true" else "false"
+          }, update_enabled: false}' > "${addonsDir}/${id}/meta.json"
+        fi
       '';
 
       mergeSecret = m: ''
