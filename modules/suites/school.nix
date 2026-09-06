@@ -9,7 +9,13 @@ in
     # Anki is a module of its own (modules/apps/anki) — it carries an addon
     # tree, two sops secrets and a theme-driven activation script, which is far
     # more than a suite should hold.
-    apps.anki.enable = true;
+    apps = {
+      anki.enable = true;
+
+      # Obsidian likewise carries its own module: it deploys a pinned set of
+      # community plugins into the notes vault (modules/apps/obsidian/_lib).
+      obsidian.enable = true;
+    };
 
     home.extraOptions =
       { pkgs, ... }:

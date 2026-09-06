@@ -68,6 +68,85 @@ in
     info = "base0C"; # teal
   };
 
+  # Obsidian's CSS custom properties, driven from the same palette. Consumed
+  # by modules/apps/obsidian, which regenerates the vault's CSS snippet from
+  # this on every activation -- so switching theme re-colors the notes too.
+  # Values are `palette` names above, or a literal hex for a one-off.
+  obsidian = {
+    accent = "mauve";
+
+    background = "base";
+    backgroundAlt = "mantle";
+    sidebar = "mantle";
+    sidebarAlt = "crust";
+    border = "surface0";
+    hover = "surface0";
+    active = "surface1";
+
+    text = "text";
+    textMuted = "subtext0";
+    textFaint = "overlay1";
+    textOnAccent = "base";
+
+    link = "blue";
+    linkHover = "sapphire";
+    linkUnresolved = "maroon";
+
+    selection = "surface1";
+    highlight = "yellow";
+
+    code = "peach";
+    codeBackground = "mantle";
+    error = "red";
+    success = "green";
+    tag = "teal";
+
+    # h1 through h6, in order. Descending saturation on purpose: a heading
+    # deeper in the tree should be quieter, not louder.
+    headings = [
+      "mauve"
+      "blue"
+      "sapphire"
+      "teal"
+      "green"
+      "subtext1"
+    ];
+
+    # Callout accents. The mathematical ones come from math-booster's
+    # environment names (modules/apps/obsidian/_lib/plugins.nix); the rest are
+    # Obsidian's own built-in types, restyled so a note does not mix two
+    # palettes. A statement (theorem, lemma) is blue-ish, a construction
+    # (definition) is mauve, a proof is deliberately grey -- it is the part
+    # you fold away.
+    callouts = {
+      theorem = "blue";
+      lemma = "sapphire";
+      proposition = "sky";
+      corollary = "teal";
+      claim = "sapphire";
+      conjecture = "lavender";
+      hypothesis = "lavender";
+      assumption = "lavender";
+      axiom = "pink";
+      definition = "mauve";
+      proof = "overlay1";
+      solution = "overlay1";
+      example = "green";
+      exercise = "peach";
+      remark = "subtext0";
+      note = "blue";
+      info = "sky";
+      tip = "teal";
+      success = "green";
+      question = "yellow";
+      warning = "peach";
+      danger = "red";
+      bug = "red";
+      quote = "lavender";
+      abstract = "teal";
+    };
+  };
+
   # ReColor (Anki addon, anki-addons/fetched) dark-mode swatch per color key --
   # either a `palette` name above or a literal hex for one-off custom tweaks.
   # Light-mode values, labels and CSS var names come from ReColor's own
