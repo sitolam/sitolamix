@@ -58,9 +58,13 @@ in
     # launched *through* it, so a Steam title needs `gamemoderun %command%` in
     # its launch options — everything else has the dankMenu toggle
     # (trigger.toggle.kanata, ../dms/plugins.nix).
-    programs.gamemode.settings.custom = lib.mkIf config.programs.gamemode.enable {
-      start = "${kanata-off}/bin/kanata-off";
-      end = "${kanata-on}/bin/kanata-on";
+    #
+    # gamemode's custom.start/end are single strings and more than one module
+    # wants them, so they are pooled in modules/suites/gaming.nix — append
+    # here, don't set programs.gamemode.settings.custom directly.
+    suites.gaming.gamemodeHooks = lib.mkIf config.programs.gamemode.enable {
+      start = [ "${kanata-off}/bin/kanata-off" ];
+      end = [ "${kanata-on}/bin/kanata-on" ];
     };
 
     # gamemoded and the shell run as the user, and kanata-default is a *system*
