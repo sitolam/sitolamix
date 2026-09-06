@@ -48,6 +48,13 @@ let
       # element pickers and two sets of cosmetic filters on every page.
       pin = false;
     };
+    "dedjgknigfeelejglamclffonmophnfl" = {
+      name = "yt-dlp";
+      # Talks to the native-messaging host apps.ytdlp-download ships — see
+      # ../ytdlp-download/default.nix. The extension is useless without that
+      # module enabled, but installing it here costs nothing on its own.
+      pin = false;
+    };
     "dhdgffkkebhmkfjojejmpbldmpobfkfo" = {
       name = "Tampermonkey";
       pin = false;

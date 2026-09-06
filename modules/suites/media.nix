@@ -10,6 +10,7 @@ in
       gpu-screen-recorder.enable = true;
       spotify.enable = true; # spotify via spicetify (themed + extensions)
       cliamp.enable = true; # Winamp 2.x TUI — config, Spotify provider, Mod+Alt+C
+      ytdlp-download.enable = true; # right-click "Download with yt-dlp" in helium
     };
 
     home.extraOptions =

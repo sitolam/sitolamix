@@ -138,6 +138,10 @@ Things this config does that a stock desktop does not:
   sops, and GUI-made settings still survive a rebuild (§ Anki).
 - 🔒 **Lock before sleep** — swayidle locks, then suspends, and pauses the whole
   chain while media is playing.
+- 🎬 **Right-click, download** — a yt-dlp browser extension in helium talks to a
+  native-messaging host this flake ships; the video lands in `~/Videos` and a
+  notification with a thumbnail opens it in mpv on click
+  ([`modules/apps/ytdlp-download/`](modules/apps/ytdlp-download/)).
 
 ## ⌨️ Keybinds
 
