@@ -44,6 +44,10 @@
       ram = "8G";
       cores = 6;
     };
+
+    # Home WireGuard tunnel, toggled from DMS's control center (see
+    # modules/services/wireguard-laxoi.nix).
+    wireguard-laxoi.enable = true;
   };
 
   # feature suites

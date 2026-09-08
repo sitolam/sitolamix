@@ -179,6 +179,13 @@
           enabled = true;
           width = 50;
         }
+        # tunnel itself is modules/services/wireguard-laxoi.nix — this only
+        # needs NetworkManager (already on) plus a VPN-type connection to show.
+        {
+          id = "builtin_vpn";
+          enabled = true;
+          width = 50;
+        }
         {
           id = "audioOutput";
           enabled = true;
