@@ -129,6 +129,10 @@
       rdpScale = 180;
     };
 
+    # Home WireGuard tunnel, toggled from DMS's control center (see
+    # modules/services/wireguard-laxoi.nix).
+    wireguard-laxoi.enable = true;
+
     # Lid close and idle-suspend both hand off to hibernate — but only on
     # battery. On AC there's no reason to burn a resume-from-hibernate on
     # what's effectively a desktop with a lid, so that case stays plain
