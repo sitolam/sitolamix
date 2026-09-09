@@ -36,6 +36,9 @@ in
             id = "laxoi";
             type = "wireguard";
             interface-name = "laxoi";
+            # Off by default — toggle from DMS's control center (builtin_vpn
+            # tile). autoconnect=true would bring it up at boot/NM-reload.
+            autoconnect = false;
           };
           wireguard = {
             private-key = "$WG_PRIVATE_KEY";
