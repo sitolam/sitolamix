@@ -16,18 +16,28 @@ in
         niri = "${config.programs.niri.package}/bin/niri";
         loginctl = "${pkgs.systemd}/bin/loginctl";
         systemctl = "${pkgs.systemd}/bin/systemctl";
+        dms = "${config.programs.dank-material-shell.package}/bin/dms";
 
-        # On battery, hibernate after the idle timeout (via
-        # suspend-then-hibernate); on AC, plain suspend — mirrors the lid
-        # switch split in hosts/omnibook/default.nix. `grep -q 1
-        # .../online` is true iff any power_supply reports an AC/mains
-        # source currently connected, regardless of its device name (AC,
-        # ADP1, ACAD, ...).
+        # On battery, hand off to hibernate 15 min after suspending
+        # (HibernateDelaySec, hosts/omnibook/default.nix) — never on AC, no
+        # reason to burn a resume-from-hibernate while plugged in. Checked
+        # once, at the moment idle-sleep fires, not polled continuously —
+        # an unplug that happens mid-sleep is only caught if the machine
+        # wakes and re-idles afterwards. `grep -q 1 .../online` is true iff
+        # any power_supply reports an AC/mains source currently connected,
+        # regardless of its device name (AC, ADP1, ACAD, ...).
         sleepCommand =
           if hasHibernate then
             "if grep -q 1 /sys/class/power_supply/*/online 2>/dev/null; then ${systemctl} suspend; else ${systemctl} suspend-then-hibernate; fi"
           else
             "${systemctl} suspend";
+
+        # Undo the dim step below: raise the internal panel back by the same
+        # amount it was dropped. Symmetric increment/decrement, not a
+        # save/restore of the absolute level — simplest thing that works,
+        # though it won't land back exactly if the panel was already near
+        # 0% or 100% when idling started.
+        dimStep = "30";
       in
       {
         # Idle manager. Deliberately NOT DMS's built-in IdleService — swayidle is
@@ -52,15 +62,25 @@ in
 
           timeouts = [
             {
-              # 6 min: lock the session.
-              timeout = 360;
-              command = "${loginctl} lock-session";
+              # 9.5 min: dim the internal panel as a warning shot before it
+              # blanks — mirrors Windows' pre-timeout dim. External/DDC
+              # monitors are left alone (dimming those over I2C is slow and
+              # flickery); "" targets the default device, which bindings.nix
+              # already documents as the eDP panel.
+              timeout = 570;
+              command = "${dms} ipc call brightness decrement ${dimStep} \"\"";
+              resumeCommand = "${dms} ipc call brightness increment ${dimStep} \"\"";
             }
             {
               # 10 min: blank the outputs; wake them on any activity.
               timeout = 600;
               command = "${niri} msg action power-off-monitors";
               resumeCommand = "${niri} msg action power-on-monitors";
+            }
+            {
+              # 11 min: lock the session.
+              timeout = 660;
+              command = "${loginctl} lock-session";
             }
             {
               # 15 min: suspend, or suspend-then-hibernate if on battery
@@ -71,7 +91,7 @@ in
           ];
 
           # Lock before suspend/hibernate so we never resume to an unlocked
-          # screen (redundant if already locked by the 6-min timer — harmless).
+          # screen (redundant if already locked by the 11-min timer — harmless).
           # New HM format: attrset keyed by event name (was a list of
           # { event; command; } — deprecated).
           events.before-sleep = "${loginctl} lock-session";
