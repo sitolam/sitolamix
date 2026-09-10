@@ -938,6 +938,44 @@ directory) removes them.
 
 </details>
 
+## 🔓 Bitwarden biometric unlock
+
+<details>
+<summary>Unlock the Helium browser extension's vault with your session password/PIN instead of retyping the Bitwarden master password every time — via <code>suites.browser</code> (<code>apps.bitwarden</code> + <code>apps.helium</code>).</summary>
+
+<br>
+
+There's no fingerprint reader on these machines, so "biometric" here means
+polkit's `auth_self`: a system-authentication prompt (your login password or,
+on `omnibook`, your face via [gaze](#-face-unlock-gaze)), not an actual
+fingerprint. Bitwarden's own docs call this "system authentication" for
+exactly that reason.
+
+The desktop app and the Helium extension are both installed declaratively, but
+linking them together is a one-time step nix can't do — the app only writes
+its native-messaging manifest once you flip a setting inside it:
+
+1. Launch **Bitwarden** (installed by `apps.bitwarden`) and log into your
+   vault.
+2. **File ▸ Settings ▸ Security**, check **Unlock with system authentication**.
+   A polkit prompt appears — confirm it with your password (or face, on
+   `omnibook`).
+3. Open the Bitwarden icon in Helium's toolbar (pinned by `apps.helium`) and
+   log in there too. Its **Settings ▸ Unlock with biometrics** toggle is now
+   available — turn it on.
+
+From then on, unlocking the extension re-prompts through the same polkit
+dialog instead of the master password field.
+
+> [!NOTE]
+> If step 2's polkit prompt never appears: niri-flake starts its own polkit
+> agent unconditionally, which this repo masks in favour of `polkit_gnome`
+> (see the comment in `modules/desktop/niri/default.nix`) — its QML dialog
+> segfaults under stylix's Kvantum styling. If that mask ever regresses, no
+> agent (or two racing, crash-looping ones) means no dialog at all.
+
+</details>
+
 ## 💤 Idle & hibernate
 
 <details>

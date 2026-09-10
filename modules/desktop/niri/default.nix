@@ -86,6 +86,21 @@ in
 
     # dbus + polkit gui agent
     services.dbus.enable = true;
+
+    # niri-flake's own module unconditionally starts a second agent
+    # (niri-flake-polkit, kdePackages.polkit-kde-agent-1) — no option turns
+    # it off. Running it alongside polkit_gnome below makes both race to
+    # register with polkitd: whichever loses gets "An authentication agent
+    # already exists for the given subject" and crash-loops into
+    # start-limit-hit. polkit-kde-agent-1 is also the worse of the two here —
+    # its QML dialog (QuickAuthDialog.qml) segfaults under stylix's
+    # `QT_STYLE_OVERRIDE=kvantum` ("module kvantum is not installed": Kvantum
+    # is a QWidget style, it has no QQC2/QML counterpart) — so even on the
+    # runs where it wins the race, every polkit prompt (Bitwarden's biometric
+    # unlock included) silently died instead of showing a dialog. Masked so
+    # polkit_gnome (GTK, unaffected by kvantum) is the only agent running.
+    systemd.user.services.niri-flake-polkit.enable = false;
+
     systemd.user.services.polkit-gnome-authentication-agent-1 = {
       description = "polkit-gnome-authentication-agent-1";
       wantedBy = [ "graphical-session.target" ];
