@@ -135,19 +135,21 @@
 
     # Lid close on battery: suspend immediately, hibernate for real after
     # HibernateDelaySec below. On AC, plain suspend — never hibernate while
-    # plugged in. Same split, same delay as the idle-timer path (no lid
-    # involved) in modules/desktop/niri/idle.nix — one HibernateDelaySec, so
-    # both share it. Laptop-only: gamingpc has no lid and no resume device,
-    # so none of this applies there.
+    # plugged in. Laptop-only: gamingpc has no lid and no resume device, so
+    # none of this applies there. The idle-timer path (no lid involved, see
+    # modules/desktop/niri/idle.nix) wants a much longer sleep-to-hibernate
+    # delay than a closed lid does, and systemd only has this one
+    # HibernateDelaySec knob — so that path deliberately avoids
+    # suspend-then-hibernate and arms its own separate wake timer instead of
+    # sharing this value.
     logind.settings.Login = {
       HandleLidSwitch = "suspend-then-hibernate";
       HandleLidSwitchExternalPower = "suspend";
     };
   };
 
-  # How long suspend-then-hibernate (lid close and idle-timer, both on
-  # battery only) stays merely suspended before systemd wakes it to write RAM
-  # out to swap and hibernate for real.
+  # How long a closed lid (battery only) stays merely suspended before
+  # systemd wakes it to write RAM out to swap and hibernate for real.
   systemd.sleep.settings.Sleep.HibernateDelaySec = "15min";
 
   # feature suites
