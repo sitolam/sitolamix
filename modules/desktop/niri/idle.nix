@@ -62,14 +62,7 @@ in
         # (AC, ADP1, ACAD, ...).
         sleepCommand =
           if hasHibernate then
-            ''
-              if grep -q 1 /sys/class/power_supply/*/online 2>/dev/null; then
-                ${systemctl} suspend
-              else
-                ${systemdRun} --unit=${hibernateUnit} --on-active=105min --timer-property=WakeSystem=true ${systemctl} hibernate
-                ${systemctl} suspend
-              fi
-            ''
+            "if grep -q 1 /sys/class/power_supply/*/online 2>/dev/null; then ${systemctl} suspend; else ${systemdRun} --unit=${hibernateUnit} --on-active=105min --timer-property=WakeSystem=true ${systemctl} hibernate; ${systemctl} suspend; fi"
           else
             "${systemctl} suspend";
 
