@@ -133,28 +133,22 @@
     # modules/services/wireguard-laxoi.nix).
     wireguard-laxoi.enable = true;
 
-    # Lid close and idle-suspend both hand off to hibernate — but only on
-    # battery. On AC there's no reason to burn a resume-from-hibernate on
-    # what's effectively a desktop with a lid, so that case stays plain
-    # suspend. Idle-timer side (same battery/AC split) lives in
-    # modules/desktop/niri/idle.nix, gated on boot.resumeDevice which only
-    # this host sets. Laptop-only: gamingpc has no lid and no resume device,
+    # Lid close on battery: suspend immediately, hibernate for real after
+    # HibernateDelaySec below. On AC, plain suspend — never hibernate while
+    # plugged in. Same split, same delay as the idle-timer path (no lid
+    # involved) in modules/desktop/niri/idle.nix — one HibernateDelaySec, so
+    # both share it. Laptop-only: gamingpc has no lid and no resume device,
     # so none of this applies there.
-    #
-    # suspend-then-hibernate sleeps immediately (RAM suspend, near-zero
-    # latency to resume), then after HibernateDelaySec of staying suspended,
-    # systemd wakes it briefly to write RAM out to swap and hibernate for
-    # real — so a closed lid on battery still only costs real power for
-    # 30 min before it's safe to unplug the charger entirely.
     logind.settings.Login = {
       HandleLidSwitch = "suspend-then-hibernate";
       HandleLidSwitchExternalPower = "suspend";
     };
   };
 
-  # The other half of the lid/idle handoff above: how long suspend-then-hibernate
-  # stays merely suspended before writing RAM to swap.
-  systemd.sleep.settings.Sleep.HibernateDelaySec = "30min";
+  # How long suspend-then-hibernate (lid close and idle-timer, both on
+  # battery only) stays merely suspended before systemd wakes it to write RAM
+  # out to swap and hibernate for real.
+  systemd.sleep.settings.Sleep.HibernateDelaySec = "15min";
 
   # feature suites
   suites = {
