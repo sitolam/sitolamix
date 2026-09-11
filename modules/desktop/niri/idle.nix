@@ -4,34 +4,9 @@ let
   # (see hosts/omnibook/hardware.nix); gamingpc has no resume device, so
   # this stays plain suspend there automatically.
   hasHibernate = config.boot.resumeDevice != "";
-
-  # Name of the deferred-hibernate transient unit armed by `sleepCommand`
-  # below. Shared with the polkit rule so the two can't drift apart.
-  hibernateUnit = "idle-hibernate";
 in
 {
   config = lib.mkIf config.desktop.niri.enable {
-    # `sleepCommand` below arms a *system* transient timer to bridge from
-    # "suspended" to "hibernated" on its own delay (see there for why it
-    # can't just use suspend-then-hibernate/HibernateDelaySec, which
-    # hosts/omnibook/default.nix already spends on the lid-close path with a
-    # different delay). Starting/stopping a system unit needs polkit
-    # authorization, which by default prompts — wrong for something
-    # swayidle fires unattended. Scope the grant to exactly
-    # "${hibernateUnit}.timer" rather than a blanket allow on
-    # org.freedesktop.systemd1.manage-units, which would hand wheel
-    # unprompted control over every system unit (start/stop sshd,
-    # networking, ...).
-    security.polkit.extraConfig = ''
-      polkit.addRule(function(action, subject) {
-        if (action.id == "org.freedesktop.systemd1.manage-units" &&
-            action.lookup("unit") == "${hibernateUnit}.timer" &&
-            subject.isInGroup("wheel")) {
-          return polkit.Result.YES;
-        }
-      });
-    '';
-
     # HM function: needs home-manager's `config` (niri package) and `pkgs`.
     home.extraOptions =
       { config, pkgs, ... }:
@@ -41,28 +16,25 @@ in
         niri = "${config.programs.niri.package}/bin/niri";
         loginctl = "${pkgs.systemd}/bin/loginctl";
         systemctl = "${pkgs.systemd}/bin/systemctl";
-        systemdRun = "${pkgs.systemd}/bin/systemd-run";
         dms = "${config.programs.dank-material-shell.package}/bin/dms";
 
-        # Idle-sleep (lid still open) only ever plain-suspends at 15 min —
-        # never suspend-then-hibernate, which would inherit
-        # hosts/omnibook/default.nix's HibernateDelaySec (15 min, tuned for
-        # a *closed lid*). Idle wants a much longer 120-min-total runway
-        # before hibernating, and systemd has no per-invocation delay for
-        # suspend-then-hibernate — one knob, not one per trigger. So, on
-        # battery only, arm a one-shot transient *system* timer for the
-        # remaining 105 min that WAKES the suspended machine
-        # (WakeSystem=true — the same RTC-wake mechanism
-        # suspend-then-hibernate itself already uses for the lid path, see
-        # journalctl) and hibernates it then. If the user wakes the machine
-        # first, the sleep timeout's resumeCommand below cancels it. Never
-        # armed on AC: no reason to hibernate at all while plugged in.
+        # On battery, hand off to hibernate 15 min after suspending
+        # (HibernateDelaySec, hosts/omnibook/default.nix — shared with the
+        # lid-close path) — never on AC, no reason to burn a
+        # resume-from-hibernate while plugged in. A previous version of this
+        # armed its own RTC wake timer (systemd-run --timer-property=
+        # WakeSystem=true) to get idle-sleep a longer, independent delay from
+        # the lid's; dropped after that turned out to be the prime suspect
+        # for the omnibook's hibernation subsystem getting stuck reporting
+        # unsupported (CanHibernate="na") for the rest of a boot — see
+        # memory/omnibook-hibernate-cansupport-flap.md. Plain
+        # suspend-then-hibernate only, same as everything else on this host.
         # `grep -q 1 .../online` is true iff any power_supply reports an
         # AC/mains source currently connected, regardless of its device name
         # (AC, ADP1, ACAD, ...).
         sleepCommand =
           if hasHibernate then
-            "if grep -q 1 /sys/class/power_supply/*/online 2>/dev/null; then ${systemctl} suspend; else ${systemdRun} --unit=${hibernateUnit} --on-active=105min --timer-property=WakeSystem=true ${systemctl} hibernate; ${systemctl} suspend; fi"
+            "if grep -q 1 /sys/class/power_supply/*/online 2>/dev/null; then ${systemctl} suspend; else ${systemctl} suspend-then-hibernate; fi"
           else
             "${systemctl} suspend";
 
@@ -117,14 +89,10 @@ in
               command = "${loginctl} lock-session";
             }
             {
-              # 15 min: suspend (see `sleepCommand` above for the deferred,
-              # battery-only hibernate). On resume, cancel a still-pending
-              # hibernate timer so it doesn't fire later while the machine is
-              # back in use — `|| true` because there's nothing to stop once
-              # it has already fired (unit gone) or was never armed (AC).
+              # 15 min: suspend, or suspend-then-hibernate if on battery
+              # (see `sleepCommand` above).
               timeout = 900;
               command = sleepCommand;
-              resumeCommand = lib.optionalString hasHibernate "${systemctl} stop ${hibernateUnit}.timer 2>/dev/null || true";
             }
           ];
 
