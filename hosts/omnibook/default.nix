@@ -73,6 +73,11 @@
   #   journalctl -k -b | grep -c "DSB 0 poll error"
   boot.kernelParams = [
     "xe.enable_dsb=0"
+    # Diagnostic for the CanHibernate="na"/`/sys/power/disk` stuck-disabled
+    # bug (memory/omnibook-hibernate-cansupport-flap.md) — hibernation_available()
+    # fails silently with no kernel log line at the default log level. Verbose
+    # PM/hibernate logging only, no behaviour change. Drop once root-caused.
+    "pm_debug_messages"
   ];
 
   # 2880x1800 panel at niri output scale 1.75 (see `niri msg outputs`) makes
