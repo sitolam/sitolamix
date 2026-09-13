@@ -130,13 +130,37 @@ in
           # letter shortcuts keep working as a bonus. Pinned to the current DMS
           # layout: a version bump that moves these lines trips --replace-fail and
           # fails the build loudly, which is the cue to refresh the patch.
+          #
+          # nixpkgs 1.5.3 -> 1.6.1 (2026-09-09, NixOS/nixpkgs#9d32272f7) dropped
+          # `$out/share/quickshell/dms` entirely: quickshell/ is now go:embed'd
+          # into the `dms` binary via `make sync-shell` in preBuild, so there is
+          # no installed .qml left to patch in postFixup (it never exists there
+          # any more, not just moved — this is a real nixpkgs packaging change,
+          # not an upstream DMS regression). Patch the source instead, before
+          # nixpkgs's own preBuild embeds it: append after its `chmod -R u+w
+          # ../quickshell` (so the tree is writable) but keep its `make
+          # sync-shell` last so the embed picks up our edit. Re-running
+          # sync-shell (old.preBuild already ran it once) regenerates the embed
+          # dir from the now-patched tree, but its `rm -rf` of the embed dir
+          # trips on the read-only files tar wrote there the first time —
+          # chmod that dir writable first, or the second sync-shell fails.
+          #
+          # DMS 1.6.1 also split the modal: Modals/PowerMenuModal.qml is now a
+          # thin DankModal wrapper, the actual grid/list + key handling moved to
+          # Modules/PowerMenu/PowerMenuContent.qml. handleActionShortcut() is the
+          # shared dispatcher grid+list navigation both call first — inject the
+          # number-key branch at its top instead of before a bare "switch
+          # (event.key) {", which now also matches the two unrelated
+          # arrow-key-navigation switches in the same file.
           package = pkgs.dms-shell.overrideAttrs (old: {
-            postFixup = (old.postFixup or "") + ''
-              substituteInPlace $out/share/quickshell/dms/Modals/PowerMenuModal.qml \
+            preBuild = (old.preBuild or "") + ''
+              substituteInPlace ../quickshell/Modules/PowerMenu/PowerMenuContent.qml \
                 --replace-fail 'text: gridButtonRect.actionData.key' 'text: (gridButtonRect.index + 1)' \
                 --replace-fail 'text: listButtonRect.actionData.key' 'text: (listButtonRect.index + 1)' \
                 --replace-fail '(event.key === Qt.Key_P && !(event.modifiers & Qt.ControlModifier))) {' '(event.key === Qt.Key_P && !(event.modifiers & Qt.ControlModifier)) || (event.key >= Qt.Key_1 && event.key <= Qt.Key_9 && !(event.modifiers & Qt.ControlModifier))) {' \
-                --replace-fail 'switch (event.key) {' 'if (event.key >= Qt.Key_1 && event.key <= Qt.Key_9 && !(event.modifiers & Qt.ControlModifier)) { const numIndex = event.key - Qt.Key_1; if (numIndex < visibleActions.length) { startHold(getActionAtIndex(numIndex), numIndex); event.accepted = true; return; } } switch (event.key) {'
+                --replace-fail 'function handleActionShortcut(event) {' 'function handleActionShortcut(event) { if (event.key >= Qt.Key_1 && event.key <= Qt.Key_9 && !(event.modifiers & Qt.ControlModifier)) { const numIndex = event.key - Qt.Key_1; if (numIndex < visibleActions.length) { startHold(getActionAtIndex(numIndex), numIndex); event.accepted = true; return true; } }'
+              chmod -R u+w internal/shellembed/dist
+              make sync-shell
             '';
           });
           quickshell.package = pkgs.quickshell;
