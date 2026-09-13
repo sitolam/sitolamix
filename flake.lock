@@ -348,6 +348,22 @@
         "type": "github"
       }
     },
+    "dms-take-a-break": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1789318707,
+        "narHash": "sha256-h50O0LRjtI7fGzgtZzx5OLVsI5cd1mJQ5NjjSQlPc7E=",
+        "owner": "sitolam",
+        "repo": "dms-take-a-break",
+        "rev": "ec38371a9835eab13833cbe68dede5477765d258",
+        "type": "github"
+      },
+      "original": {
+        "owner": "sitolam",
+        "repo": "dms-take-a-break",
+        "type": "github"
+      }
+    },
     "firefox-gnome-theme": {
       "flake": false,
       "locked": {
@@ -890,6 +906,7 @@
         "dms": "dms",
         "dms-plugin-registry": "dms-plugin-registry",
         "dms-plugins": "dms-plugins",
+        "dms-take-a-break": "dms-take-a-break",
         "flake-parts": "flake-parts",
         "gaze": "gaze",
         "helium": "helium",

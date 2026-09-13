@@ -141,6 +141,19 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # sitolam/dms-take-a-break — fork of hthienloc/dms-take-a-break adding
+    # countOnlyActiveUse: the break countdown only runs while the seat is
+    # active (idle-notify), so idle time no longer eats into the break
+    # interval. dms-plugin-registry still builds the unforked upstream, so
+    # modules/desktop/dms/plugins.nix overrides `src` for this one plugin —
+    # same shape as mouthGuard's dms-plugins override above. Test a working
+    # checkout with `--override-input dms-take-a-break path:…` before
+    # pushing/updating this pin.
+    dms-take-a-break = {
+      url = "github:sitolam/dms-take-a-break";
+      flake = false;
+    };
+
     # orangci/walls-catppuccin-mocha — a plain repo of wallpaper images, linked
     # into ~/Pictures/Wallpapers by modules/desktop/wallpapers.nix so DMS can
     # browse them. flake=false: it is images, not a flake.
