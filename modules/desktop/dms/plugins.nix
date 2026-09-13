@@ -601,19 +601,25 @@ in
         # niriDS below is its own bar-widget control-center tile instead.
         niriDS.enable = true; # hthienloc/dms-niri-display-settings (needs wl-mirror), in dms-plugin-registry
         takeABreak = {
-          enable = true; # hthienloc/dms-take-a-break
+          enable = true; # sitolam/dms-take-a-break, forked from hthienloc/dms-take-a-break
+          # mkForce: dms-plugin-registry still builds the unforked upstream
+          # and sets `src` at normal priority too (same conflict mouthGuard
+          # has above) — this fork adds countOnlyActiveUse, gating the break
+          # countdown on seat activity (idle-notify) instead of wall clock.
+          src = lib.mkForce inputs.dms-take-a-break;
           # overlay = the fullscreen break screen dim; preWarning = the toast
           # before a break. Both 0..100 (%). GUI edits to these revert because
           # plugin settings are Nix-managed (managePluginSettings), so set here.
+          #
+          # shortBreakInterval/Duration, shortBreaksBeforeLong and
+          # longBreakDuration used to be overridden here (45m/10s/4/2m instead
+          # of the plugin's 20m/20s/3/5m) because the 20-minute cadence
+          # interrupted too often. countOnlyActiveUse fixed the actual
+          # problem — the interval no longer burns down while away from the
+          # keyboard — so the plugin defaults are back.
           settings = {
             overlayOpacity = 80;
             preWarningOpacity = 80;
-            # Rarer and shorter than the plugin defaults (20m / 20s / 3 / 5m):
-            # the 20-minute cadence interrupted too often.
-            shortBreakInterval = 45; # minutes between short breaks
-            shortBreakDuration = 10; # seconds per short break
-            shortBreaksBeforeLong = 4; # so a long break lands every 3h
-            longBreakDuration = 2; # minutes
           };
         };
         homeAssistantMonitor = {
