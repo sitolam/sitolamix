@@ -224,6 +224,14 @@ in
         # Allow (0) is what suppresses the second one.
         CommandLineFlagSecurityWarningsEnabled = false;
         ExtensionDeveloperModeSettings = 0;
+
+        # Add Dutch to spellcheck. Chromium's SpellcheckLanguage policy
+        # merges into whatever the user already enabled by hand, it does not
+        # replace it, so this only adds "nl" instead of pinning the whole list.
+        SpellcheckLanguage = [
+          "nl"
+          "en-US"
+        ];
       };
     };
   };
