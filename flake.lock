@@ -68,6 +68,22 @@
         "type": "github"
       }
     },
+    "base46-dms": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1784785285,
+        "narHash": "sha256-kwDMC6rYzJYECmGnwn8JiAbffUq7hAXcUH6gPSkk2uI=",
+        "owner": "AvengeMedia",
+        "repo": "base46",
+        "rev": "83522e02c6c3b4ea901c4bffd9e0a5e0371c1fe6",
+        "type": "github"
+      },
+      "original": {
+        "owner": "AvengeMedia",
+        "repo": "base46",
+        "type": "github"
+      }
+    },
     "claude-desktop": {
       "inputs": {
         "nixpkgs": [
@@ -892,6 +908,7 @@
     },
     "root": {
       "inputs": {
+        "base46-dms": "base46-dms",
         "claude-desktop": "claude-desktop",
         "claude-marketplace-caveman": "claude-marketplace-caveman",
         "claude-marketplace-flutter": "claude-marketplace-flutter",
