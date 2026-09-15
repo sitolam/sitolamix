@@ -20,7 +20,10 @@ in
       stayfree.enable = true;
       localsend.enable = true; # LAN AirDrop-alike — GUI only, no keybind/menu row
     };
-    theming.stylix.enable = true;
+    theming = {
+      stylix.enable = true;
+      matugen.enable = true;
+    };
     services.kde-connect.enable = true;
   };
 }
