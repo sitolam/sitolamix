@@ -50,7 +50,13 @@ in
           # ---- blur (niri 26.04 ext-background-effect) ----
           # frosted-glass blur behind DMS surfaces (bar, popouts, modals).
           blurEnabled = true;
-          blurForegroundLayers = true;
+          # "Foreground Layers" under Theme > Surface Styling: off, so cards
+          # nested inside popouts get no extra tinted surface of their own.
+          blurForegroundLayers = false;
+          # Same toggle under Theme > Floating Windows (Settings, Notepad, polkit
+          # prompts). While "Sync with Global Settings" is on, DMS uses the global
+          # value above; set it explicitly too so it stays off if sync is turned off.
+          floatingWindowForegroundLayers = false;
           # blur the wallpaper inside the overview. Two cooperating pieces:
           #  - blurWallpaperOnOverview: blurs the live wallpaper in the workspace
           #    tiles (internal MultiEffect, gated on inOverview).
