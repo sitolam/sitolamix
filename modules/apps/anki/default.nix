@@ -1,4 +1,9 @@
-{ config, lib, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 let
   cfg = config.apps.anki;
 in
@@ -24,13 +29,10 @@ in
     home.extraOptions =
       { pkgs, lib, ... }:
       let
-        # Same theme lookup as modules/desktop/dms/theme.nix — the active
-        # theme's `recolor` table drives ReColor's colors below.
-        theme = (import ../../../themes { inherit lib; }).get config.theming.stylix.theme;
         # ./_lib is the addon tree (sources, seeds, patches) plus the builder.
         # import-tree skips any path containing `/_`, so it is *not* loaded as
         # a NixOS module even though it lives under modules/.
-        ankiAddons = import ./_lib { inherit pkgs lib theme; };
+        ankiAddons = import ./_lib { inherit pkgs lib; };
         addonsDir = "$HOME/.local/share/Anki2/addons21";
       in
       {
@@ -42,13 +44,13 @@ in
           #
           # Keeping it would now break Anki outright rather than merely cost a
           # second closure. Anki is a Qt app and this desktop themes Qt through
-          # QT_PLUGIN_PATH (kvantum + qt6ct, which stylix's own Qt support puts
-          # there — no file in this repo sets them): those style plugins are
-          # built against the *unstable* qtbase, and stable's anki
-          # carried its own older one (6.11.1 against the system's 6.11.2 on
-          # 2026-09-03). Loading a style plugin linked to a second Qt into the
-          # process sends QProxyStyle::standardPalette into infinite recursion
-          # and Anki dies on startup with SIGSEGV before showing a window.
+          # QT_PLUGIN_PATH (qt6ct and qt5ct, which modules/theming/matugen.nix
+          # sets up): those style plugins are built against the *unstable*
+          # qtbase, and stable's anki carried its own older one (6.11.1
+          # against the system's 6.11.2 on 2026-09-03). Loading a style
+          # plugin linked to a second Qt into the process sends
+          # QProxyStyle::standardPalette into infinite recursion and Anki
+          # dies on startup with SIGSEGV before showing a window.
           #
           # So if anki ever has to go back to pkgs.stable, the two qtbase
           # versions have to match, or the theming env has to be stripped for
@@ -60,8 +62,10 @@ in
         # folder on every activation (code only — meta.json/user_files are
         # left alone once they exist, so GUI-made config changes survive
         # rebuilds). The two secret merges keep HyperTTS/Leaderboard synced
-        # to sops regardless of anything else; ReColor's meta.json is fully
-        # regenerated from the active theme every time (see ./_lib).
+        # to sops regardless of anything else; ReColor's meta.json is
+        # regenerated from its base (light) values every time, then
+        # recolorApply fills the dark slot from the wallpaper-driven colours
+        # file (see ./_lib).
         home.activation.ankiAddons = lib.hm.dag.entryAfter [ "writeBoundary" ] (
           ankiAddons.mkActivationScript {
             inherit addonsDir;
@@ -80,11 +84,21 @@ in
             themedFiles = [
               {
                 id = "688199788";
-                file = ankiAddons.recolorMetaFile;
+                file = ankiAddons.recolorBaseMeta;
               }
             ];
           }
         );
+      };
+
+    theming.matugen.templates.anki-recolor =
+      let
+        ankiAddons = import ./_lib { inherit pkgs lib; };
+      in
+      {
+        input = ankiAddons.recolorTemplate;
+        output = "/home/otis/.local/state/sitolamix/anki-recolor.json";
+        postHook = "${ankiAddons.recolorApply}";
       };
   };
 }
