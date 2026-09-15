@@ -65,12 +65,11 @@ in
   config = lib.mkIf cfg.enable {
     # DMS only reads the [config] and [templates] sections of this file.
     # [config] stays empty: DMS supplies its own.
-    home.extraOptions.xdg.configFile."matugen/config.toml".text =
-      ''
-        [config]
+    home.extraOptions.xdg.configFile."matugen/config.toml".text = ''
+      [config]
 
-        [templates]
-      ''
-      + lib.concatStrings (lib.mapAttrsToList templateSection cfg.templates);
+      [templates]
+    ''
+    + lib.concatStrings (lib.mapAttrsToList templateSection cfg.templates);
   };
 }
