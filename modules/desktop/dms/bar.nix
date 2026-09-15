@@ -19,7 +19,7 @@
       # app-drawer grid.
       launcherStyle = "spotlight";
 
-      showWorkspaceIndex = true;
+      showWorkspaceIndex = false;
       showOccupiedWorkspacesOnly = true;
 
       osdMediaPlaybackEnabled = true;
@@ -71,8 +71,8 @@
           ];
           rightWidgets = [
             # barDropdown (local plugin, see plugins.nix). One button holding
-            # ambientSound, the system tray and usbManager; click drops them in
-            # a panel below the bar, click again closes it. Its three members
+            # ambientSound, the system tray, usbManager and mouthGuard; click drops them in
+            # a panel below the bar, click again closes it. Its members
             # are deliberately absent from this list — the panel renders them
             # itself. Nothing here expands sideways, so unlike the two
             # collapsers this replaced, the button's position on the bar is
@@ -85,12 +85,6 @@
               id = "dankKDEConnect";
               enabled = true;
             } # AvengeMedia DankKDEConnect
-            # webcam mouth-closure tracker (local plugin, see plugins.nix).
-            # left click = popout, middle = start/stop, right = mute alerts.
-            {
-              id = "mouthGuard";
-              enabled = true;
-            }
             {
               id = "homeAssistantMonitor";
               enabled = true;
@@ -105,10 +99,8 @@
               id = "systemMonitorPlus";
               enabled = true;
             }
-            {
-              id = "notificationButton";
-              enabled = true;
-            }
+            # no notificationButton: notification history is left off the bar
+            # to keep it uncluttered.
             # battery/power widget removed from the bar — power lives only in the
             # control center now (the battery tile has the power-profile switcher).
             {

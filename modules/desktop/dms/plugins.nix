@@ -694,11 +694,14 @@ in
             # deliberately absent from rightWidgets in ./bar.nix: the panel
             # instantiates them itself, so a member left on the bar too would be
             # rendered twice. systemTray resolves against the plugin's built-in
-            # component table, the other two through PluginService.
+            # component table, the others through PluginService.
             targets = [
               "ambientSound"
               "systemTray"
               "usbManager"
+              # webcam mouth-closure tracker. left click = popout,
+              # middle = start/stop, right = mute alerts.
+              "mouthGuard"
             ];
             icon = "widgets";
             display = "icon"; # no text label beside the icon
