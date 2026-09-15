@@ -42,7 +42,7 @@ in
   # stylix.override (base16 slot tweaks), or null for none.
   override = null;
 
-  # DankMaterialShell M3 tokens -> base16 slot names (resolved to hex from the
+  # DankMaterialShell M3 tokens -> base16 slot names or literal hex (resolved to hex from the
   # active stylix scheme in modules/desktop/dms/theme.nix). Set to null to fall back to
   # stylix's own auto mapping. That mapping leads with base0D (blue) + surface0
   # containers, which reads Nord-ish; lead with mauve (base0E) and keep the bar
@@ -54,15 +54,20 @@ in
     secondary = "base0D"; # blue
     surface = "base00"; # base
     surfaceText = "base05"; # text
-    surfaceVariant = "base01"; # surface0
+    # Catppuccin's surface0/surface1 read as flat blue-grey on unselected
+    # buttons (surfaceVariant) and dropdowns/cards (surfaceContainerHigh*).
+    # These are base with a little lavender mixed in instead: a deep indigo
+    # that sits between the bar and the mauve accent. Custom, not stock
+    # palette swatches.
+    surfaceVariant = "#2a2b3f"; # base + 8% lavender
     surfaceVariantText = "base04"; # subtext0
     surfaceTint = "base0E"; # mauve
     background = "base00"; # base (darkest slot available)
     backgroundText = "base05"; # text
     outline = "base03"; # overlay0
     surfaceContainer = "base00"; # bar background — keep it dark, not surface0
-    surfaceContainerHigh = "base01"; # surface0
-    surfaceContainerHighest = "base02"; # surface1
+    surfaceContainerHigh = "#2a2b3f"; # base + 8% lavender
+    surfaceContainerHighest = "#34364d"; # base + 15% lavender
     error = "base08"; # red
     warning = "base0A"; # yellow
     info = "base0C"; # teal

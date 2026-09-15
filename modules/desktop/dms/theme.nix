@@ -26,7 +26,10 @@ in
             null
           else
             let
-              variant = (builtins.mapAttrs (_token: slot: c.${slot}) palette) // {
+              # a value is a base16 slot name, or a literal "#rrggbb" for a
+              # tint the base16 scheme has no slot for.
+              resolve = v: if lib.hasPrefix "#" v then v else c.${v};
+              variant = (builtins.mapAttrs (_token: resolve) palette) // {
                 name = config.lib.stylix.colors.scheme-name;
               };
             in
