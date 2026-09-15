@@ -1,4 +1,9 @@
-{ config, lib, ... }:
+{
+  config,
+  lib,
+  inputs,
+  ...
+}:
 let
   cfg = config.apps.neovim;
 in
@@ -17,6 +22,24 @@ in
           # no plugins use the ruby/python remote providers — adopt the new lean default
           withRuby = false;
           withPython3 = false;
+
+          plugins = [
+            (pkgs.vimUtils.buildVimPlugin {
+              pname = "base46-dms";
+              version = inputs.base46-dms.shortRev or "unstable";
+              src = inputs.base46-dms;
+              # plugin runtime is loaded lazily by the colorscheme; nothing to require-check.
+              doCheck = false;
+            })
+          ];
+
+          # DMS's matugen renders colors/dms.lua on every wallpaper change and
+          # the file hot-reloads itself. Before DMS has run once the file does
+          # not exist, so a bare `colorscheme dms` would error on every start;
+          # pcall keeps nvim quiet until it appears.
+          initLua = ''
+            pcall(vim.cmd.colorscheme, "dms")
+          '';
         };
 
         home.packages = with pkgs; [

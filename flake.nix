@@ -154,6 +154,16 @@
       flake = false;
     };
 
+    # AvengeMedia/base46 — DMS's fork of NvChad's base46 colour engine. DMS's
+    # neovim matugen template (~/.config/nvim/colors/dms.lua) requires it and
+    # checks for its `_DMS_SUPPORT` marker, so nixpkgs' vimPlugins.base46
+    # (upstream NvChad, no harmonise API) does not work. flake=false: it is a
+    # plain plugin tree, built with vimUtils in modules/apps/neovim.nix.
+    base46-dms = {
+      url = "github:AvengeMedia/base46";
+      flake = false;
+    };
+
     # orangci/walls-catppuccin-mocha — a plain repo of wallpaper images, linked
     # into ~/Pictures/Wallpapers by modules/desktop/wallpapers.nix so DMS can
     # browse them. flake=false: it is images, not a flake.
