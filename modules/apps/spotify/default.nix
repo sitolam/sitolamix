@@ -8,12 +8,11 @@ let
   cfg = config.apps.spotify;
 in
 {
-  options.apps.spotify.enable = lib.mkEnableOption "Spotify with spicetify (stylix-themed + extensions)";
+  options.apps.spotify.enable = lib.mkEnableOption "Spotify with spicetify (wallpaper-themed + extensions)";
 
   config = lib.mkIf cfg.enable {
     home.extraOptions =
       {
-        config,
         osConfig,
         pkgs,
         lib,
@@ -24,12 +23,6 @@ in
       in
       {
         imports = [ inputs.spicetify-nix.homeManagerModules.default ];
-
-        # stylix auto-enables its own spicetify target; disable it so our
-        # customColorScheme (below) is the single source of theming.
-        # (spotify is unfree, already allowed via nixpkgs.config.allowUnfree in
-        # modules/system/nix.nix + home-manager.useGlobalPkgs.)
-        stylix.targets.spicetify.enable = false;
 
         programs.spicetify = {
           enable = true;
@@ -52,31 +45,35 @@ in
             lyricsPlus # scrolling lyrics
           ];
 
-          theme = spicePkgs.themes.sleek;
-          colorScheme = "custom";
-          # themed from the active stylix scheme (base16 named colours, no '#').
-          customColorScheme = with config.lib.stylix.colors; {
-            text = magenta;
-            subtext = base05;
-            nav-active-text = bright-green;
-            main = base00;
-            sidebar = base00;
-            player = base00;
-            card = base00;
-            shadow = base02;
-            main-secondary = base01;
-            button = orange;
-            button-secondary = bright-cyan;
-            button-active = orange;
-            button-disabled = base0D;
-            nav-active = magenta;
-            play-button = green;
-            tab-active = yellow;
-            notification = blue;
-            notification-error = red;
-            playback-bar = bright-green;
-            misc = bright-magenta;
-          };
+          # mkForce: stylix's own spicetify target (still active elsewhere in
+          # this repo) sets theme.name = "stylix" at the same priority. That
+          # target's actual colour file is moot here — see the postFixup
+          # symlink below, which replaces the built colors.css outright — but
+          # the conflicting *theme* definition still fails evaluation without
+          # this override. Drop it along with stylix.targets.spicetify itself
+          # once stylix is removed (Task 7).
+          theme = lib.mkForce spicePkgs.themes.sleek;
+          # mkForce for the same reason as theme above: stylix's target sets
+          # colorScheme = "base", which sleek's theme.sh doesn't define.
+          # Value is otherwise moot — postFixup's symlink replaces the built
+          # colors.css before Spotify ever reads it.
+          colorScheme = lib.mkForce "TokyoNight";
+
+          # Colours follow the wallpaper. spicetify bakes a colour scheme into
+          # the store build at `spicetify apply` time, which no runtime change
+          # can reach — but the result loads its colours from a separate
+          # Apps/xpui/colors.css. So the build is left with sleek's default
+          # scheme and that one file is replaced, after apply, by a link out
+          # of the store to the file matugen renders from ./colors.css
+          # (theming.matugen.templates.spotify below). Spotify reads it at
+          # startup: a new wallpaper shows on the next launch. Checked
+          # 2026-09-15 that Spotify's Chromium follows the link. Drop this if
+          # spicetify-nix ever grows a runtime colour file of its own.
+          spotifyPackage = pkgs.spotify.overrideAttrs (old: {
+            postFixup = (old.postFixup or "") + ''
+              ln -sf /home/otis/.config/spicetify-dms/colors.css $out/share/spotify/Apps/xpui/colors.css
+            '';
+          });
         };
 
         # niri bits live here rather than in niri/bindings.nix + niri/rules.nix
@@ -106,5 +103,10 @@ in
           ];
         };
       };
+
+    theming.matugen.templates.spotify = {
+      input = ./colors.css;
+      output = "/home/otis/.config/spicetify-dms/colors.css";
+    };
   };
 }
