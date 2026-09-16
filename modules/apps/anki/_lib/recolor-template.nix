@@ -27,7 +27,14 @@ let
     CANVAS = c "surface";
     CANVAS_CODE = c "surface_container_low";
     CANVAS_ELEVATED = c "surface_container_low";
-    CANVAS_GLASS = "{{colors.surface_container_low.default.hex_stripped}}66";
+    # 8-digit hex with alpha, pasted straight into CSS. `hex` already carries
+    # the leading `#`, so appending an alpha suffix to it would double up
+    # ("##..." after ReColor concatenates it into the property, silently
+    # dropping the whole declaration); `hex_stripped` has no `#`, and the
+    # literal `#` here is the one and only leading hash, still satisfying the
+    # no-hardcoded-hex-value rule since the colour itself still comes from
+    # matugen.
+    CANVAS_GLASS = "#{{colors.surface_container_low.default.hex_stripped}}66";
     CANVAS_INSET = c "surface_container_lowest";
     CANVAS_OVERLAY = c "surface_container_low";
     FG = c "on_surface";
