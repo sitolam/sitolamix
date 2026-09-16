@@ -89,7 +89,7 @@ in
           package = pkgs.bibata-cursors;
           size = cfg.cursorSize;
           # newer home-manager wants this explicit rather than inferred from
-          # the theme name (stylix used to set it).
+          # the presence of a cursor name/package.
           enable = true;
           # gtk.enable would turn on home-manager's gtk module; the cursor is
           # set through dconf below instead so nothing here owns gtk.css.
