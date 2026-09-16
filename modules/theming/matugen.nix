@@ -74,7 +74,16 @@ in
     };
 
     home.extraOptions =
-      { pkgs, ... }:
+      {
+        pkgs,
+        # `lib` is taken explicitly so it is home-manager's — it carries
+        # lib.hm.dag, used by the GTK/Qt seeding activation below — rather
+        # than the NixOS lib this file closes over (see the equivalent note
+        # in modules/desktop/dms/default.nix). config.fonts.* just below
+        # still comes from the outer NixOS scope: config is not shadowed.
+        lib,
+        ...
+      }:
       {
         # DMS only reads the [config] and [templates] sections of this file.
         # [config] stays empty: DMS supplies its own.
@@ -84,23 +93,6 @@ in
           [templates]
         ''
         + lib.concatStrings (lib.mapAttrsToList templateSection cfg.templates);
-
-        home.pointerCursor = {
-          name = "Bibata-Modern-Classic";
-          package = pkgs.bibata-cursors;
-          size = cfg.cursorSize;
-          # newer home-manager wants this explicit rather than inferred from
-          # the presence of a cursor name/package.
-          enable = true;
-          # gtk.enable would turn on home-manager's gtk module; the cursor is
-          # set through dconf below instead so nothing here owns gtk.css.
-          x11.enable = true;
-        };
-
-        home.packages = [
-          pkgs.adw-gtk3
-          pkgs.whitesur-icon-theme
-        ];
 
         # GTK theme, icons and cursor through gsettings rather than
         # home-manager's gtk module. That module writes gtk-3.0/gtk.css and
@@ -117,6 +109,85 @@ in
           color-scheme = "prefer-dark";
           font-name = "${lib.head config.fonts.fontconfig.defaultFonts.sansSerif} 10";
           monospace-font-name = "${lib.head config.fonts.fontconfig.defaultFonts.monospace} 10";
+        };
+
+        # DMS's matugen run (modules/desktop/dms/theme.nix) renders
+        # ~/.config/{gtk-3.0,gtk-4.0}/dank-colors.css and
+        # ~/.config/{qt5ct,qt6ct}/colors/matugen.conf on every wallpaper
+        # change, but only *wires* them up — the `@import
+        # url("dank-colors.css")` line in gtk.css, and the
+        # custom_palette/color_scheme_path keys in qt5ct.conf/qt6ct.conf —
+        # from a button in DMS's own Settings UI
+        # (quickshell/Common/Theme.qml's applyGtkColors()/applyQtColors(),
+        # which shell out to its scripts/gtk.sh and scripts/qt.sh). Without
+        # pressing that button once, GTK/Qt apps never pick up the rendered
+        # colours at all.
+        #
+        # Running those scripts ourselves from activation was considered and
+        # rejected: nixpkgs 1.6.1 go:embeds quickshell/ into the `dms`
+        # binary (see the dms-shell overrideAttrs comment in
+        # modules/desktop/dms/default.nix) rather than installing it under
+        # $out/share, so there is no on-disk script to invoke — DMS
+        # extracts it at runtime to a revision-tagged cache directory only
+        # once it is running, which activation cannot rely on. So this seeds
+        # the same wiring gtk.sh's fallback path and qt.sh already write,
+        # by hand, once:
+        #   - gtk.css: GTK always loads the user's gtk-3.0/gtk-4.0 gtk.css
+        #     as an application-priority stylesheet on top of whatever theme
+        #     is active, so a plain `@import` here overrides adw-gtk3-dark's
+        #     colours with dank-colors.css's @define-color lines without
+        #     needing gtk.sh's fancier (and file-layout-fragile) path of
+        #     copying adw-gtk3 into ~/.local/share/themes and patching it in
+        #     place.
+        #   - qt5ct.conf/qt6ct.conf: qt5ct/qt6ct only apply a custom colour
+        #     scheme when [Appearance] names one, which is exactly what
+        #     qt.sh's update_qt_config writes.
+        # Seeded only when missing/absent, like session.json and cache.json
+        # elsewhere in this repo — never a home-manager symlink, since
+        # gtk.sh explicitly refuses to touch a symlink it did not create,
+        # and qt.sh/DMS rewrite these files in place afterwards. Once
+        # seeded, gtk.sh's own `dms_managed_css` check (it greps for this
+        # same import line) recognises the file as DMS-managed, so pressing
+        # Apply in Settings later still works and can upgrade GTK3 to the
+        # patched-adw-gtk3 path if it finds one.
+        home = {
+          pointerCursor = {
+            name = "Bibata-Modern-Classic";
+            package = pkgs.bibata-cursors;
+            size = cfg.cursorSize;
+            # newer home-manager wants this explicit rather than inferred from
+            # the presence of a cursor name/package.
+            enable = true;
+            # gtk.enable would turn on home-manager's gtk module; the cursor is
+            # set through dconf below instead so nothing here owns gtk.css.
+            x11.enable = true;
+          };
+
+          packages = [
+            pkgs.adw-gtk3
+            pkgs.whitesur-icon-theme
+          ];
+
+          # Drop this activation block if DMS ever wires GTK/Qt as part of
+          # its matugen run itself, rather than only from its Settings UI.
+          activation.seedGtkQtColorWiring = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+            for css in "$HOME/.config/gtk-3.0/gtk.css" "$HOME/.config/gtk-4.0/gtk.css"; do
+              run mkdir -p "$(dirname "$css")"
+              if [ ! -e "$css" ]; then
+                run sh -c 'printf "%s\n" "$1" > "$2"' -- '@import url("dank-colors.css");' "$css"
+              elif [ ! -L "$css" ] && ! grep -q '^@import url(.*dank-colors\.css.*);$' "$css"; then
+                run sed -i '1i\@import url("dank-colors.css");' "$css"
+              fi
+            done
+
+            for name in qt5ct qt6ct; do
+              conf="$HOME/.config/$name/$name.conf"
+              if [ ! -e "$conf" ]; then
+                run mkdir -p "$(dirname "$conf")"
+                run sh -c 'printf "[Appearance]\ncustom_palette=true\ncolor_scheme_path=%s/.local/share/color-schemes/DankMatugen.colors\n" "$1" > "$2"' -- "$HOME" "$conf"
+              fi
+            done
+          '';
         };
       };
   };

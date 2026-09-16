@@ -146,6 +146,15 @@ Things this config does that a stock desktop does not:
   and Spotify are the two exceptions worth knowing about: both only read their
   colour file at startup, so they need an actual restart of the app, not just
   a new wallpaper, before they pick up the new colours.
+
+  GTK and Qt are a different kind of exception: DMS renders their colour
+  files (`dank-colors.css`, `qt5ct`/`qt6ct` colour schemes) on every matugen
+  run same as everything else, but only *wires* them in — the `@import` line
+  in `gtk.css`, the `[Appearance]` keys in `qt5ct.conf`/`qt6ct.conf` — from a
+  button in DMS's own Settings UI, not from the matugen run itself.
+  `theming.matugen` (`modules/theming/matugen.nix`) seeds that wiring once at
+  activation, the same way `session.json`/`cache.json` get seeded elsewhere in
+  this repo, so GTK/Qt apps follow the wallpaper without that click.
 - 📇 **Anki as config** — 17 addons deployed from Nix, credentials merged in from
   sops, and GUI-made settings still survive a rebuild (§ Anki).
 - 🔒 **Lock before sleep** — swayidle locks, then suspends, and pauses the whole

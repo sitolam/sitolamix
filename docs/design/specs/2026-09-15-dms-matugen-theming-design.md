@@ -123,8 +123,8 @@ large. Both hosts fetch it.
 | DMS shell, lock screen | built in (`currentThemeName = "dynamic"`) |
 | greeter | unchanged: greetd copies `dms-colors.json` at start |
 | niri | DMS `niri` template writes `~/.config/niri/dms/colors.kdl`; add `"colors"` to `dank-material-shell.niri.includes.filesToInclude`; remove the stylix focus-ring and overview backdrop colours from `niri/appearance.nix` |
-| GTK apps (Nautilus, gparted, Helium dialogs) | DMS `gtk` template over `adw-gtk3` |
-| Qt apps (Anki's window, KDE Connect) | DMS `qt6ct`/`qt5ct` and `kcolorscheme` templates |
+| GTK apps (Nautilus, gparted, Helium dialogs) | DMS `gtk` template renders `dank-colors.css`, but only *wires* it in (the `@import` in `gtk.css`) from a button in DMS's Settings UI — `theming.matugen` seeds that import once at activation so it applies without a click |
+| Qt apps (Anki's window, KDE Connect) | DMS `qt6ct`/`qt5ct` and `kcolorscheme` templates render the colour scheme, but `qt5ct.conf`/`qt6ct.conf` naming it is likewise only written by DMS's Settings UI — `theming.matugen` seeds those `[Appearance]` keys once at activation |
 | ghostty | DMS writes `ghostty/themes/dankcolors`; set `theme = "dankcolors"` and the font directly |
 | starship, tmux, yazi, btop, fish, cliamp, nitch | take the terminal's ANSI palette, which DMS's `dank16` fills; starship loses `palette = "base16"`, btop gets `color_theme = "TTY"` |
 | neovim | `matugenTemplateNeovim = true`; `colorscheme dms` in init |
