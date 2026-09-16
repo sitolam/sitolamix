@@ -164,7 +164,9 @@
     # modules/desktop/wallpapers.nix so DMS can browse them; DMS derives every
     # colour on the desktop from the one picked. flake=false: it is images,
     # not a flake. The repo carries no licence file — it is fetched, never
-    # copied into this repo. Large: GitHub reports ~3.8 GB with history.
+    # copied into this repo. Large: GitHub reports ~3.8 GB with history; the
+    # fetched store path (no .git, just the tree) measured 3.3 GB via `du -sh`
+    # on 2026-09-16.
     wallpapers = {
       url = "github:dharmx/walls";
       flake = false;
