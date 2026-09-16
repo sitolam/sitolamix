@@ -97,7 +97,7 @@ in
       in
       {
         input = ankiAddons.recolorTemplate;
-        output = "/home/otis/.local/state/sitolamix/anki-recolor.json";
+        output = "${config.users.users.otis.home}/.local/state/sitolamix/anki-recolor.json";
         postHook = "${ankiAddons.recolorApply}";
       };
   };
