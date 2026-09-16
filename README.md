@@ -136,6 +136,16 @@ Things this config does that a stock desktop does not:
   `theming.matugen.templates` entry: spicetify rebuilds Spotify's own CSS, a
   generated `meta.json` recolors Anki, and Obsidian gets a matching CSS
   snippet. Pick a new wallpaper, they all follow — no rebuild.
+
+  Nothing renders any of this until DMS has run matugen at least once, so the
+  very first boot after a wallpaper change (or after a fresh install) looks a
+  little off: ghostty can show a config-error banner for `theme =
+  "dankcolors"`, and zed, Obsidian, Anki and Spotify all sit on fallback
+  colours until then. It corrects itself as soon as a wallpaper is picked in
+  DMS or DMS restarts — every template renders together at that point. Anki
+  and Spotify are the two exceptions worth knowing about: both only read their
+  colour file at startup, so they need an actual restart of the app, not just
+  a new wallpaper, before they pick up the new colours.
 - 📇 **Anki as config** — 17 addons deployed from Nix, credentials merged in from
   sops, and GUI-made settings still survive a rebuild (§ Anki).
 - 🔒 **Lock before sleep** — swayidle locks, then suspends, and pauses the whole
@@ -1537,7 +1547,7 @@ playback.
 ### The binds
 
 `Mod+Alt+C` — the "run a tool" plane. Its sibling `Mod+Alt+F` does the same for
-Spotify (`modules/apps/spotify.nix`). Both just launch: no workspace switching
+Spotify (`modules/apps/spotify/default.nix`). Both just launch: no workspace switching
 or pinning, the window opens floating wherever you currently are.
 
 cliamp opens floating and centred at 60% × 60%, Spotify at 75% × 80% — it is a
@@ -1560,7 +1570,7 @@ missing.
 ## 📇 Anki (declarative addons)
 
 <details>
-<summary>17 addons deployed from Nix into Anki's <em>real</em> mutable addon folder — GUI config still survives rebuilds, two addons get their credentials from sops, and ReColor's palette is regenerated from the active theme. <code>modules/apps/anki/</code>.</summary>
+<summary>17 addons deployed from Nix into Anki's <em>real</em> mutable addon folder — GUI config still survives rebuilds, two addons get their credentials from sops, and ReColor follows the current wallpaper. <code>modules/apps/anki/</code>.</summary>
 
 <br>
 
@@ -1581,16 +1591,32 @@ Three things override that "leave it alone" rule on purpose:
 | Mechanism | Applies to | Why |
 |---|---|---|
 | `secretMerges` | HyperTTS (Azure key), Anki Leaderboard (auth token) | Live credentials. Stripped from the seed, re-merged from `/run/secrets/*` with `jq` on every activation, so they are never in git. |
-| `themedFiles` | ReColor | Its whole `meta.json` is generated from the active theme's `recolor` table and rewritten every time, so switching themes re-colors Anki too. |
+| `themedFiles` | ReColor | Its `meta.json` is rewritten wholesale on every activation from a base built out of `recolor-schema.json` (labels, light values, and every dark slot defaulted to the light value). |
 | `disabledIds` | Anki Leaderboard | The one addon that was off on the old machine, and stays off. |
+
+ReColor's dark colours themselves come from matugen, not from `themedFiles`.
+`theming.matugen.templates.anki-recolor` (`modules/apps/anki/default.nix`)
+renders `_lib/recolor-template.nix` — a flat JSON map of ReColor's colour keys
+to `{{colors.*}}`/`{{dank16.*}}` placeholders — into a colours file under
+`~/.local/state/sitolamix/`, then runs `recolorApply` (`_lib/default.nix`) as
+its post-hook. `recolorApply` is a small `jq` script that patches just the
+dark slot of each entry in the addon's live `meta.json` from that colours
+file, leaving the light slot (and everything else a rebuild wrote) alone.
+Home-manager activation runs `recolorApply` again after the base `meta.json`
+above is rewritten, so a rebuild does not reset Anki back to the light
+values. Anki only reads `meta.json` at startup, so a new wallpaper's colours
+show up the next time Anki is started, not while it is running — same as
+Spotify (below).
 
 ### Layout
 
 ```
 modules/apps/anki/
-  default.nix        the module: apps.anki.enable, sops secrets, activation
+  default.nix        the module: apps.anki.enable, sops secrets, activation,
+                      theming.matugen.templates.anki-recolor
   _lib/
-    default.nix      addon set + mkActivationScript
+    default.nix           addon set + mkActivationScript + recolorApply
+    recolor-template.nix  ReColor colour keys -> matugen placeholders
     fetched/         addons built from upstream sources, with patches
     vendored/        addons committed here (forks, or ones with no clean source)
     seeds/           captured first-install meta.json config per addon id
