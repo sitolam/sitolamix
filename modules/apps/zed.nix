@@ -12,10 +12,14 @@ in
         programs.zed-editor = {
           enable = true;
           package = pkgs.zed-editor;
-          # stylix's zed target sets the theme + fonts in userSettings; this
-          # merges with it (different keys).
           userSettings = {
             vim_mode = true;
+            # DMS renders ~/.config/zed/themes/dank-zed-theme.json from the wallpaper.
+            theme = "DankShell Dark";
+            buffer_font_family = "MesloLGS Nerd Font Mono";
+            buffer_font_size = 20;
+            ui_font_family = "DejaVu Sans";
+            ui_font_size = 16;
           };
         };
       };

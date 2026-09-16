@@ -5,9 +5,9 @@
   #
   # This is an escape hatch for single packages, not a second package set to
   # spread across the config. The desktop stack is the reason: niri, DMS,
-  # quickshell, stylix and home-manager all follow the unstable `nixpkgs`, and
-  # they are the parts that hurt when they break — so unstable stays the base
-  # and stable is reached for one package at a time.
+  # quickshell and home-manager all follow the unstable `nixpkgs`, and they
+  # are the parts that hurt when they break — so unstable stays the base and
+  # stable is reached for one package at a time.
   #
   # Use it when an app breaks on unstable and you would otherwise roll the whole
   # lock back. On 2026-08-05 a full `nix flake update` was blocked exactly like

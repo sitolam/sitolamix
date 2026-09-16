@@ -1,5 +1,5 @@
 {
-  description = "sitolamix — enable-options NixOS: niri + DankMaterialShell + stylix (catppuccin-mocha)";
+  description = "sitolamix — enable-options NixOS: niri + DankMaterialShell, themed from the wallpaper";
 
   nixConfig = {
     # garnix / hyprland / lantian / noctalia were dropped — see modules/system/nix.nix.
@@ -31,11 +31,6 @@
 
     home-manager = {
       url = "github:nix-community/home-manager/master";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
-    stylix = {
-      url = "github:nix-community/stylix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 

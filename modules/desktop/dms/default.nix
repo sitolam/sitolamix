@@ -165,10 +165,6 @@ in
           });
           quickshell.package = pkgs.quickshell;
 
-          # matugen would regenerate app color files from DMS's palette and fight
-          # stylix; keep stylix authoritative for every app but DMS's own shell.
-          enableDynamicTheming = false;
-
           # session.json is deliberately left undeclared. The DMS home module
           # writes it as a read-only store symlink whenever `session != {}`
           # (`xdg.stateFile ... = lib.mkIf (cfg.session != {})`), and a read-only
@@ -202,6 +198,10 @@ in
             seed = (pkgs.formats.json { }).generate "dms-session-seed.json" {
               weatherLocation = "Eeklo, 9900";
               weatherCoordinates = "51.2,3.6";
+
+              # always dark: the matugen templates in this repo only render
+              # dark tokens.
+              isLightMode = false;
 
               nightModeEnabled = true;
               nightModeAutoEnabled = true;

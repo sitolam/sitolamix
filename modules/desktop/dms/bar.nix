@@ -6,9 +6,10 @@
     home.extraOptions.programs.dank-material-shell.settings = {
       use24HourClock = true;
       showDock = false;
-      # let stylix own GTK/Qt app theming; DMS shouldn't apply its own.
-      gtkThemingEnabled = false;
-      qtThemingEnabled = false;
+      # DMS recolours GTK (adw-gtk3 + dank-colors.css) and Qt (qt5ct/qt6ct)
+      # apps from the wallpaper; see modules/theming/matugen.nix.
+      gtkThemingEnabled = true;
+      qtThemingEnabled = true;
 
       animationSpeed = 2;
       # animation style (SettingsData.AnimationVariant): 0=Material, 1=Fluent,
