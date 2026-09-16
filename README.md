@@ -10,7 +10,7 @@ enable-switch, side by side.
 [![niri](https://img.shields.io/badge/wm-niri-cba6f7?style=flat-square)](https://github.com/YaLTeR/niri)
 [![DankMaterialShell](https://img.shields.io/badge/shell-DankMaterialShell-f5c2e7?style=flat-square)](https://github.com/AvengeMedia/DankMaterialShell)
 [![home-manager](https://img.shields.io/badge/home--manager-folded%20in-41439a?style=flat-square)](https://github.com/nix-community/home-manager)
-[![stylix](https://img.shields.io/badge/theme-stylix%20·%20catppuccin-89b4fa?style=flat-square)](https://github.com/nix-community/stylix)
+[![matugen](https://img.shields.io/badge/theme-DMS%20matugen%20·%20wallpaper--driven-89b4fa?style=flat-square)](https://github.com/AvengeMedia/DankMaterialShell)
 [![built with Claude Code](https://img.shields.io/badge/vibe%20coded%20with-Claude%20Code-d97757?style=flat-square)](https://claude.com/claude-code)
 [![licence: GPL-3.0](https://img.shields.io/badge/licence-GPL--3.0-a6e3a1?style=flat-square)](LICENSE)
 
@@ -20,12 +20,12 @@ enable-switch, side by side.
 
 ![the desktop](assets/screenshots/desktop.png)
 
-<em>niri + DankMaterialShell — floating terminal toys, blur, one catppuccin palette everywhere</em>
+<em>niri + DankMaterialShell — floating terminal toys, blur, every colour taken from the wallpaper (screenshots predate wallpaper theming)</em>
 
 </div>
 
 <details>
-<summary><strong>More screenshots</strong> — the menu, the panels, the cheat sheet</summary>
+<summary><strong>More screenshots</strong> — the menu, the panels, the cheat sheet (predate wallpaper theming)</summary>
 
 <br>
 
@@ -86,7 +86,7 @@ A single-user NixOS configuration built on three ideas:
 | **Files** | GNOME Files (nautilus) |
 | **Browser** | [helium](https://helium.computer/) (default) + [zen](https://zen-browser.app/) — helium's flags, policies and extension set are declared in Nix |
 | **Idle / lock** | swayidle → lock · DPMS · suspend (pauses while media plays) |
-| **Theming** | [stylix](https://github.com/nix-community/stylix) — fixed `catppuccin-mocha` base16; every themable app follows |
+| **Theming** | DankMaterialShell's own [matugen](https://github.com/InioX/matugen) run — a Material 3 scheme derived from the current wallpaper; `theming.matugen.templates` registers a template per app so every themable surface follows |
 | **Greeter** | [dank-greeter](https://github.com/AvengeMedia/dank-greeter) — greetd + DMS's own login screen, drawn per-output by the same niri build as the session, wearing a copy of the desktop's theme |
 | **Keyboard** | [kanata](https://github.com/jtroo/kanata) home-row mods, system-wide |
 | **Fonts** | Nerd Fonts + the Microsoft sets (corefonts, vista-fonts) so foreign documents keep their metrics |
@@ -131,9 +131,11 @@ Things this config does that a stock desktop does not:
   to the clipboard) or `\` to search every keybind the compositor has loaded.
   Both work in spotlight *and* in dankMenu, because the menu drives DMS's
   launcher plugins rather than reimplementing them.
-- 🎨 **Theming that goes inside apps** — stylix paints the desktop, but spicetify
-  rebuilds Spotify's own CSS and a generated `meta.json` recolors Anki, both from
-  the same `themes/catppuccin-mocha.nix` palette. Change the theme, they follow.
+- 🎨 **Theming that goes inside apps** — DMS re-derives a Material 3 scheme from
+  the current wallpaper and renders it into every registered
+  `theming.matugen.templates` entry: spicetify rebuilds Spotify's own CSS, a
+  generated `meta.json` recolors Anki, and Obsidian gets a matching CSS
+  snippet. Pick a new wallpaper, they all follow — no rebuild.
 - 📇 **Anki as config** — 17 addons deployed from Nix, credentials merged in from
   sops, and GUI-made settings still survive a rebuild (§ Anki).
 - 🔒 **Lock before sleep** — swayidle locks, then suspends, and pauses the whole
@@ -264,11 +266,10 @@ modules/
   system/              always-on baseline (base, nix, locale, users, boot, sops, openssh …)
   hardware/            audio / bluetooth / graphics baseline; nvidia + gaze gated
   desktop/             niri, dms, greetd, kanata, xdg (gated on the desktop suite)
-  theming/             stylix — `theming.stylix.*`
+  theming/             matugen — `theming.matugen.*`
   services/            kde-connect, docker, rclone, nas, printing, winapps … (gated)
   apps/                one file (or directory) per app, each `apps.<name>.enable`
   suites/              groups that flip a batch of enables (core, desktop, dev …)
-themes/                theme registry — palettes read by stylix, dms and anki
 secrets/               sops-encrypted age ciphertext, one file per subsystem
 docs/                  install walkthrough + the design docs behind each feature
 assets/                screenshots, wallpaper, avatar
@@ -283,8 +284,7 @@ Two conventions worth knowing:
 - **Data that is not a module goes in a `_`-prefixed directory.** import-tree's
   filter skips any path containing `/_`, so `modules/apps/anki/_lib/` holds
   Anki's whole addon tree right next to the module that uses it without being
-  mistaken for one. Cross-cutting data that several modules read (`themes/`)
-  stays at the repo root instead.
+  mistaken for one.
 
 ### Enable-options + suites
 
@@ -295,7 +295,7 @@ Each feature declares `options.<ns>.<name>.enable` and gates its config with
 # hosts/gamingpc/default.nix
 suites = {
   core.enable = true;         # shell + CLI programs
-  desktop.enable = true;      # niri + dms + stylix + greetd/dank-greeter
+  desktop.enable = true;      # niri + dms + matugen theming + greetd/dank-greeter
   development.enable = true;   # vscode, docker, tooling
   media.enable = true;
   gaming.enable = true;
@@ -308,7 +308,8 @@ hardware.nvidia.enable = true;
 
 Home-manager runs as a NixOS module (`modules/hm.nix`). Any file mixes system +
 HM config by writing `home.extraOptions` — an attrset, or a function
-`{ config, … }: { … }` when it needs HM's own `config` (e.g. stylix colors).
+`{ config, … }: { … }` when it needs HM's own `config` (e.g. font names from
+`fonts.fontconfig.defaultFonts`).
 It's a `deferredModule`, so every file's contribution merges into
 `home-manager.users.otis`. There is no separate `home/` tree.
 
@@ -1763,7 +1764,7 @@ Two things the licence deliberately does *not* cover:
   and some bundled media with separate attribution terms). A per-add-on table is
   in [that directory's README](modules/apps/anki/_lib/vendored/README.md). Read
   it before redistributing any of them.
-- **Everything behind a flake input** — nixpkgs, niri, stylix, DankMaterialShell,
+- **Everything behind a flake input** — nixpkgs, niri, DankMaterialShell,
   Helium, WinApps and the rest are fetched at build time under their own terms.
 
 The two add-ons written for this repo, `advanced_deck_maker` and
@@ -1783,4 +1784,4 @@ they are the reasoning behind each decision, kept in the file so the next
 session (human or model) does not have to rediscover it. Treat them as the real
 documentation.
 
-<div align="center"><sub>Built with Nix · themed with stylix · broken and fixed on <code>main</code></sub></div>
+<div align="center"><sub>Built with Nix · themed with matugen, from the wallpaper · broken and fixed on <code>main</code></sub></div>

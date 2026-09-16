@@ -1,7 +1,7 @@
 # Wallpaper-driven theming: stylix out, DMS matugen in
 
 **Date:** 2026-09-15
-**Status:** approved design, not implemented
+**Status:** implemented
 **Branch:** `dms-mutagen`
 
 ## Problem
