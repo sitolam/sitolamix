@@ -234,5 +234,23 @@ in
         ];
       };
     };
+
+    home.extraOptions =
+      { pkgs, lib, ... }:
+      {
+        # Chromium's "GTK" appearance takes its colours from the GTK theme, which
+        # DMS recolours from the wallpaper — there is no matugen template for
+        # Chromium itself. The mode is a profile pref with no policy equivalent
+        # (BrowserThemeColor is a single static colour), so it is merged into
+        # Preferences. Skipped while helium runs, because it rewrites the file on
+        # exit and would undo the merge.
+        home.activation.heliumGtkTheme = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+          prefs="$HOME/.config/net.imput.helium/Default/Preferences"
+          if [ -e "$prefs" ] && ! ${pkgs.procps}/bin/pgrep -x helium >/dev/null; then
+            run ${pkgs.jq}/bin/jq '.extensions.theme.system_theme = 1' "$prefs" > "$prefs.tmp"
+            run mv "$prefs.tmp" "$prefs"
+          fi
+        '';
+      };
   };
 }
