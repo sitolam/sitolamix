@@ -60,6 +60,16 @@ in
         hosts override it.
       '';
     };
+
+    cursorTheme = lib.mkOption {
+      type = lib.types.str;
+      default = "Bibata-Modern-Classic";
+      description = ''
+        Cursor theme name. The single source for cursor identity: read by
+        home.pointerCursor/dconf below and by niri's own cursor.theme setting
+        (modules/desktop/niri/appearance.nix), so the two never drift.
+      '';
+    };
   };
 
   config = lib.mkIf cfg.enable {
@@ -104,7 +114,7 @@ in
         dconf.settings."org/gnome/desktop/interface" = {
           gtk-theme = "adw-gtk3-dark";
           icon-theme = "WhiteSur-dark";
-          cursor-theme = "Bibata-Modern-Classic";
+          cursor-theme = cfg.cursorTheme;
           cursor-size = cfg.cursorSize;
           color-scheme = "prefer-dark";
           font-name = "${lib.head config.fonts.fontconfig.defaultFonts.sansSerif} 10";
@@ -152,7 +162,7 @@ in
         # patched-adw-gtk3 path if it finds one.
         home = {
           pointerCursor = {
-            name = "Bibata-Modern-Classic";
+            name = cfg.cursorTheme;
             package = pkgs.bibata-cursors;
             size = cfg.cursorSize;
             # newer home-manager wants this explicit rather than inferred from
