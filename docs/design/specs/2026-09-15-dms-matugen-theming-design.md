@@ -129,7 +129,7 @@ large. Both hosts fetch it.
 | starship, tmux, yazi, btop, fish, cliamp, nitch | take the terminal's ANSI palette, which DMS's `dank16` fills; starship loses `palette = "base16"`, btop gets `color_theme = "TTY"` |
 | neovim | `matugenTemplateNeovim = true`; `colorscheme dms` in init |
 | zed | DMS writes `zed/themes/dank-zed-theme.json`; set `theme` and fonts in `userSettings` |
-| VS Code | DMS installs its theme extension into the mutable `~/.vscode/extensions`; `vscode.nix` sets `workbench.colorTheme` and the fonts stylix used to own; CLAUDE.md's note that stylix owns `settings.json` is updated |
+| VS Code | DMS only *renders* theme JSON into an already-installed `danklinux.dms-theme-*` extension (it globs for one and silently no-ops without a match) — it never installs the extension itself; `vscode.nix` deploys DMS's VSIX build tree as a writable copy under `~/.vscode/extensions` so matugen has somewhere to write, and sets `workbench.colorTheme` and the fonts stylix used to own; CLAUDE.md's note that stylix owns `settings.json` is updated |
 | zen | DMS `zenbrowser` template writes `DankMaterialShell/zen.css`; linked as `chrome/userChrome.css` in the zen profile with `toolkit.legacyUserProfileCustomizations.stylesheets` enabled |
 | Helium | no template exists; Chromium's GTK theme mode, set through Helium's prefs/policies, takes colours from the GTK theme |
 | Obsidian | user template writes the vault CSS snippet that `obsidian/default.nix` currently generates at activation |

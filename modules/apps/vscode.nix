@@ -23,8 +23,20 @@ in
     nixpkgs.overlays = [ inputs.nix-vscode-extensions.overlays.default ];
 
     home.extraOptions =
-      { pkgs, ... }:
+      { pkgs, lib, ... }:
       let
+        # DMS's VS Code theme extension. DMS never installs this itself — its
+        # matugen integration (core/internal/matugen/matugen.go) only globs
+        # ~/.vscode/extensions/danklinux.dms-theme-* and, on a match, renders
+        # themes/*.json into it; with no match it returns silently and VS Code
+        # keeps whatever colorTheme is set with no error. So this repo has to
+        # install the extension shell itself, from DMS's own VSIX build tree,
+        # as a *writable* copy — home-manager's `programs.vscode…extensions`
+        # would symlink a read-only store path, which matugen cannot write
+        # into. See the activation below.
+        dmsVsixBuild = "${inputs.dms}/quickshell/matugen/vsix-build";
+        dmsThemeVersion = (builtins.fromJSON (builtins.readFile "${dmsVsixBuild}/package.json")).version;
+
         nixpkgsExtensions = with pkgs.vscode-extensions; [
           # ── Nix ────────────────────────────────────────────────────────
           jnoortheen.nix-ide # LSP client; nil/nixd, syntax, formatting
@@ -103,61 +115,68 @@ in
           # Nix symlinks its own extensions in but leaves ~/.vscode/extensions
           # writable, so anything installed out-of-band survives. Two things
           # rely on that: Claude Code's CLI installs and self-updates
-          # `anthropic.claude-code` there, and DMS installs its
-          # wallpaper-generated theme extension (dms-theme) there. Setting this
-          # false makes the directory a read-only store symlink and silently
-          # breaks both.
+          # `anthropic.claude-code` there, and matugen writes the
+          # wallpaper-rendered theme JSON into the danklinux.dms-theme-*
+          # extension the activation below deploys. Setting this false makes
+          # the directory a read-only store symlink and silently breaks both.
           mutableExtensionsDir = true;
 
           profiles.default = {
             extensions = nixpkgsExtensions ++ marketplaceExtensions;
 
-            # Theme and fonts live here now; DMS provides the theme itself as
-            # the dms-theme extension.
-            userSettings = {
-              "workbench.colorTheme" = "Dynamic Base16 DankShell (Dark)";
-              "editor.fontFamily" = "MesloLGS Nerd Font Mono";
-              "editor.fontSize" = 20;
-              "terminal.integrated.fontSize" = 20;
-              "debug.console.fontFamily" = "MesloLGS Nerd Font Mono";
-              "debug.console.fontSize" = 20;
-              "scm.inputFontFamily" = "MesloLGS Nerd Font Mono";
-              "chat.editor.fontFamily" = "MesloLGS Nerd Font Mono";
-              "chat.editor.fontSize" = 20;
-              "chat.fontFamily" = "DejaVu Sans";
-              "markdown.preview.fontFamily" = "DejaVu Sans";
-              "markdown.preview.fontSize" = 20;
-              "notebook.markup.fontFamily" = "DejaVu Sans";
+            # Theme and fonts live here now. The theme extension itself is
+            # deployed by the activation below; matugen renders its colours
+            # into it at runtime. The label has to match one of
+            # dmsVsixBuild's package.json `contributes.themes` exactly.
+            userSettings =
+              let
+                monoFont = lib.head config.fonts.fontconfig.defaultFonts.monospace;
+                sansFont = lib.head config.fonts.fontconfig.defaultFonts.sansSerif;
+              in
+              {
+                "workbench.colorTheme" = "Dynamic Base16 DankShell (Dark)";
+                "editor.fontFamily" = monoFont;
+                "editor.fontSize" = 20;
+                "terminal.integrated.fontSize" = 20;
+                "debug.console.fontFamily" = monoFont;
+                "debug.console.fontSize" = 20;
+                "scm.inputFontFamily" = monoFont;
+                "chat.editor.fontFamily" = monoFont;
+                "chat.editor.fontSize" = 20;
+                "chat.fontFamily" = sansFont;
+                "markdown.preview.fontFamily" = sansFont;
+                "markdown.preview.fontSize" = 20;
+                "notebook.markup.fontFamily" = sansFont;
 
-              # nix-ide ships no language server; without these three keys it
-              # is a syntax highlighter. nixd over nil because it evaluates the
-              # flake, which is what buys option completion and hover docs for
-              # `services.*`/`home-manager.*` — the bulk of what gets typed in
-              # this repo. Absolute store paths so neither binary has to be on
-              # PATH.
-              "nix.enableLanguageServer" = true;
-              "nix.serverPath" = lib.getExe pkgs.nixd;
-              "nix.formatterPath" = lib.getExe pkgs.nixfmt;
+                # nix-ide ships no language server; without these three keys it
+                # is a syntax highlighter. nixd over nil because it evaluates the
+                # flake, which is what buys option completion and hover docs for
+                # `services.*`/`home-manager.*` — the bulk of what gets typed in
+                # this repo. Absolute store paths so neither binary has to be on
+                # PATH.
+                "nix.enableLanguageServer" = true;
+                "nix.serverPath" = lib.getExe pkgs.nixd;
+                "nix.formatterPath" = lib.getExe pkgs.nixfmt;
 
-              "nix.serverSettings".nixd = {
-                # Package completion. `import ... { }` and not the flake's own
-                # legacyPackages so nixd does not drag in every host.
-                nixpkgs.expr = ''import (builtins.getFlake "${flakeDir}").inputs.nixpkgs { }'';
+                "nix.serverSettings".nixd = {
+                  # Package completion. `import ... { }` and not the flake's own
+                  # legacyPackages so nixd does not drag in every host.
+                  nixpkgs.expr = ''import (builtins.getFlake "${flakeDir}").inputs.nixpkgs { }'';
 
-                # Option completion. Pinned to *this* host: the two hosts have
-                # different module sets, and nixd takes one expression.
-                options = {
-                  nixos.expr = ''(builtins.getFlake "${flakeDir}").nixosConfigurations.${config.networking.hostName}.options'';
+                  # Option completion. Pinned to *this* host: the two hosts have
+                  # different module sets, and nixd takes one expression.
+                  options = {
+                    nixos.expr = ''(builtins.getFlake "${flakeDir}").nixosConfigurations.${config.networking.hostName}.options'';
 
-                  # home-manager options live behind `users.<name>`, whose
-                  # submodule has to be forced open before nixd can see inside.
-                  home-manager.expr = ''(builtins.getFlake "${flakeDir}").nixosConfigurations.${config.networking.hostName}.options.home-manager.users.type.getSubOptions [ ]'';
+                    # home-manager options live behind `users.<name>`, whose
+                    # submodule has to be forced open before nixd can see inside.
+                    home-manager.expr = ''(builtins.getFlake "${flakeDir}").nixosConfigurations.${config.networking.hostName}.options.home-manager.users.type.getSubOptions [ ]'';
+                  };
+
+                  # Match `just fmt`, so the editor and treefmt never fight.
+                  formatting.command = [ (lib.getExe pkgs.nixfmt) ];
                 };
-
-                # Match `just fmt`, so the editor and treefmt never fight.
-                formatting.command = [ (lib.getExe pkgs.nixfmt) ];
               };
-            };
 
             keybindings = [
               # F5-adjacent: run a Flutter app with the debugger detached, which
@@ -185,6 +204,38 @@ in
             ];
           };
         };
+
+        # Deploys DMS's VSIX build tree as a writable copy, because matugen
+        # writes themes/*.json into the extension directory it finds by glob
+        # (danklinux.dms-theme-*) and a home-manager-managed extension would
+        # be a read-only store symlink. Re-copies everything except themes/
+        # on every activation, so a `dms` input bump reaches package.json,
+        # README etc.; themes/ is left alone once it exists because matugen
+        # has usually already rendered real wallpaper colours into it by the
+        # time this runs, and clobbering it would revert VS Code to
+        # vsix-build's static placeholder until the next wallpaper change or
+        # DMS restart. Stale copies from an earlier dms input version are
+        # removed so the glob above always has exactly one match.
+        home.activation.deployDmsVscodeTheme = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+          extBase="$HOME/.vscode/extensions"
+          extDir="$extBase/danklinux.dms-theme-${dmsThemeVersion}"
+          run mkdir -p "$extBase"
+
+          for old in "$extBase"/danklinux.dms-theme-*; do
+            [ -e "$old" ] || continue
+            [ "$old" = "$extDir" ] && continue
+            run rm -rf "$old"
+          done
+
+          if [ ! -d "$extDir" ]; then
+            run mkdir -p "$extDir"
+            run cp -rT --no-preserve=mode ${dmsVsixBuild} "$extDir"
+            run chmod -R u+w "$extDir"
+          else
+            run ${pkgs.rsync}/bin/rsync -a --chmod=D755,F644 --exclude=themes/ ${dmsVsixBuild}/ "$extDir/"
+            run chmod -R u+w "$extDir"
+          fi
+        '';
       };
 
     # ensure electron apps run natively on wayland
