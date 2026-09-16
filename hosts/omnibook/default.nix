@@ -76,9 +76,9 @@
   ];
 
   # 2880x1800 panel at niri output scale 1.75 (see `niri msg outputs`) makes
-  # the shared 7px default (modules/theming/stylix.nix) nearly invisible —
+  # the shared 7px default (modules/theming/matugen.nix) nearly invisible —
   # that size is logical/unscaled, so it doesn't grow with output scale.
-  stylix.cursor.size = 16;
+  theming.matugen.cursorSize = 16;
 
   services = {
     # KDE Connect run-commands, remote-triggerable from the paired phone.

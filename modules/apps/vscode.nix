@@ -103,19 +103,32 @@ in
           # Nix symlinks its own extensions in but leaves ~/.vscode/extensions
           # writable, so anything installed out-of-band survives. Two things
           # rely on that: Claude Code's CLI installs and self-updates
-          # `anthropic.claude-code` there, and stylix drops its generated theme
-          # extension in. Setting this false makes the directory a read-only
-          # store symlink and silently breaks both.
+          # `anthropic.claude-code` there, and DMS installs its
+          # wallpaper-generated theme extension (dms-theme) there. Setting this
+          # false makes the directory a read-only store symlink and silently
+          # breaks both.
           mutableExtensionsDir = true;
 
           profiles.default = {
             extensions = nixpkgsExtensions ++ marketplaceExtensions;
 
-            # stylix's vscode target writes into this same option (fonts,
-            # sizes, `workbench.colorTheme = "Stylix"`). It is an attrset, so
-            # the two definitions merge — but only while the keys stay
-            # disjoint. Never set a font or a theme key here.
+            # Theme and fonts live here now; DMS provides the theme itself as
+            # the dms-theme extension.
             userSettings = {
+              "workbench.colorTheme" = "Dynamic Base16 DankShell (Dark)";
+              "editor.fontFamily" = "MesloLGS Nerd Font Mono";
+              "editor.fontSize" = 20;
+              "terminal.integrated.fontSize" = 20;
+              "debug.console.fontFamily" = "MesloLGS Nerd Font Mono";
+              "debug.console.fontSize" = 20;
+              "scm.inputFontFamily" = "MesloLGS Nerd Font Mono";
+              "chat.editor.fontFamily" = "MesloLGS Nerd Font Mono";
+              "chat.editor.fontSize" = 20;
+              "chat.fontFamily" = "DejaVu Sans";
+              "markdown.preview.fontFamily" = "DejaVu Sans";
+              "markdown.preview.fontSize" = 20;
+              "notebook.markup.fontFamily" = "DejaVu Sans";
+
               # nix-ide ships no language server; without these three keys it
               # is a syntax highlighter. nixd over nil because it evaluates the
               # flake, which is what buys option completion and hover docs for

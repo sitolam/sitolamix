@@ -2,7 +2,7 @@
 {
   fonts = {
     packages = with pkgs; [
-      # UI / terminal (stylix picks its faces from these, see ../theming/stylix.nix)
+      # UI / terminal (fontconfig defaults below; DMS, Obsidian and the GTK font read them)
       nerd-fonts.meslo-lg
       nerd-fonts.jetbrains-mono
       nerd-fonts.symbols-only

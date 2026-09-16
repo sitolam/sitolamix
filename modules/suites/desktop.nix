@@ -3,7 +3,7 @@ let
   cfg = config.suites.desktop;
 in
 {
-  options.suites.desktop.enable = lib.mkEnableOption "niri + DankMaterialShell + stylix + kanata desktop";
+  options.suites.desktop.enable = lib.mkEnableOption "niri + DankMaterialShell + wallpaper theming + kanata desktop";
 
   config = lib.mkIf cfg.enable {
     desktop = {
@@ -20,10 +20,7 @@ in
       stayfree.enable = true;
       localsend.enable = true; # LAN AirDrop-alike — GUI only, no keybind/menu row
     };
-    theming = {
-      stylix.enable = true;
-      matugen.enable = true;
-    };
+    theming.matugen.enable = true;
     services.kde-connect.enable = true;
   };
 }

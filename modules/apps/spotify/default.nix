@@ -45,19 +45,7 @@ in
             lyricsPlus # scrolling lyrics
           ];
 
-          # mkForce: stylix's own spicetify target (still active elsewhere in
-          # this repo) sets theme.name = "stylix" at the same priority. That
-          # target's actual colour file is moot here — see the postFixup
-          # symlink below, which replaces the built colors.css outright — but
-          # the conflicting *theme* definition still fails evaluation without
-          # this override. Drop it along with stylix.targets.spicetify itself
-          # once stylix is removed (Task 7).
-          theme = lib.mkForce spicePkgs.themes.sleek;
-          # mkForce for the same reason as theme above: stylix's target sets
-          # colorScheme = "base", which sleek's theme.sh doesn't define.
-          # Value is otherwise moot — postFixup's symlink replaces the built
-          # colors.css before Spotify ever reads it.
-          colorScheme = lib.mkForce "TokyoNight";
+          theme = spicePkgs.themes.sleek;
 
           # Colours follow the wallpaper. spicetify bakes a colour scheme into
           # the store build at `spicetify apply` time, which no runtime change

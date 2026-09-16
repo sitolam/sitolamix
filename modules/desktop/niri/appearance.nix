@@ -9,9 +9,9 @@ let
 in
 {
   config = lib.mkIf config.desktop.niri.enable {
-    # HM function — needs home-manager's `config` for stylix colors.
+    # HM function.
     home.extraOptions =
-      { config, lib, ... }:
+      { lib, ... }:
       {
         programs.niri = {
           config = lib.mkOptionDefault (
@@ -66,15 +66,7 @@ in
 
             layout.focus-ring = {
               enable = true;
-              active.color = "#${config.lib.stylix.colors.base0E}";
-              inactive.color = "#${config.lib.stylix.colors.base02}";
             };
-
-            # Overview backdrop (visible between workspaces, and as the fallback
-            # on any output where DMS's blurred-wallpaper backdrop doesn't render
-            # — currently the non-focused monitor). Use the theme's base so it
-            # reads as an intentional dark surface rather than a sharp wallpaper.
-            overview.backdrop-color = "#${config.lib.stylix.colors.base00}";
 
             debug = {
               honor-xdg-activation-with-invalid-serial = [ ];
