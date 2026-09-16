@@ -64,9 +64,10 @@ in
 
   config = lib.mkIf cfg.enable {
     # Qt: qt5ct/qt6ct as the platform theme, so DMS's qtct colour templates
-    # apply. home-manager's `qt` module only sets the env var and installs
-    # the packages here; it must not own qt5ct.conf/qt6ct.conf, which DMS's
-    # scripts/qt.sh edits in place.
+    # apply. This is NixOS's own `qt` module (nixos/modules/config/qt.nix) —
+    # it only sets QT_QPA_PLATFORMTHEME and installs the packages here; it
+    # must not own qt5ct.conf/qt6ct.conf, which DMS's scripts/qt.sh edits in
+    # place.
     qt = {
       enable = true;
       platformTheme = "qt5ct";
