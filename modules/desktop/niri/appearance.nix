@@ -62,7 +62,20 @@ in
           settings = {
             prefer-no-csd = true;
             hotkey-overlay.skip-at-startup = true;
-            cursor.hide-after-inactive-ms = 5000;
+            cursor = {
+              hide-after-inactive-ms = 5000;
+              # home.pointerCursor (modules/theming/matugen.nix) already sets
+              # XCURSOR_THEME/XCURSOR_SIZE for the session, but niri draws its
+              # own compositor-side cursor from its own config rather than
+              # those env vars, and xcursor-size here is logical/unscaled so
+              # it does not grow with output scale (see the comment on
+              # theming.matugen.cursorSize in hosts/omnibook/default.nix) —
+              # so it needs to be told separately. Pulled from
+              # theming.matugen's cursorTheme/cursorSize rather than
+              # duplicated, so the two stay in sync.
+              theme = config.theming.matugen.cursorTheme;
+              size = config.theming.matugen.cursorSize;
+            };
 
             layout.focus-ring = {
               enable = true;
