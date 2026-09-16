@@ -1,7 +1,7 @@
 # sitolamix — house rules
 
-Personal NixOS flake: niri + DankMaterialShell + stylix. Read this before
-changing anything here.
+Personal NixOS flake: niri + DankMaterialShell, every colour taken from the
+wallpaper by DMS's matugen. Read this before changing anything here.
 
 ## The one rule
 
@@ -52,8 +52,7 @@ Hosts are auto-discovered from `hosts/`.
 - **Non-module data goes in a `_`-prefixed directory.** import-tree's filter is
   `andNot (hasInfix "/_") (hasSuffix ".nix")`, so anything under `/_…` is
   skipped and can't be mistaken for a NixOS module — that is what
-  `modules/apps/anki/_lib/` is. Cross-cutting data read by several modules
-  (`themes/`) lives at the repo root instead.
+  `modules/apps/anki/_lib/` is.
 
 Hosts flip suites; suites flip modules. A host enabling a module directly is a
 host-specific decision and needs a comment saying why.
@@ -67,22 +66,24 @@ statix enforces this.
 |---|---|
 | Name collides with a nixpkgs option (`services.printing`) | Suffix yours (`services.printing-cups`) **and comment why** at the top of the file |
 | Package broken on unstable | `pkgs.stable.<name>`, see `modules/system/nixpkgs-stable.nix`. Comment what broke and when to drop it |
-| Any colour, font or wallpaper | Read it from `themes/<name>.nix`. Never hardcode a hex value in a module |
+| Any colour | Never a hex value in Nix. The app module ships a matugen template (tokens like `{{colors.primary.default.hex}}`) and registers it in `theming.matugen.templates`; DMS renders it on every wallpaper change. Fonts come from `fonts.fontconfig.defaultFonts` |
 | A secret | sops. Declare `sops.secrets.<name>`, reference `config.sops.secrets.<name>.path`, **never the value**. Edit with `just secret secrets/<file>.yaml` |
 | New flake input | Comment what it is and why it isn't in nixpkgs |
 | Vendoring third-party code | Keep its licence files. Anki add-ons also need a row in `modules/apps/anki/_lib/vendored/README.md` — the repo is GPL-3.0 but vendored code is not |
 
 **Files this repo owns that applications also write:** Claude Code's plugin
 manifests, DMS's `outputs.kdl`, Anki's `meta.json`, cliamp's `config.toml`, VS
-Code's `keybindings.json` (and its `settings.json`, which stylix owns).
+Code's `keybindings.json` and `settings.json`, and DMS's matugen outputs
+(`ghostty/themes/dankcolors`, `niri/dms/colors.kdl`, the Obsidian snippet,
+`spicetify-dms/colors.css`, …) — regenerated on every wallpaper change.
 Changing these in the app's own UI will not stick, or will be overwritten on
 the next rebuild. Change the Nix, not the app.
 
 VS Code's *extensions* are the exception: `mutableExtensionsDir = true` keeps
-`~/.vscode/extensions` writable so Claude Code's CLI and stylix can drop their
-own extensions in. Anything you install from the marketplace by hand therefore
-survives a rebuild — and is invisible to this repo. Add it to
-`modules/apps/vscode.nix` or it is not part of the config.
+`~/.vscode/extensions` writable so Claude Code's CLI and DMS (its dms-theme
+extension) can drop their own extensions in. Anything you install from the
+marketplace by hand therefore survives a rebuild — and is invisible to this
+repo. Add it to `modules/apps/vscode.nix` or it is not part of the config.
 
 ## Comments are the deliverable
 
