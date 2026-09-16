@@ -58,6 +58,14 @@ in
           # 2026-09-15 that Spotify's Chromium follows the link. Drop this if
           # spicetify-nix ever grows a runtime colour file of its own.
           spotifyPackage = pkgs.spotify.overrideAttrs (old: {
+            # Deliberately left hardcoded, unlike the matugen `output` path
+            # below. This string is spliced straight into the *store*
+            # derivation's postFixup at build time; splicing in
+            # `osConfig.users.users.otis.home` instead would make the
+            # resulting /nix/store/... output path itself depend on the
+            # evaluating user's home directory, which is not something you
+            # want in a build output. otis is the only user this flake ever
+            # builds for, so the literal costs nothing in practice.
             postFixup = (old.postFixup or "") + ''
               ln -sf /home/otis/.config/spicetify-dms/colors.css $out/share/spotify/Apps/xpui/colors.css
             '';
@@ -94,7 +102,7 @@ in
 
     theming.matugen.templates.spotify = {
       input = ./colors.css;
-      output = "/home/otis/.config/spicetify-dms/colors.css";
+      output = "${config.users.users.otis.home}/.config/spicetify-dms/colors.css";
     };
   };
 }
