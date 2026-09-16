@@ -5,25 +5,23 @@
   ...
 }:
 let
-  # orangci/walls-catppuccin-mocha — a flake input, so the images live in the
-  # Nix store and nowhere else. 335 files, ~396 MB. (GitHub reports 795 MB for
-  # the repo; that counts git history the tarball does not carry.)
+  # dharmx/walls — a flake input, so the images live in the Nix store and
+  # nowhere else, sorted into category folders.
   collection = inputs.wallpapers;
 
-  # The wallpaper DMS starts on. Pointing it *into the collection* is what makes
-  # the directory declarative: DMS has no wallpaper-folder setting, but
-  # Services/WallpaperCyclingService.qml derives the folder it cycles through
-  # from the current wallpaper's own directory —
+  # The category DMS starts in. DMS has no wallpaper-folder setting:
+  # Services/WallpaperCyclingService.qml cycles the directory of the current
+  # wallpaper —
   #
   #   const wallpaperDir = currentWallpaper.substring(0, currentWallpaper.lastIndexOf('/'))
   #
-  # — so seeding a path inside the store collection sets the folder for free,
-  # and cycling covers all 335 images.
-  default = "cat-in-clouds.png";
+  # — so seeding an image inside `nature/` makes cycling cover that category.
+  # Pick an image from another folder in DMS to cycle that one instead.
+  category = "nature";
 
-  # Guard the filename against an input update renaming it: fall back to the
-  # first image rather than silently seeding a path that does not exist. Plain
-  # readDir on a store path, so no import-from-derivation.
+  # First image of the category, by natural sort. Plain readDir on a store
+  # path, so no import-from-derivation; guards against an input update
+  # renaming files.
   images = lib.naturalSort (
     lib.attrNames (
       lib.filterAttrs (
@@ -31,17 +29,18 @@ let
         type == "regular"
         && lib.any (ext: lib.hasSuffix ext (lib.toLower name)) [
           ".jpg"
+          ".jpeg"
           ".png"
         ]
-      ) (builtins.readDir collection)
+      ) (builtins.readDir "${collection}/${category}")
     )
   );
-  chosen = if lib.elem default images then default else lib.head images;
+  chosen = lib.head images;
 in
 {
   config = lib.mkIf config.desktop.dms.enable {
     # Consumed by the session.json seeding in ./dms/default.nix.
-    desktop.dms.initialWallpaper = "${collection}/${chosen}";
+    desktop.dms.initialWallpaper = "${collection}/${category}/${chosen}";
 
     home.extraOptions =
       {

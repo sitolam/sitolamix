@@ -159,11 +159,14 @@
       flake = false;
     };
 
-    # orangci/walls-catppuccin-mocha — a plain repo of wallpaper images, linked
-    # into ~/Pictures/Wallpapers by modules/desktop/wallpapers.nix so DMS can
-    # browse them. flake=false: it is images, not a flake.
+    # dharmx/walls — a plain repo of wallpaper images sorted into category
+    # folders, linked into ~/Pictures/Wallpapers by
+    # modules/desktop/wallpapers.nix so DMS can browse them; DMS derives every
+    # colour on the desktop from the one picked. flake=false: it is images,
+    # not a flake. The repo carries no licence file — it is fetched, never
+    # copied into this repo. Large: GitHub reports ~3.8 GB with history.
     wallpapers = {
-      url = "github:orangci/walls-catppuccin-mocha";
+      url = "github:dharmx/walls";
       flake = false;
     };
 
