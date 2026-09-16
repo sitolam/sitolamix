@@ -223,6 +223,22 @@ in
               run rm -f "$state"
               # install, not cp: store files are read-only and DMS must write it.
               run install -m 644 ${seed} "$state"
+            else
+              # A wallpaper collection that gets swapped out from under DMS (a
+              # wallpapers flake-input bump, a GC of the old collection's
+              # store path) leaves session.json naming a wallpaperPath that no
+              # longer exists. DMS then hands matugen a nonexistent image and
+              # matugen renders nothing at all — every registered template
+              # goes stale silently. Patch just that one key with jq, in
+              # place: this is the user's own live settings file (weather,
+              # night mode, whatever they've since picked in the DMS UI), so a
+              # full re-seed is not an option — only the one key that can go
+              # stale on its own gets touched, and only when it actually has.
+              wp="$(${pkgs.jq}/bin/jq -r '.wallpaperPath // empty' "$state" 2>/dev/null)"
+              if [ -n "$wp" ] && [ ! -e "$wp" ]; then
+                run sh -c '${pkgs.jq}/bin/jq --arg wp "$1" ".wallpaperPath = \$wp" "$2" > "$2.tmp" && mv "$2.tmp" "$2"' \
+                  -- "${cfg.initialWallpaper}" "$state"
+              fi
             fi
           '';
 
