@@ -247,8 +247,11 @@ in
         home.activation.heliumGtkTheme = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
           prefs="$HOME/.config/net.imput.helium/Default/Preferences"
           if [ -e "$prefs" ] && ! ${pkgs.procps}/bin/pgrep -x helium >/dev/null; then
-            run ${pkgs.jq}/bin/jq '.extensions.theme.system_theme = 1' "$prefs" > "$prefs.tmp"
-            run mv "$prefs.tmp" "$prefs"
+            # `&&`, not two separate `run`s: a jq failure must not fall
+            # through to `mv` and install a truncated file over helium's
+            # live Preferences.
+            run sh -c '${pkgs.jq}/bin/jq "$1" "$2" > "$2.tmp" && mv "$2.tmp" "$2"' \
+              -- '.extensions.theme.system_theme = 1' "$prefs"
           fi
         '';
       };

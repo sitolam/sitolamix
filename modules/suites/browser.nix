@@ -22,6 +22,13 @@ in
           inputs.zen-browser.packages.${pkgs.stdenv.hostPlatform.system}.default
         ];
 
+        # This activation is feature work living in a suite rather than its
+        # own module — deliberately, for now: zen is a bare `home.packages`
+        # entry above with no options and nothing else to gate, so a whole
+        # `modules/apps/zen.nix` would exist only to hold this one activation.
+        # The day zen grows a second concern (flags, policies, an extension
+        # set — the shape helium.nix already has), split it out then.
+        #
         # zen: DMS renders ~/.config/DankMaterialShell/zen.css from the wallpaper.
         # zen only loads chrome/userChrome.css with the legacy stylesheet pref on,
         # and profile directories are created by zen itself under a random name, so
