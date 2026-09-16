@@ -105,7 +105,7 @@ Both linters must stay clean:
 
 ```sh
 nix shell nixpkgs#statix nixpkgs#deadnix --command sh -c \
-  'statix check .; deadnix modules/ hosts/ themes/ flake/ flake.nix'
+  'statix check .; deadnix modules/ hosts/ flake/ flake.nix'
 ```
 
 **`just check` passing is not proof a refactor preserved behaviour.** For
