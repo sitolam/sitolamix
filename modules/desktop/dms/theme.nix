@@ -8,8 +8,11 @@
       currentThemeName = "dynamic";
       # Declared here, so a scheme picked in DMS's UI lasts only until DMS
       # restarts (settings.json is a store symlink). Try schemes live in the
-      # UI, then set the winner here.
-      matugenScheme = "scheme-tonal-spot";
+      # UI, then set the winner here. fidelity tracks the wallpaper's own
+      # colours most literally of matugen's schemes (the alternative,
+      # tonal-spot, is Material You's muted default and washes a photo's
+      # palette down to one hue).
+      matugenScheme = "scheme-fidelity";
       runUserMatugenTemplates = true;
 
       # neovim's template is off by default in DMS; modules/apps/neovim.nix
