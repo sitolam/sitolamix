@@ -97,12 +97,25 @@ in
       {
         # DMS only reads the [config] and [templates] sections of this file.
         # [config] stays empty: DMS supplies its own.
-        xdg.configFile."matugen/config.toml".text = ''
-          [config]
+        xdg.configFile = {
+          "matugen/config.toml".text = ''
+            [config]
 
-          [templates]
-        ''
-        + lib.concatStrings (lib.mapAttrsToList templateSection cfg.templates);
+            [templates]
+          ''
+          + lib.concatStrings (lib.mapAttrsToList templateSection cfg.templates);
+
+          # home-manager's gtk3.nix/gtk4.nix write these two unconditionally
+          # once the gtk module is on (below), with no option to gate them
+          # off. DMS rewrites gtk-3.0/settings.ini itself when the icon theme
+          # is changed in its Settings UI, so a store symlink here would
+          # either block that write or silently revert it on the next
+          # rebuild — the same "the app writes it, not us" problem CLAUDE.md
+          # lists for cliamp's config.toml. Drop these two lines if the gtk
+          # module ever grows its own switch for them.
+          "gtk-3.0/settings.ini".enable = lib.mkForce false;
+          "gtk-4.0/settings.ini".enable = lib.mkForce false;
+        };
 
         # GTK theme, icons and cursor through gsettings rather than
         # home-manager's gtk module. That module writes gtk-3.0/gtk.css and
@@ -160,6 +173,36 @@ in
         # same import line) recognises the file as DMS-managed, so pressing
         # Apply in Settings later still works and can upgrade GTK3 to the
         # patched-adw-gtk3 path if it finds one.
+
+        # home-manager's gtk module, turned on for exactly one thing: it is
+        # the only thing that writes ~/.config/gtk-3.0/bookmarks (from
+        # gtk.gtk3.bookmarks — modules/desktop/xdg.nix's XDG dirs and
+        # modules/services/nas.nix's mounts both append to that list) and
+        # the dconf keys it derives from gtk.gtk3.theme/iconTheme/etc. We
+        # never set those theme options, so home-manager's own
+        # dconf.settings."org/gnome/desktop/interface" write above (all
+        # null -> filtered out) never fights the one above. Two more things
+        # this module must keep true or gtk.enable regresses exactly what
+        # the comment above this block protects:
+        #   - gtk-3.0/gtk.css and gtk-4.0/gtk.css: home-manager only writes
+        #     these when gtk.gtk3.extraCss/gtk.gtk4.extraCss (or gtk4's
+        #     theme.package) is set. We never set them, so they stay
+        #     unwritten and gtk.sh's symlink refusal above still holds.
+        #   - gtk-3.0/settings.ini and gtk-4.0/settings.ini: unlike gtk.css,
+        #     home-manager's gtk3.nix/gtk4.nix write these *unconditionally*
+        #     once the module is on — no option gates it off. DMS rewrites
+        #     gtk-3.0/settings.ini itself when the icon theme is changed in
+        #     its Settings UI, so letting home-manager symlink-manage it
+        #     would either block that write or get silently reverted on the
+        #     next rebuild — see the two mkForce lines in xdg.configFile
+        #     above. gtk2/gtk4 are turned off outright since we need nothing
+        #     else from them (gtk2 writes ~/.gtkrc-2.0 unconditionally too).
+        gtk = {
+          enable = true;
+          gtk2.enable = false;
+          gtk4.enable = false;
+        };
+
         home = {
           pointerCursor = {
             name = cfg.cursorTheme;
@@ -168,8 +211,6 @@ in
             # newer home-manager wants this explicit rather than inferred from
             # the presence of a cursor name/package.
             enable = true;
-            # gtk.enable would turn on home-manager's gtk module; the cursor is
-            # set through dconf below instead so nothing here owns gtk.css.
             x11.enable = true;
           };
 
