@@ -47,18 +47,35 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    # HM module runs kdeconnectd + the tray indicator (DMS has a system tray).
-    home.extraOptions.services.kdeconnect = {
-      enable = true;
-      indicator = true;
-    };
+    home.extraOptions =
+      { pkgs, lib, ... }:
+      {
+        # HM module runs kdeconnectd + the tray indicator (DMS has a system tray).
+        services.kdeconnect = {
+          enable = true;
+          indicator = true;
+        };
 
-    home.extraOptions.xdg.configFile = lib.mkIf (cfg.deviceId != null) {
-      "kdeconnect/${cfg.deviceId}/kdeconnect_runcommand/config".text = ''
-        [General]
-        commands="@ByteArray(${escapedJson})"
-      '';
-    };
+        xdg.configFile = lib.mkIf (cfg.deviceId != null) {
+          "kdeconnect/${cfg.deviceId}/kdeconnect_runcommand/config".text = ''
+            [General]
+            commands="@ByteArray(${escapedJson})"
+          '';
+        };
+
+        # "Send via KDE Connect" in Nautilus's right-click menu. The extension
+        # ships inside kdeconnect-kde as a nautilus-python script, but only
+        # under the *profile* that installs it
+        # (/etc/profiles/per-user/otis/share/...), and nautilus-python scans
+        # the XDG_DATA_DIRS nautilus itself was wrapped with — the per-user
+        # profile is not among them, so the script is installed and never
+        # loaded. ~/.local/share is always scanned (nautilus-python puts it
+        # first), so link it there. Drop this if nixpkgs ever wraps nautilus
+        # with the per-user profile on XDG_DATA_DIRS, or if the extension
+        # moves into the system profile.
+        home.file.".local/share/nautilus-python/extensions/kdeconnect-share.py".source =
+          lib.mkIf config.apps.nautilus.enable "${pkgs.kdePackages.kdeconnect-kde}/share/nautilus-python/extensions/kdeconnect-share.py";
+      };
 
     # the HM module does not open the firewall; KDE Connect needs 1714-1764.
     networking.firewall = {
