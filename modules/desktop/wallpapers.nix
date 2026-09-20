@@ -5,23 +5,22 @@
   ...
 }:
 let
-  # dharmx/walls — a flake input, so the images live in the Nix store and
-  # nowhere else, sorted into category folders.
-  collection = inputs.wallpapers;
-
-  # The category DMS starts in. DMS has no wallpaper-folder setting:
-  # Services/WallpaperCyclingService.qml cycles the directory of the current
-  # wallpaper —
+  # sitolam/mywalls — my own collection, a flake input so the images live in
+  # the Nix store and nowhere else. Flat: one directory of images, no category
+  # folders, which is what makes cycling cover the whole collection —
+  # Services/WallpaperCyclingService.qml derives the folder it cycles from the
+  # current wallpaper's own directory:
   #
   #   const wallpaperDir = currentWallpaper.substring(0, currentWallpaper.lastIndexOf('/'))
   #
-  # — so seeding an image inside `nature/` makes cycling cover that category.
-  # Pick an image from another folder in DMS to cycle that one instead.
-  category = "nature";
+  # (dharmx/walls, which this replaced, is split into ~50 category folders, so
+  # cycling there only ever covered the category the current wallpaper sat in.)
+  collection = inputs.wallpapers;
 
-  # First image of the category, by natural sort. Plain readDir on a store
-  # path, so no import-from-derivation; guards against an input update
-  # renaming files.
+  # The wallpaper DMS starts on: first image by natural sort. Plain readDir on
+  # a store path, so no import-from-derivation, and nothing to break when the
+  # input gains or loses files. The .gif/.mp4 in the collection are left out —
+  # DMS's still-image pipeline is what seeds cleanly; pick those in the UI.
   images = lib.naturalSort (
     lib.attrNames (
       lib.filterAttrs (
@@ -31,8 +30,9 @@ let
           ".jpg"
           ".jpeg"
           ".png"
+          ".webp"
         ]
-      ) (builtins.readDir "${collection}/${category}")
+      ) (builtins.readDir collection)
     )
   );
   chosen = lib.head images;
@@ -40,7 +40,7 @@ in
 {
   config = lib.mkIf config.desktop.dms.enable {
     # Consumed by the session.json seeding in ./dms/default.nix.
-    desktop.dms.initialWallpaper = "${collection}/${category}/${chosen}";
+    desktop.dms.initialWallpaper = "${collection}/${chosen}";
 
     home.extraOptions =
       {
