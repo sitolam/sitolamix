@@ -8,7 +8,11 @@ in
 
     vault = lib.mkOption {
       type = lib.types.str;
-      default = "/home/otis/Documents/uni";
+      # Documents/uni was the first vault; this one replaced it in 2026-09.
+      # Only one vault is managed at a time — the plugins and the generated
+      # CSS snippet land here, and whatever sits in an older vault stays
+      # frozen at the version it was last deployed with.
+      default = "/home/otis/Documents/Obsidian notes/School";
       description = ''
         Absolute path of the vault this module deploys plugins into.
 
