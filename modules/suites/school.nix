@@ -15,6 +15,8 @@ in
       # Obsidian likewise carries its own module: it deploys a pinned set of
       # community plugins into the notes vault (modules/apps/obsidian/_lib).
       obsidian.enable = true;
+
+      oop-apps.enable = true;
     };
 
     home.extraOptions =
