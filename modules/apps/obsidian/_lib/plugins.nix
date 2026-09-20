@@ -154,4 +154,41 @@ map mkPlugin [
       "styles.css" = "sha256-MwbdkDLgD5ibpyM6N/0lW8TT9DQM7mYXYulS8/aqHek=";
     };
   }
+  {
+    # Annotate and cite lecture slides in place: highlights in the PDF become
+    # links back into the notes, so slide references survive re-reading.
+    id = "pdf-plus";
+    repo = "RyotaUshio/obsidian-pdf-plus";
+    version = "0.40.31";
+    hashes = {
+      "main.js" = "sha256-P9OVygFf+BLfikjnXaDsenq1pvWUBtN1RwiYsfcqrJM=";
+      "manifest.json" = "sha256-3KUBZbdDFs2yt2ySCEN0mXvnlJ0hazHvzswrgv9KCGw=";
+      "styles.css" = "sha256-TZRNbqeqWB/c2DZ8nYqwnzfFqMWU4zZUd5X3ny7eQGY=";
+    };
+  }
+  {
+    # Quick Switcher++: the switcher, but able to jump to a heading, symbol
+    # or open pane instead of only a file — which is how a lecture note with
+    # twenty headings stays navigable from the keyboard.
+    id = "darlal-switcher-plus";
+    repo = "darlal/obsidian-switcher-plus";
+    version = "6.2.0";
+    hashes = {
+      "main.js" = "sha256-NHBb5Ro90/2Y9nZBWmP09ALdYGifeZOl4g1Oz5Bj1tw=";
+      "manifest.json" = "sha256-l0bcL45p1Lv2Z2jZmQhlHIzCHwDevkEE6fJTDkf65V0=";
+      "styles.css" = "sha256-spuk9tu+V7xKRF4qxdqKAJIQqWCQIUf5qhCXwSHgGNw=";
+    };
+  }
+  {
+    # Rewrites ASCII as you type it into the real glyph (-> becomes →, !=
+    # becomes ≠), so prose around the maths reads like the maths does.
+    id = "symbols-prettifier";
+    repo = "florianwoelki/obsidian-symbols-prettifier";
+    version = "1.2.5";
+    hashes = {
+      "main.js" = "sha256-qjYU0PiR/4IeM92EBUjGS/PoGk6e/3WwhZzVVy9L430=";
+      "manifest.json" = "sha256-QOx7haEXfMKccqu99tEa//s5WJAcRfJqcWBL6ZI0NVo=";
+      "styles.css" = "sha256-rhnVhVLEoA8m/9w8UsQ41z+9XRcmk0on3hHKuzeYU2U=";
+    };
+  }
 ]
