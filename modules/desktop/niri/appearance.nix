@@ -79,6 +79,7 @@ in
 
             layout.focus-ring = {
               enable = true;
+              width = 3.0;
             };
 
             debug = {
