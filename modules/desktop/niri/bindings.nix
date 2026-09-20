@@ -349,8 +349,6 @@
             # full-screen. dankdash's picker is still one row away in
             # dankMenu ("Wallpaper").
             "Mod+Alt+W" = spawn (dms [
-              "ipc"
-              "call"
               "wallpaperCarousel"
               "toggle"
             ]);
