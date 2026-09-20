@@ -907,16 +907,16 @@
     "wallpapers": {
       "flake": false,
       "locked": {
-        "lastModified": 1709702900,
-        "narHash": "sha256-M96jJy3L0a+VkJ+DcbtrRAquwDWaIG9hAUxenr/TcQU=",
-        "owner": "dharmx",
-        "repo": "walls",
-        "rev": "6bf4d733ebf2b484a37c17d742eb47e5139e6a14",
+        "lastModified": 1789927380,
+        "narHash": "sha256-Lka3yFLqoH1yNj5Cgeuw1+1FsRY+xCAHkfcy6LkrtbA=",
+        "owner": "sitolam",
+        "repo": "mywalls",
+        "rev": "a75cf89137e4c29899819bd16814419ade7c6cbd",
         "type": "github"
       },
       "original": {
-        "owner": "dharmx",
-        "repo": "walls",
+        "owner": "sitolam",
+        "repo": "mywalls",
         "type": "github"
       }
     },

@@ -159,16 +159,16 @@
       flake = false;
     };
 
-    # dharmx/walls — a plain repo of wallpaper images sorted into category
-    # folders, linked into ~/Pictures/Wallpapers by
-    # modules/desktop/wallpapers.nix so DMS can browse them; DMS derives every
-    # colour on the desktop from the one picked. flake=false: it is images,
-    # not a flake. The repo carries no licence file — it is fetched, never
-    # copied into this repo. Large: GitHub reports ~3.8 GB with history; the
-    # fetched store path (no .git, just the tree) measured 3.3 GB via `du -sh`
-    # on 2026-09-16.
+    # sitolam/mywalls — our own wallpaper collection, linked into
+    # ~/Pictures/Wallpapers by modules/desktop/wallpapers.nix so DMS can browse
+    # it; DMS derives every colour on the desktop from the image picked, so
+    # this input is effectively the theme. flake=false: it is images, not a
+    # flake. Flat (no category folders) on purpose — see that module. ~490 MB.
+    # It replaced dharmx/walls, which is a far larger (3.3 GB fetched),
+    # category-sorted collection worth browsing when hunting for new ones; its
+    # README credits that repo and orangci/walls-catppuccin-mocha as sources.
     wallpapers = {
-      url = "github:dharmx/walls";
+      url = "github:sitolam/mywalls";
       flake = false;
     };
 
