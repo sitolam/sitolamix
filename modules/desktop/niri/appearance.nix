@@ -9,9 +9,9 @@ let
 in
 {
   config = lib.mkIf config.desktop.niri.enable {
-    # HM function — needs home-manager's `config` for stylix colors.
+    # HM function.
     home.extraOptions =
-      { config, lib, ... }:
+      { lib, ... }:
       {
         programs.niri = {
           config = lib.mkOptionDefault (
@@ -62,19 +62,25 @@ in
           settings = {
             prefer-no-csd = true;
             hotkey-overlay.skip-at-startup = true;
-            cursor.hide-after-inactive-ms = 5000;
+            cursor = {
+              hide-after-inactive-ms = 5000;
+              # home.pointerCursor (modules/theming/matugen.nix) already sets
+              # XCURSOR_THEME/XCURSOR_SIZE for the session, but niri draws its
+              # own compositor-side cursor from its own config rather than
+              # those env vars, and xcursor-size here is logical/unscaled so
+              # it does not grow with output scale (see the comment on
+              # theming.matugen.cursorSize in hosts/omnibook/default.nix) —
+              # so it needs to be told separately. Pulled from
+              # theming.matugen's cursorTheme/cursorSize rather than
+              # duplicated, so the two stay in sync.
+              theme = config.theming.matugen.cursorTheme;
+              size = config.theming.matugen.cursorSize;
+            };
 
             layout.focus-ring = {
               enable = true;
-              active.color = "#${config.lib.stylix.colors.base0E}";
-              inactive.color = "#${config.lib.stylix.colors.base02}";
+              width = 3.0;
             };
-
-            # Overview backdrop (visible between workspaces, and as the fallback
-            # on any output where DMS's blurred-wallpaper backdrop doesn't render
-            # — currently the non-focused monitor). Use the theme's base so it
-            # reads as an intentional dark surface rather than a sharp wallpaper.
-            overview.backdrop-color = "#${config.lib.stylix.colors.base00}";
 
             debug = {
               honor-xdg-activation-with-invalid-serial = [ ];

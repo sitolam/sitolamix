@@ -165,10 +165,6 @@ in
           });
           quickshell.package = pkgs.quickshell;
 
-          # matugen would regenerate app color files from DMS's palette and fight
-          # stylix; keep stylix authoritative for every app but DMS's own shell.
-          enableDynamicTheming = false;
-
           # session.json is deliberately left undeclared. The DMS home module
           # writes it as a read-only store symlink whenever `session != {}`
           # (`xdg.stateFile ... = lib.mkIf (cfg.session != {})`), and a read-only
@@ -203,6 +199,10 @@ in
               weatherLocation = "Eeklo, 9900";
               weatherCoordinates = "51.2,3.6";
 
+              # always dark: the matugen templates in this repo only render
+              # dark tokens.
+              isLightMode = false;
+
               nightModeEnabled = true;
               nightModeAutoEnabled = true;
               nightModeAutoMode = "location";
@@ -223,6 +223,22 @@ in
               run rm -f "$state"
               # install, not cp: store files are read-only and DMS must write it.
               run install -m 644 ${seed} "$state"
+            else
+              # A wallpaper collection that gets swapped out from under DMS (a
+              # wallpapers flake-input bump, a GC of the old collection's
+              # store path) leaves session.json naming a wallpaperPath that no
+              # longer exists. DMS then hands matugen a nonexistent image and
+              # matugen renders nothing at all — every registered template
+              # goes stale silently. Patch just that one key with jq, in
+              # place: this is the user's own live settings file (weather,
+              # night mode, whatever they've since picked in the DMS UI), so a
+              # full re-seed is not an option — only the one key that can go
+              # stale on its own gets touched, and only when it actually has.
+              wp="$(${pkgs.jq}/bin/jq -r '.wallpaperPath // empty' "$state" 2>/dev/null)"
+              if [ -n "$wp" ] && [ ! -e "$wp" ]; then
+                run sh -c '${pkgs.jq}/bin/jq --arg wp "$1" ".wallpaperPath = \$wp" "$2" > "$2.tmp" && mv "$2.tmp" "$2"' \
+                  -- "${cfg.initialWallpaper}" "$state"
+              fi
             fi
           '';
 

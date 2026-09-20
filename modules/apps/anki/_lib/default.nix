@@ -15,57 +15,60 @@
 # any path containing `/_`, so none of these data files are mistaken for NixOS
 # modules. ../default.nix imports it explicitly.
 #
-# ReColor's colors are theme-driven rather than a static seed: its dark-mode
-# swatches come from the active theme's `recolor` table (themes/<name>.nix),
-# resolved against `recolorSchema` (ReColor's own shipped labels/light
-# values/css var names, captured once in recolor-schema.json since they never
-# change). The result is written to its meta.json on *every* activation (not
-# just first-install), so switching the active theme re-colors Anki too.
+# ReColor's dark-mode colours follow the wallpaper. Nix writes a base
+# meta.json (labels, light values and CSS var names from recolor-schema.json,
+# dark slot = light value) on every activation; recolorApply then fills the
+# dark slot from the colours file matugen renders from ./recolor-template.nix.
+# matugen runs recolorApply as its post-hook on every wallpaper change, and
+# activation runs it again so a rebuild does not reset Anki to the light
+# values. Anki reads the file at startup, so a new wallpaper shows on the
+# next Anki start.
 {
   pkgs,
   lib,
-  theme,
 }:
 let
   inherit (pkgs.stable) anki-utils;
 
   recolorSchema = builtins.fromJSON (builtins.readFile ./recolor-schema.json);
 
-  resolveSwatch = v: if lib.hasPrefix "#" v then v else theme.palette.${v};
+  recolorColorsFile = "$HOME/.local/state/sitolamix/anki-recolor.json";
 
-  recolorColors = lib.mapAttrs (
-    key: schemaVal:
-    let
-      label = builtins.elemAt schemaVal 0;
-      light = builtins.elemAt schemaVal 1;
-      cssvar = builtins.elemAt schemaVal 2;
-      dark = resolveSwatch (
-        theme.recolor.${key} or (throw "themes/${theme.themeName}.nix: recolor.${key} is not set")
-      );
-    in
-    [
-      label
-      light
-      dark
-      cssvar
-    ]
-  ) recolorSchema;
+  recolorTemplate = builtins.toFile "anki-recolor.json" (
+    import ./recolor-template.nix {
+      inherit lib;
+      keys = lib.attrNames recolorSchema;
+    }
+  );
 
-  recolorMetaFile = (pkgs.formats.json { }).generate "recolor-meta.json" {
+  recolorBaseMeta = (pkgs.formats.json { }).generate "recolor-meta.json" {
     mod = 0;
     disabled = false;
-    # Same reason as the update_enabled line in mkActivationScript: this file
-    # replaces meta.json wholesale on every activation, so it has to carry the
-    # flag itself or Anki puts the addon back in its update prompt.
+    # This file replaces meta.json wholesale on every activation, so it has to
+    # carry the flag itself or Anki puts the addon back in its update prompt.
     update_enabled = false;
     config = {
-      colors = recolorColors;
+      colors = lib.mapAttrs (_key: v: [
+        (builtins.elemAt v 0)
+        (builtins.elemAt v 1)
+        (builtins.elemAt v 1)
+        (builtins.elemAt v 2)
+      ]) recolorSchema;
       version = {
         major = 3;
         minor = 3;
       };
     };
   };
+
+  recolorApply = pkgs.writeShellScript "anki-recolor-apply" ''
+    colors="${recolorColorsFile}"
+    meta="$HOME/.local/share/Anki2/addons21/688199788/meta.json"
+    [ -e "$colors" ] && [ -e "$meta" ] || exit 0
+    ${pkgs.jq}/bin/jq --slurpfile c "$colors" \
+      '.config.colors |= with_entries(.value[2] = ($c[0][.key] // .value[2]))' \
+      "$meta" > "$meta.tmp" && mv "$meta.tmp" "$meta"
+  '';
 
   fetched = import ./fetched { inherit pkgs; };
 
@@ -134,21 +137,27 @@ let
   ];
 in
 {
-  inherit addons seededIds recolorMetaFile;
+  inherit
+    addons
+    seededIds
+    recolorBaseMeta
+    recolorTemplate
+    recolorApply
+    recolorColorsFile
+    ;
   seedsDir = ./seeds;
 
   # Builds the home.activation script body.
   # - `secretMerges` merges live secrets into their addon's meta.json on every
   #   run, keyed by addon id; the jq filter path is relative to `.config`
   #   (meta.json's top-level config key).
-  # - `themedFiles` installs a fully Nix-generated meta.json verbatim on every
-  #   run (no seed-once check) -- for addons like ReColor whose config should
-  #   always match the current theme, not just the first install.
+  # - `themedFiles` installs a Nix-generated meta.json verbatim on every run,
+  #   then runs recolorApply.
   mkActivationScript =
     {
       addonsDir, # e.g. "$HOME/.local/share/Anki2/addons21"
       secretMerges, # [{ id = "111623432"; jqPath = ".configuration.service_config.Azure.api_key"; secretPath = "/run/secrets/..."; }]
-      themedFiles ? [ ], # [{ id = "688199788"; file = recolorMetaFile; }]
+      themedFiles ? [ ], # [{ id = "688199788"; file = recolorBaseMeta; }]
     }:
     let
       deployOne = id: drv: ''
@@ -208,5 +217,8 @@ in
     ''
     + lib.concatStrings (lib.mapAttrsToList deployOne addons)
     + lib.concatStrings (map mergeSecret secretMerges)
-    + lib.concatStrings (map deployThemedFile themedFiles);
+    + lib.concatStrings (map deployThemedFile themedFiles)
+    + lib.optionalString (themedFiles != [ ]) ''
+      ${recolorApply}
+    '';
 }

@@ -10,7 +10,10 @@ in
       { pkgs, ... }:
       {
         programs = {
-          bat.enable = true;
+          bat = {
+            enable = true;
+            config.theme = "ansi";
+          };
           eza = {
             enable = true;
             icons = "auto";
@@ -26,7 +29,12 @@ in
             enable = true;
             enableFishIntegration = true;
           };
-          btop.enable = true;
+          btop = {
+            enable = true;
+            # TTY theme draws with the terminal's 16 ANSI colours, which DMS sets
+            # from the wallpaper through ghostty.
+            settings.color_theme = "TTY";
+          };
           atuin = {
             enable = true;
             enableFishIntegration = true;

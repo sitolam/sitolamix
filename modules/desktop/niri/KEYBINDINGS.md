@@ -166,7 +166,7 @@ launcher.
 | `Mod+Alt+A` | phone screen mirror (`modules/apps/android.nix`) |
 | `Mod+Alt+S` | colour picker (`hyprpicker`) |
 | `Mod+Alt+T` | toggle light/dark theme |
-| `Mod+Alt+W` | wallpaper picker |
+| `Mod+Alt+W` | wallpaper carousel — fullscreen picker over the wallpaper folder (`wallpaperCarousel` plugin) |
 | `Mod+Alt+N` | night light |
 | `Mod+Alt+E` | emoji / unicode picker (also `Mod+F2`) |
 | `Mod+Alt+P` | keydrill, with niri's own binds switched off while it runs |

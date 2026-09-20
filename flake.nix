@@ -1,5 +1,5 @@
 {
-  description = "sitolamix — enable-options NixOS: niri + DankMaterialShell + stylix (catppuccin-mocha)";
+  description = "sitolamix — enable-options NixOS: niri + DankMaterialShell, themed from the wallpaper";
 
   nixConfig = {
     # garnix / hyprland / lantian / noctalia were dropped — see modules/system/nix.nix.
@@ -31,11 +31,6 @@
 
     home-manager = {
       url = "github:nix-community/home-manager/master";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
-    stylix = {
-      url = "github:nix-community/stylix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -154,11 +149,26 @@
       flake = false;
     };
 
-    # orangci/walls-catppuccin-mocha — a plain repo of wallpaper images, linked
-    # into ~/Pictures/Wallpapers by modules/desktop/wallpapers.nix so DMS can
-    # browse them. flake=false: it is images, not a flake.
+    # AvengeMedia/base46 — DMS's fork of NvChad's base46 colour engine. DMS's
+    # neovim matugen template (~/.config/nvim/colors/dms.lua) requires it and
+    # checks for its `_DMS_SUPPORT` marker, so nixpkgs' vimPlugins.base46
+    # (upstream NvChad, no harmonise API) does not work. flake=false: it is a
+    # plain plugin tree, built with vimUtils in modules/apps/neovim.nix.
+    base46-dms = {
+      url = "github:AvengeMedia/base46";
+      flake = false;
+    };
+
+    # sitolam/mywalls — our own wallpaper collection, linked into
+    # ~/Pictures/Wallpapers by modules/desktop/wallpapers.nix so DMS can browse
+    # it; DMS derives every colour on the desktop from the image picked, so
+    # this input is effectively the theme. flake=false: it is images, not a
+    # flake. Flat (no category folders) on purpose — see that module. ~490 MB.
+    # It replaced dharmx/walls, which is a far larger (3.3 GB fetched),
+    # category-sorted collection worth browsing when hunting for new ones; its
+    # README credits that repo and orangci/walls-catppuccin-mocha as sources.
     wallpapers = {
-      url = "github:orangci/walls-catppuccin-mocha";
+      url = "github:sitolam/mywalls";
       flake = false;
     };
 
