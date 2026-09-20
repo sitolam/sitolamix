@@ -5,25 +5,22 @@
   ...
 }:
 let
-  # orangci/walls-catppuccin-mocha — a flake input, so the images live in the
-  # Nix store and nowhere else. 335 files, ~396 MB. (GitHub reports 795 MB for
-  # the repo; that counts git history the tarball does not carry.)
-  collection = inputs.wallpapers;
-
-  # The wallpaper DMS starts on. Pointing it *into the collection* is what makes
-  # the directory declarative: DMS has no wallpaper-folder setting, but
-  # Services/WallpaperCyclingService.qml derives the folder it cycles through
-  # from the current wallpaper's own directory —
+  # sitolam/mywalls — my own collection, a flake input so the images live in
+  # the Nix store and nowhere else. Flat: one directory of images, no category
+  # folders, which is what makes cycling cover the whole collection —
+  # Services/WallpaperCyclingService.qml derives the folder it cycles from the
+  # current wallpaper's own directory:
   #
   #   const wallpaperDir = currentWallpaper.substring(0, currentWallpaper.lastIndexOf('/'))
   #
-  # — so seeding a path inside the store collection sets the folder for free,
-  # and cycling covers all 335 images.
-  default = "cat-in-clouds.png";
+  # (dharmx/walls, which this replaced, is split into ~50 category folders, so
+  # cycling there only ever covered the category the current wallpaper sat in.)
+  collection = inputs.wallpapers;
 
-  # Guard the filename against an input update renaming it: fall back to the
-  # first image rather than silently seeding a path that does not exist. Plain
-  # readDir on a store path, so no import-from-derivation.
+  # The wallpaper DMS starts on: first image by natural sort. Plain readDir on
+  # a store path, so no import-from-derivation, and nothing to break when the
+  # input gains or loses files. The .gif/.mp4 in the collection are left out —
+  # DMS's still-image pipeline is what seeds cleanly; pick those in the UI.
   images = lib.naturalSort (
     lib.attrNames (
       lib.filterAttrs (
@@ -31,12 +28,14 @@ let
         type == "regular"
         && lib.any (ext: lib.hasSuffix ext (lib.toLower name)) [
           ".jpg"
+          ".jpeg"
           ".png"
+          ".webp"
         ]
       ) (builtins.readDir collection)
     )
   );
-  chosen = if lib.elem default images then default else lib.head images;
+  chosen = lib.head images;
 in
 {
   config = lib.mkIf config.desktop.dms.enable {

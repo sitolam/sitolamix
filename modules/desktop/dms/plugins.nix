@@ -346,6 +346,19 @@ let
       action = "dms ipc call settings focusOrToggleWith wallpaper";
     }
     {
+      # The carousel (plugin below) rather than the settings page above: this
+      # is the picker you actually browse with, and since every colour on the
+      # desktop is derived from the wallpaper, it is a theming control.
+      id = "style.carousel";
+      icon = "view_carousel";
+      label = "Wallpaper carousel";
+      aliases = [
+        "carousel"
+        "walls"
+      ];
+      action = "dms ipc call wallpaperCarousel toggle";
+    }
+    {
       id = "style.bar";
       icon = "width_normal";
       label = "Bar";
@@ -596,6 +609,16 @@ in
             screenshotBackend = "dms";
           };
         };
+        # fullscreen skewed carousel over the wallpaper folder DMS is already
+        # cycling (see ../wallpapers.nix), bound to Mod+Alt+W in
+        # ../niri/bindings.nix. Since this branch every colour on the desktop
+        # is matugen'd from the current wallpaper, so this is the fastest way
+        # to re-theme the machine. Settings are left at the plugin's own
+        # defaults: it reads the directory from DMS's wallpaper management
+        # rather than carrying its own, and the rest is overlay geometry best
+        # judged by eye in Settings > Plugins.
+        wallpaperCarousel.enable = true; # motor-dev/wallpaperCarousel, in dms-plugin-registry
+
         # control-center plugin (no bar widget, so NOT hideable by the hidden
         # bar): a break reminder, surfaces as a control-center toggle.
         # niriDS below is its own bar-widget control-center tile instead.

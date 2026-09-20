@@ -344,9 +344,13 @@
               "theme"
               "toggle"
             ]);
+            # the wallpaperCarousel plugin (../dms/plugins.nix), not
+            # dankdash's own grid: same job, but it browses the whole folder
+            # full-screen. dankdash's picker is still one row away in
+            # dankMenu ("Wallpaper").
             "Mod+Alt+W" = spawn (dms [
-              "dankdash"
-              "wallpaper"
+              "wallpaperCarousel"
+              "toggle"
             ]);
             "Mod+Alt+N" = spawn (dms [
               "night"

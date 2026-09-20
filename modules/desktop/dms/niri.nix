@@ -8,20 +8,22 @@
           # Let DMS manage niri outputs from its settings UI. It writes display
           # config to ~/.config/niri/dms/outputs.kdl; this include mechanism
           # relocates our niri config to niri/hm.kdl and makes config.kdl include
-          # both — so DMS's output changes persist. We only pull in "outputs"
-          # (binds/layout/colors/wpblur stay ours). override=true (default) means
-          # DMS's outputs win over the defaults in hosts/gamingpc.
+          # both — so DMS's output changes persist. We also pull in "colors"
+          # (see the comment on filesToInclude below); binds/layout/wpblur
+          # stay ours. override=true (default) means DMS's outputs win over
+          # the defaults in hosts/gamingpc.
           dank-material-shell.niri.includes = {
             enable = true;
-            filesToInclude = [ "outputs" ];
+            # "colors" is DMS's matugen-rendered focus ring, border, shadow,
+            # tab indicator and insert hint, which is why niri/appearance.nix
+            # sets no colours.
+            filesToInclude = [
+              "outputs"
+              "colors"
+            ];
           };
 
           niri.settings = {
-            # DMS honours DMS_DISABLE_MATUGEN to skip generating app theme
-            # templates entirely; merges with the environment block in
-            # niri/layout.nix.
-            environment.DMS_DISABLE_MATUGEN = "1";
-
             # Pin DMS's blurred-wallpaper duplicate into niri's overview backdrop,
             # so it's only visible in the overview / between workspaces (never on
             # the normal desktop). This is the "manual niri configuration" that
