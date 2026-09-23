@@ -25,6 +25,13 @@ in
           # requires apps.vscode.enable — profiles.default only exists once
           # that module sets programs.vscode.enable = true.
           pkgs.vscode-extensions.james-yu.latex-workshop
+
+          # Companion to latex-workshop, not a competitor: word count, a
+          # format-on-save cleanup, hover-preview of citations/refs. Needs
+          # latex-workshop installed; ships no compiler of its own, so it
+          # doesn't hit the "don't stack LaTeX extensions" warning that
+          # applies to standalone language-support ones.
+          pkgs.vscode-extensions.tecosaur.latex-utilities
         ];
 
         programs.vscode.profiles.default.userSettings = {
