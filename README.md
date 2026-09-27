@@ -1159,7 +1159,7 @@ made from your phone or the web UI within seconds.
 ## 🗄️ NAS shares (SMB)
 
 <details>
-<summary>The home NAS's SMB shares mounted under <code>/mnt/nas/&lt;share&gt;</code> as real kernel <code>cifs</code> mounts, automounted on first access, with the share password held in sops — no keyring prompt, no GVFS, available to every process and to root.</summary>
+<summary>The home NAS's SMB shares mounted under <code>/mnt/nas/&lt;share&gt;</code> as real kernel <code>cifs</code> mounts, mounted automatically whenever the network comes up and listed in the Nautilus sidebar, with the share password held in sops — no keyring prompt, no GVFS, available to every process and to root.</summary>
 
 <br>
 
@@ -1175,11 +1175,13 @@ services.nas = {
 };
 ```
 
-The mounts are `noauto` + `x-systemd.automount`: systemd creates the mount point
-and only runs `mount.cifs` when something first touches the path. Boot never
-waits on the NAS, so a laptop away from the home network still boots normally
-and the mount simply happens once it is back. An idle mount is released again
-after 10 minutes.
+The mounts are `noauto`, so boot never waits on the NAS and a laptop away from
+the home network still boots normally. A NetworkManager dispatcher script
+starts the mount units whenever a connection comes up and stops them once no
+connection is left; away from home the attempt just times out after 10 s.
+`x-systemd.automount` stays as a fallback: touching the path retries a mount
+that failed. `x-gvfs-show` puts each mounted share in the Nautilus sidebar as a
+drive, so there are no bookmarks.
 
 ### Credentials
 

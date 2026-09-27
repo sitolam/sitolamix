@@ -1,15 +1,31 @@
-{ config, lib, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  utils,
+  ...
+}:
 let
   cfg = config.services.nas;
 
   credentials = config.sops.secrets.nas_credentials.path;
 
-  # noauto + x-systemd.automount: systemd creates an .automount unit and only
-  # runs mount.cifs on first access to the path. The NAS is on the home LAN and
-  # this flake also runs on a laptop, so a boot-time mount would stall boot
-  # (and fail) whenever the machine is elsewhere. idle-timeout unmounts again
-  # after 10 min so a share that went away does not leave a hung mountpoint.
-  mountOptions = [
+  mountPoints = map (share: "${cfg.mountRoot}/${share}") cfg.shares;
+  mountUnits = map (path: "${utils.escapeSystemdPath path}.mount") mountPoints;
+
+  # noauto keeps the shares out of the boot transaction: the NAS is on the
+  # home LAN and this flake also runs on a laptop, so a boot-time mount would
+  # stall boot (and fail) whenever the machine is elsewhere. Mounting happens
+  # instead from the NetworkManager dispatcher below, as soon as a connection
+  # comes up. x-systemd.automount stays as the fallback: if the dispatcher's
+  # attempt failed (NAS still booting, say), touching the path retries it.
+  #
+  # x-gvfs-show makes GVFS's udisks2 volume monitor list the share in the
+  # Nautilus sidebar as a mounted drive (it handles `//host/share` fstab
+  # entries too, not only block devices). No idle-timeout: the shares should
+  # stay mounted while the network is up, not drop out of the sidebar after
+  # ten idle minutes.
+  mountOptions = share: [
     "credentials=${credentials}"
     "uid=1000"
     "gid=100"
@@ -20,8 +36,9 @@ let
     "_netdev"
     "noauto"
     "x-systemd.automount"
-    "x-systemd.idle-timeout=600"
     "x-systemd.mount-timeout=10s"
+    "x-gvfs-show"
+    "x-gvfs-name=${share}"
   ];
 
   mount = share: {
@@ -29,7 +46,7 @@ let
     value = {
       device = "//${cfg.server}/${share}";
       fsType = "cifs";
-      options = mountOptions;
+      options = mountOptions share;
     };
   };
 in
@@ -66,14 +83,27 @@ in
 
     fileSystems = lib.listToAttrs (map mount cfg.shares);
 
-    # Nautilus sidebar entries. The mounts are otherwise invisible in the file
-    # manager: gio only auto-displays mounts under /media, /run/media/$USER or
-    # $HOME, and the fstab flag that would force it (`x-gvfs-show`) is only read
-    # by GVFS's udisks2 monitor, which handles block devices — not `//host/share`.
-    # A bookmark also works while the share is idle-unmounted: opening it just
-    # touches the path, which is what triggers the automount.
-    home.extraOptions.gtk.gtk3.bookmarks = map (
-      share: "file://${cfg.mountRoot}/${share} ${share}"
-    ) cfg.shares;
+    # Mount the shares whenever a connection comes up, and release them once
+    # the machine has no connection left, so a vanished NAS never leaves a hung
+    # mountpoint. The "disconnected" check matters: toggling the WireGuard
+    # tunnel (services.wireguard-laxoi) also fires `down` while Wi-Fi stays up.
+    # Away from home the start just fails after mount-timeout and is retried on
+    # the next connection change. --no-block: the dispatcher must not wait on
+    # the NAS.
+    networking.networkmanager.dispatcherScripts = [
+      {
+        type = "basic";
+        source = pkgs.writeShellScript "nas-mount" ''
+          case "$2" in
+            up | vpn-up | connectivity-change)
+              ${pkgs.systemd}/bin/systemctl start --no-block ${lib.escapeShellArgs mountUnits} ;;
+            down)
+              if [ "$(${pkgs.networkmanager}/bin/nmcli -t -f STATE general)" = disconnected ]; then
+                ${pkgs.systemd}/bin/systemctl stop --no-block ${lib.escapeShellArgs mountUnits}
+              fi ;;
+          esac
+        '';
+      }
+    ];
   };
 }
