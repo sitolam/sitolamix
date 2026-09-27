@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "sitolamix wallpaper theme",
+  "version": "1.0",
+  "theme": {
+    "colors": {
+      "toolbar": [{{colors.surface_container.default.red}}, {{colors.surface_container.default.green}}, {{colors.surface_container.default.blue}}],
+      "background_tab": [{{colors.surface_container_lowest.default.red}}, {{colors.surface_container_lowest.default.green}}, {{colors.surface_container_lowest.default.blue}}],
+      "background_tab_inactive": [{{colors.surface_container_lowest.default.red}}, {{colors.surface_container_lowest.default.green}}, {{colors.surface_container_lowest.default.blue}}],
+      "tab_text": [{{colors.primary.default.red}}, {{colors.primary.default.green}}, {{colors.primary.default.blue}}],
+      "background_tab_text": [{{colors.on_surface_variant.default.red}}, {{colors.on_surface_variant.default.green}}, {{colors.on_surface_variant.default.blue}}],
+      "toolbar_text": [{{colors.on_surface.default.red}}, {{colors.on_surface.default.green}}, {{colors.on_surface.default.blue}}],
+      "toolbar_button_icon": [{{colors.on_surface_variant.default.red}}, {{colors.on_surface_variant.default.green}}, {{colors.on_surface_variant.default.blue}}],
+      "bookmark_text": [{{colors.on_surface.default.red}}, {{colors.on_surface.default.green}}, {{colors.on_surface.default.blue}}],
+      "omnibox_background": [{{colors.surface_container_highest.default.red}}, {{colors.surface_container_highest.default.green}}, {{colors.surface_container_highest.default.blue}}],
+      "omnibox_text": [{{colors.on_surface.default.red}}, {{colors.on_surface.default.green}}, {{colors.on_surface.default.blue}}],
+      "ntp_background": [{{colors.surface.default.red}}, {{colors.surface.default.green}}, {{colors.surface.default.blue}}],
+      "ntp_text": [{{colors.on_surface.default.red}}, {{colors.on_surface.default.green}}, {{colors.on_surface.default.blue}}]
+    }
+  }
+}

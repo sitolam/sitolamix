@@ -156,6 +156,14 @@ let
       matches = [ "https://event.supercell.com/brawlstars/*" ];
     })
   ];
+
+  # Unpacked theme extension that matugen renders from ./theme-manifest.json
+  # (theming.matugen.templates.helium below). It lives outside the store
+  # because DMS rewrites it on every wallpaper change, and because Chromium
+  # writes its `Cached Theme.pak` next to the manifest. Helium re-reads the
+  # manifest on every start, so a wallpaper change reaches the browser on its
+  # next launch, not live.
+  themeDir = "${config.users.users.otis.home}/.local/state/sitolamix/helium-theme";
 in
 {
   imports = [ inputs.helium.nixosModules.default ];
@@ -189,7 +197,7 @@ in
         # Web Store id, and Chromium's standalone-external-extension directory
         # is the compiled-in /usr/share/chromium/extensions, which NixOS has no
         # business creating.
-        "--load-extension=${lib.concatMapStringsSep "," toString userscripts}"
+        "--load-extension=${lib.concatMapStringsSep "," toString (userscripts ++ [ themeDir ])}"
       ];
 
       # Chrome Enterprise policies, written to /etc/chromium/policies/managed —
@@ -235,23 +243,38 @@ in
       };
     };
 
+    # Wallpaper colours through a Chrome theme extension instead of Chromium's
+    # "GTK" appearance. Helium's GTK mode paints the tab strip, the toolbar and
+    # the active tab all from GTK's window_bg_color and reads no other GTK
+    # colour for them (tested 2026-09-27 on 0.18.1.1), so the open tab was
+    # indistinguishable. A theme's colours are honoured, but not as Chrome
+    # maps them: helium ignores `frame`, paints frame *and* active tab from
+    # `toolbar`, and draws inactive tabs as pills in `background_tab`. So the
+    # active tab is the one without a pill, and gets the accent as its text
+    # colour to make it stand out further.
+    #
+    # Drop this (and go back to GTK mode: `.extensions.theme.system_theme = 1`
+    # merged into Preferences) once helium distinguishes the active tab in GTK
+    # mode — https://github.com/imputnet/helium-linux/issues/131 and
+    # https://github.com/imputnet/helium/issues/1850.
+    theming.matugen.templates.helium = {
+      input = ./theme-manifest.json;
+      output = "${themeDir}/manifest.json";
+    };
+
     home.extraOptions =
-      { pkgs, lib, ... }:
+      { lib, ... }:
       {
-        # Chromium's "GTK" appearance takes its colours from the GTK theme, which
-        # DMS recolours from the wallpaper — there is no matugen template for
-        # Chromium itself. The mode is a profile pref with no policy equivalent
-        # (BrowserThemeColor is a single static colour), so it is merged into
-        # Preferences. Skipped while helium runs, because it rewrites the file on
-        # exit and would undo the merge.
-        home.activation.heliumGtkTheme = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-          prefs="$HOME/.config/net.imput.helium/Default/Preferences"
-          if [ -e "$prefs" ] && ! ${pkgs.procps}/bin/pgrep -x helium >/dev/null; then
-            # `&&`, not two separate `run`s: a jq failure must not fall
-            # through to `mv` and install a truncated file over helium's
-            # live Preferences.
-            run sh -c '${pkgs.jq}/bin/jq "$1" "$2" > "$2.tmp" && mv "$2.tmp" "$2"' \
-              -- '.extensions.theme.system_theme = 1' "$prefs"
+        # DMS only renders the template on its next wallpaper change. Until
+        # then --load-extension would point at a missing directory and helium
+        # pops an error on every launch, so seed an empty but valid theme.
+        # Never overwrites: once DMS has rendered, the file is its.
+        home.activation.heliumThemeSeed = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+          if [ ! -e "${themeDir}/manifest.json" ]; then
+            run mkdir -p "${themeDir}"
+            run sh -c 'printf "%s\n" "$1" > "$2"' -- \
+              '{"manifest_version":3,"name":"sitolamix wallpaper theme","version":"1.0","theme":{}}' \
+              "${themeDir}/manifest.json"
           fi
         '';
       };
