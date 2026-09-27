@@ -745,7 +745,13 @@ in
         # containers, compose projects, logs, shells) ever becomes useful.
         dockerManager.enable = false;
         ambientSound.enable = true; # hthienloc/dms-ambient-sound (bar widget — no control-center variant)
-        dankBatteryAlerts.enable = true; # AvengeMedia DankBatteryAlerts
+        # AvengeMedia DankBatteryAlerts was dropped from dms-plugin-registry
+        # (registry commit 098a7f6, "remove builtin plugins"): its low/critical
+        # threshold alerts moved into DMS core Settings > Battery > Alerts
+        # (SettingsData.batteryAlerts*), no plugin entry needed. Removing this
+        # `enable = true` fixes `programs.dank-material-shell.plugins.dankBatteryAlerts.src'
+        # was accessed but has no value defined` after a flake update dropped
+        # the registry's pinned src for it.
         # notsopreety/batteryOSD. Used to need its own flake input, back when it
         # was missing from dms-plugin-registry; the registry has since adopted
         # it (plugins/notsopreety-batteryOSD.json), so this is a plain `enable`

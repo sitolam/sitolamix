@@ -16,6 +16,13 @@
       # 2=Dynamic.
       animationVariant = 1; # Fluent
 
+      # Low-battery notifications. Used to be the dankBatteryAlerts plugin;
+      # dms-plugin-registry dropped it (registry commit 098a7f6) once DMS
+      # folded the same alerts into core Settings > Battery > Alerts.
+      # batteryNotifyCritical already defaults to true; batteryNotifyLow
+      # defaults to false, so it's set here to match what the plugin did.
+      batteryNotifyLow = true;
+
       # default app launcher: compact Spotlight style rather than the "full"
       # app-drawer grid.
       launcherStyle = "spotlight";
