@@ -43,7 +43,7 @@ in
         # save/restore of the absolute level — simplest thing that works,
         # though it won't land back exactly if the panel was already near
         # 0% or 100% when idling started.
-        dimStep = "30";
+        dimStep = "40";
       in
       {
         # Idle manager. Deliberately NOT DMS's built-in IdleService — swayidle is
@@ -68,12 +68,14 @@ in
 
           timeouts = [
             {
-              # 9.5 min: dim the internal panel as a warning shot before it
-              # blanks — mirrors Windows' pre-timeout dim. External/DDC
+              # 9 min: dim the internal panel as a warning shot before it
+              # blanks — mirrors Windows' pre-timeout dim. A full minute of
+              # warning: the earlier 30 s was too short to notice and react
+              # to before the screen went dark. External/DDC
               # monitors are left alone (dimming those over I2C is slow and
               # flickery); "" targets the default device, which bindings.nix
               # already documents as the eDP panel.
-              timeout = 570;
+              timeout = 540;
               command = "${dms} ipc call brightness decrement ${dimStep} \"\"";
               resumeCommand = "${dms} ipc call brightness increment ${dimStep} \"\"";
             }
