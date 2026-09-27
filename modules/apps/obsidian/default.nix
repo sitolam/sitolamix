@@ -4,22 +4,23 @@ let
 in
 {
   options.apps.obsidian = {
-    enable = lib.mkEnableOption "Obsidian with a declaratively deployed plugin set";
+    enable = lib.mkEnableOption "Obsidian with wallpaper-driven theming";
 
     vault = lib.mkOption {
       type = lib.types.str;
       # Documents/uni was the first vault; this one replaced it in 2026-09.
-      # Only one vault is managed at a time — the plugins and the generated
-      # CSS snippet land here, and whatever sits in an older vault stays
-      # frozen at the version it was last deployed with.
+      # Only one vault is managed at a time — the generated CSS snippet lands
+      # here, and an older vault keeps whatever snippet it last received.
       default = "/home/otis/Documents/Obsidian notes/School";
       description = ''
-        Absolute path of the vault this module deploys plugins into.
+        Absolute path of the vault this module themes.
 
         The vault itself is *not* part of this repo: it is its own git
         repository, committed by the obsidian-git plugin, because it is course
-        notes (user data) and not system configuration. This module only owns
-        the `.obsidian/` machinery inside it.
+        notes (user data) and not system configuration. Community plugins are
+        installed from Obsidian's own browser and live in that repository
+        under `.obsidian/plugins/`; this module only seeds first-run settings
+        and writes the matugen CSS snippet.
       '';
     };
   };
@@ -28,8 +29,6 @@ in
     home.extraOptions =
       { pkgs, lib, ... }:
       let
-        plugins = import ./_lib/plugins.nix { inherit pkgs lib; };
-
         # Written once, then left to Obsidian. Every file under .obsidian/ is
         # rewritten by the app the moment a setting is toggled, so seeding is
         # the only honest option: a file this module rewrote on every
@@ -95,54 +94,6 @@ in
           '') seeds
         );
 
-        # Plugin *code* is redeployed every activation (that is the point of
-        # pinning it in Nix); each plugin's data.json — its settings — is
-        # never touched, so anything configured in the app survives a rebuild.
-        # A plugin dropped from ./_lib/plugins.nix would otherwise stay on disk
-        # and keep running forever. Only directories carrying the marker this
-        # module writes are removed, so plugins installed by hand from
-        # Obsidian's own browser are never touched.
-        pruneScript = ''
-          for dir in "$plugdir"/*/; do
-            id=$(basename "$dir")
-            if [ -e "$dir/.nix-managed" ] && ! printf '%s\n' ${
-              lib.concatMapStringsSep " " (p: lib.escapeShellArg p.id) plugins
-            } | grep -qx "$id"; then
-              rm -rf "$dir"
-              if [ -e "$cfgdir/community-plugins.json" ]; then
-                ${pkgs.jq}/bin/jq --arg id "$id" 'map(select(. != $id))' \
-                  "$cfgdir/community-plugins.json" > "$cfgdir/community-plugins.json.tmp"
-                mv "$cfgdir/community-plugins.json.tmp" "$cfgdir/community-plugins.json"
-              fi
-            fi
-          done
-        '';
-
-        # Plugin code on disk is inert until its id is listed here, so this
-        # one file cannot be seed-once like the rest: a plugin added to
-        # ./_lib/plugins.nix months from now would land on disk and never
-        # switch on. Union rather than overwrite, so ids Obsidian added for
-        # plugins installed from its own browser survive. Consequence: a
-        # plugin listed here cannot be turned off in the app, only by removing
-        # it from ./_lib/plugins.nix.
-        enableScript = ''
-          ids=${lib.escapeShellArg (builtins.toJSON (map (p: p.id) plugins))}
-          if [ -e "$cfgdir/community-plugins.json" ]; then
-            ${pkgs.jq}/bin/jq -n --argjson a "$(cat "$cfgdir/community-plugins.json")" \
-              --argjson b "$ids" '$a + $b | unique' > "$cfgdir/community-plugins.json.tmp"
-            mv "$cfgdir/community-plugins.json.tmp" "$cfgdir/community-plugins.json"
-          else
-            printf '%s' "$ids" > "$cfgdir/community-plugins.json"
-          fi
-        '';
-
-        deployScript = lib.concatMapStringsSep "\n" (p: ''
-          install -d "$plugdir/${p.id}"
-          ${lib.concatMapStringsSep "\n" (
-            file: ''install -m644 "${p.files.${file}}" "$plugdir/${p.id}/${file}"''
-          ) (lib.attrNames p.files)}
-          touch "$plugdir/${p.id}/.nix-managed"
-        '') plugins;
         # The snippet is inert until Obsidian is told to load it. The base
         # theme is always "obsidian" (dark) because the matugen scheme is
         # always dark; accentColor is removed because a static hex here
@@ -183,14 +134,10 @@ in
             fi
           '';
 
-          activation.obsidianPlugins = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+          activation.obsidianVault = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
             cfgdir=${lib.escapeShellArg "${cfg.vault}/.obsidian"}
-            plugdir=${lib.escapeShellArg "${cfg.vault}/.obsidian/plugins"}
-            install -d "$plugdir"
-            ${deployScript}
-            ${pruneScript}
+            install -d "$cfgdir"
             ${seedScript}
-            ${enableScript}
             install -d "$cfgdir/snippets"
             ${appearanceScript}
           '';

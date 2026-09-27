@@ -12,8 +12,8 @@ in
     apps = {
       anki.enable = true;
 
-      # Obsidian likewise carries its own module: it deploys a pinned set of
-      # community plugins into the notes vault (modules/apps/obsidian/_lib).
+      # Obsidian likewise carries its own module: it themes the notes vault
+      # from the wallpaper; plugins live in the vault's own git repository.
       obsidian.enable = true;
 
       oop-apps.enable = true;
