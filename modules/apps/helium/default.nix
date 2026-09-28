@@ -265,6 +265,24 @@ in
     home.extraOptions =
       { lib, ... }:
       {
+        # Widevine (DRM) for streaming sites. Helium is ungoogled-chromium
+        # based: it has the Widevine *component* code compiled in, but never
+        # downloads the CDM from Google, and oxcl's flake repacks the .deb
+        # without one — so ~/.config/net.imput.helium/WidevineCdm stays empty
+        # and every DRM player fails (seen as a football stream's
+        # "Error code: 1002", 2026-09-28).
+        # Chromium reads this hint file at startup and registers the CDM at
+        # `Path`, so pointing it at nixpkgs' widevine-cdm makes the store
+        # copy the one in use, updated with nixpkgs rather than by hand.
+        #
+        # Drop this if helium or the flake ever ship Widevine themselves
+        # (helium://components would then list a downloaded version).
+        xdg.configFile."net.imput.helium/WidevineCdm/latest-component-updated-widevine-cdm".text =
+          builtins.toJSON
+            {
+              Path = "${pkgs.widevine-cdm}/share/google/chrome/WidevineCdm";
+            };
+
         # DMS only renders the template on its next wallpaper change. Until
         # then --load-extension would point at a missing directory and helium
         # pops an error on every launch, so seed an empty but valid theme.
