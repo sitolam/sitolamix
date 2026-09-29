@@ -2,9 +2,7 @@
 {
   imports = [
     ./hardware.nix
-    # No hp-omnibook module exists in nixos-hardware (only elitebook/probook/
-    # laptop/notebook), so this is the generic laptop stack.
-    # common-cpu-intel pulls common/gpu/intel in with it.
+    # No hp-omnibook module in nixos-hardware, so this is the generic laptop stack.
     inputs.nixos-hardware.nixosModules.common-cpu-intel
     inputs.nixos-hardware.nixosModules.common-pc-laptop
     inputs.nixos-hardware.nixosModules.common-pc-laptop-ssd
@@ -13,36 +11,17 @@
   networking.hostName = "omnibook";
   system.stateVersion = "25.11";
 
-  # hardware
   hardware = {
-    # Core Ultra X7 358H is Panther Lake — Xe3 graphics, xe-only, no i915 path.
-    # nixos-hardware has no panther-lake directory either, so these are the two
-    # settings its lunar-lake module would have applied (common/gpu/intel still
-    # defaults `driver` to i915, which is wrong here). The zen kernel this flake
-    # pins is well past the 6.8 the xe driver asserts on.
+    # Panther Lake (Xe3) is xe-only, no i915 path; no nixos-hardware module for it yet, and common/gpu/intel defaults `driver` to i915.
     intelgpu = {
       driver = "xe";
       vaapiDriver = "intel-media-driver";
     };
 
-    # 5th-gen NPU (NPU4). ivpu kernel driver upstreamed in Linux 6.13 (zen here
-    # is 7.1.8), and pkgs.intel-npu-driver 1.35.0 has carried Panther Lake
-    # userspace/firmware support since 1.28.0 — nixpkgs just never enabled this
-    # module for us. /dev/accel/accel0 is the resulting device node.
+    # 5th-gen NPU (NPU4); nixpkgs never enabled this for Panther Lake despite kernel/driver support. Device node: /dev/accel/accel0.
     cpu.intel.npu.enable = true;
 
-    # Face unlock. Convenience, not a second factor — read the security note at
-    # the top of modules/hardware/gaze.nix. The IR camera is machine-specific
-    # (see README → Face unlock): the Quanta "HP 5MP Camera" module, whose IR
-    # half is the GREY-only V4L2 node (`v4l2-ctl --list-formats-ext`) next to
-    # the colour MJPG/YUYV one. Given as usb:VID:PID rather than a device node
-    # so gaze resolves the infrared node itself — /dev/videoN numbering isn't
-    # guaranteed across boots, and a by-path symlink is not a form gaze parses.
-    #
-    # device = "npu": the NPU enabled just above. Face detection and
-    # recognition are exactly the small fixed-shape CNNs it exists for, and
-    # keeping them off the CPU is what makes a scan that races the password
-    # prompt cheap enough to run on every unlock, on battery.
+    # Face unlock (convenience, not a second factor — see modules/hardware/gaze.nix). irDevice is usb:VID:PID since /dev/videoN numbering isn't stable. device = "npu" keeps inference cheap enough to race the password prompt.
     gaze = {
       enable = true;
       irDevice = "usb:0408:5494";
@@ -50,41 +29,20 @@
     };
   };
 
-  # Xe3 display-engine workaround. The driver stack above is correct (xe +
-  # iHD, both confirmed loaded); what misbehaves is Panther Lake's still-young
-  # display code.
-  #
-  #   xe.enable_dsb=0 — Display State Buffer, the batched register-write path
-  #     for atomic commits. Symptom: "[CRTC:151:pipe A] DSB 0 poll error"
-  #     repeating about once per vblank (660k lines in one boot before this),
-  #     which stalls commits and reads as dropped frames in video playback.
-  #
-  # Display-engine only — no effect on rendering or VA-API decode.
-  #
-  # xe.enable_psr=0 (Panel Self Refresh) used to sit here too, for half-panel
-  # blackouts logged as "Timed out waiting PSR idle state", "Selective fetch
-  # area calculation failed in pipe A" and "CPU pipe A FIFO underrun". Dropped
-  # on 2026-08-26 to retest on zen 7.1.9 (it was set on 7.1.8), because PSR is
-  # the display feature that actually costs idle battery when off. If the
-  # blackouts come back, put it back; if they do not, it is fixed upstream.
-  # Verify after a few hours of use, on this boot:
-  #   journalctl -k -b | grep -cE "PSR idle state|Selective fetch|FIFO underrun"
-  # Same one-at-a-time retest applies to DSB after the next kernel bump:
-  #   journalctl -k -b | grep -c "DSB 0 poll error"
+  # Xe3 display-engine bug (not misconfiguration): DSB commit stalls flood dmesg
+  # with "DSB 0 poll error" and read as dropped frames. Retest after kernel
+  # bumps with `journalctl -k -b | grep -c "DSB 0 poll error"`.
   boot.kernelParams = [
     "xe.enable_dsb=0"
   ];
 
-  # 2880x1800 panel at niri output scale 1.75 (see `niri msg outputs`) makes
-  # the shared 7px default (modules/theming/matugen.nix) nearly invisible —
-  # that size is logical/unscaled, so it doesn't grow with output scale.
+  # 2880x1800 panel at scale 1.75 makes the shared 7px cursor default nearly
+  # invisible — cursor size is logical, so it doesn't grow with output scale.
   theming.matugen.cursorSize = 16;
 
   services = {
-    # KDE Connect run-commands, remote-triggerable from the paired phone.
-    # deviceId is this machine's own kdeconnect identity (see
-    # modules/services/kde-connect.nix) — find it as the UUID dir under
-    # ~/.config/kdeconnect/ if it ever needs to be regenerated.
+    # Remote-triggerable from the paired phone. deviceId is this machine's
+    # kdeconnect identity — regenerate under ~/.config/kdeconnect/ if needed.
     kde-connect = {
       deviceId = "a1064e6b61e148d4857dc698990e06e2";
       commands = {
@@ -93,15 +51,13 @@
       };
     };
 
-    # cloud mounts — the remotes themselves are created with `rclone config`
-    # (see README → Cloud mounts), only *which* ones to mount lives here.
+    # Remotes are created with `rclone config`; this only says which to mount.
     rclone = {
       enable = true;
       remotes.gdrive_personal = { };
     };
 
-    # NAS shares (see modules/services/nas.nix). Automounted on first access, so
-    # the paths exist even when the NAS is unreachable.
+    # Automounted on first access, so the paths exist even when unreachable.
     nas = {
       enable = true;
       server = "192.168.68.148";
@@ -112,47 +68,32 @@
       ];
     };
 
-    # On-demand Windows VM for Office (see modules/services/winapps). Not started
-    # at boot by design — start it from dankMenu's Windows submenu. Defaults are
-    # sized for this laptop; the VM is a real battery cost while running.
+    # On-demand Windows VM for Office. Not started at boot — start from
+    # dankMenu's Windows submenu.
     winapps = {
       enable = true;
-      # This machine's VM already exists at 64G (installed before the default
-      # dropped to 32G). Shrinking would mean deleting stateDir/storage and
-      # reinstalling Windows and Office, and the image is sparse anyway — the
-      # number is a ceiling, not space consumed — so it is pinned rather than
-      # migrated.
+      # Pinned at 64G (installed before the default dropped to 32G); shrinking
+      # means reinstalling, and the sparse image doesn't cost the difference.
       disk = "64G";
-      # This panel runs at niri output scale 1.75; without a matching RDP scale
-      # Windows renders 1:1 and Office text comes out tiny next to everything
-      # else. FreeRDP only offers 100/140/180.
+      # Matches this panel's niri scale (1.75); FreeRDP only offers 100/140/180.
       rdpScale = 180;
     };
 
-    # Home WireGuard tunnel, toggled from DMS's control center (see
-    # modules/services/wireguard-laxoi.nix).
+    # Home tunnel, toggled from DMS's control center.
     wireguard-laxoi.enable = true;
 
-    # Lid close on battery: suspend immediately, hibernate for real after
-    # HibernateDelaySec below. On AC, plain suspend — never hibernate while
-    # plugged in. Laptop-only: gamingpc has no lid and no resume device, so
-    # none of this applies there. The idle-timer path (no lid involved, see
-    # modules/desktop/niri/idle.nix) wants a much longer sleep-to-hibernate
-    # delay than a closed lid does, and systemd only has this one
-    # HibernateDelaySec knob — so that path deliberately avoids
-    # suspend-then-hibernate and arms its own separate wake timer instead of
-    # sharing this value.
+    # Battery: suspend then hibernate after HibernateDelaySec. AC: plain
+    # suspend, never hibernate. Laptop-only (gamingpc has no lid); the
+    # idle-timer path (modules/desktop/niri/idle.nix) arms its own wake timer.
     logind.settings.Login = {
       HandleLidSwitch = "suspend-then-hibernate";
       HandleLidSwitchExternalPower = "suspend";
     };
   };
 
-  # How long a closed lid (battery only) stays merely suspended before
-  # systemd wakes it to write RAM out to swap and hibernate for real.
+  # How long a closed lid (battery only) stays suspended before hibernating.
   systemd.sleep.settings.Sleep.HibernateDelaySec = "15min";
 
-  # feature suites
   suites = {
     core.enable = true;
     desktop.enable = true;
@@ -165,7 +106,6 @@
     ai.enable = true;
   };
 
-  # Monitors are managed by DMS (settings UI -> ~/.config/niri/dms/outputs.kdl,
-  # included via desktop.dms). Don't also declare outputs here — a second
-  # definition in hm.kdl conflicts and DMS's changes wouldn't apply.
+  # Monitors are managed by DMS (~/.config/niri/dms/outputs.kdl) — don't
+  # declare outputs here too.
 }

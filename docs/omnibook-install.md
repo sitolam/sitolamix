@@ -36,16 +36,16 @@ and face unlock on the IR camera.
 
 ## Part 0 — On `gamingpc`, before you touch the laptop
 
-### 0.1 Commit and push the host config
+### 0.1 Commit and push any local changes
 
 The installer clones from GitHub, so anything uncommitted does not exist as far
-as the laptop is concerned. The `omnibook` host, the face-unlock module, and the
-`amd_pstate` move are currently staged but not committed.
+as the laptop is concerned. Before reinstalling, make sure `hosts/omnibook/`
+and anything else you want on the new install is committed and pushed:
 
 ```sh
 cd ~/sitolamix
 git status                 # confirm what you are about to commit
-git commit -m "feat(hosts): add omnibook — HP laptop, LUKS+LVM, gaze face unlock"
+git commit -am "..."
 git push
 ```
 

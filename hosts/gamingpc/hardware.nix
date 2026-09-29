@@ -18,14 +18,8 @@
     extraModulePackages = [ ];
   };
 
-  # Current disk = ext4 root. Relabel partitions with:
-  #   sudo e2label /dev/nvme0n1p2 NIXROOT
-  #   sudo fatlabel /dev/nvme0n1p1 NIXBOOT
-  #
-  # On next fresh install, switch to btrfs subvolumes:
-  #   device = "/dev/disk/by-label/NIXROOT";
-  #   fsType = "btrfs";
-  #   options = [ "subvol=@" "compress=zstd" "noatime" ];
+  # ext4 root, labeled NIXROOT/NIXBOOT. Switch to btrfs subvolumes on next
+  # fresh install (subvol=@, compress=zstd, noatime).
   fileSystems = {
     "/" = {
       device = "/dev/disk/by-label/NIXROOT";

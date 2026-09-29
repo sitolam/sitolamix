@@ -5,18 +5,16 @@
       { lib, ... }:
       {
         programs = {
-          # Let DMS manage niri outputs from its settings UI. It writes display
-          # config to ~/.config/niri/dms/outputs.kdl; this include mechanism
-          # relocates our niri config to niri/hm.kdl and makes config.kdl include
-          # both — so DMS's output changes persist. We also pull in "colors"
-          # (see the comment on filesToInclude below); binds/layout/wpblur
-          # stay ours. override=true (default) means DMS's outputs win over
-          # the defaults in hosts/gamingpc.
+          # Let DMS manage niri outputs from its settings UI: it writes display
+          # config to ~/.config/niri/dms/outputs.kdl, and this include
+          # mechanism relocates our niri config to niri/hm.kdl so config.kdl
+          # includes both, letting DMS's output changes persist.
+          # binds/layout/wpblur stay ours; override=true (default) means DMS's
+          # outputs win over the defaults in hosts/gamingpc.
           dank-material-shell.niri.includes = {
             enable = true;
             # "colors" is DMS's matugen-rendered focus ring, border, shadow,
-            # tab indicator and insert hint, which is why niri/appearance.nix
-            # sets no colours.
+            # tab indicator and insert hint — why niri/appearance.nix sets none.
             filesToInclude = [
               "outputs"
               "colors"
@@ -24,12 +22,11 @@
           };
 
           niri.settings = {
-            # Pin DMS's blurred-wallpaper duplicate into niri's overview backdrop,
-            # so it's only visible in the overview / between workspaces (never on
-            # the normal desktop). This is the "manual niri configuration" that
-            # the blurredWallpaperLayer setting (see theme.nix) requires. The
-            # layer is a Background surface that ignores exclusive zones, as
-            # place-within-backdrop needs.
+            # Pin DMS's blurred-wallpaper duplicate into the overview backdrop
+            # (visible only there, never on the desktop) — the manual niri
+            # config blurredWallpaperLayer (theme.nix) requires. The layer is
+            # a Background surface ignoring exclusive zones, as needed by
+            # place-within-backdrop.
             layer-rules = [
               {
                 matches = [ { namespace = "^dms:blurwallpaper$"; } ];
@@ -39,10 +36,9 @@
           };
         };
 
-        # niri reads its config (incl. the dms/outputs.kdl include) at startup,
-        # before DMS runs — so seed an empty outputs file if absent to avoid a
-        # missing-include error. Not a home.file symlink: DMS must be able to
-        # overwrite it when you change displays.
+        # niri reads its config, incl. the dms/outputs.kdl include, before DMS
+        # runs — seed an empty file if absent to avoid a missing-include
+        # error. Not a home.file symlink: DMS must be able to overwrite it.
         home.activation.dmsOutputsPlaceholder = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
           f="$HOME/.config/niri/dms/outputs.kdl"
           if [ ! -e "$f" ]; then

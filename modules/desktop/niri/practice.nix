@@ -7,9 +7,8 @@
 let
   cfg = config.desktop.niri;
 
-  # niri can be told to load any config file at runtime, so practice mode is
-  # a config swap and nothing else — no file is edited, and nothing
-  # home-manager owns is touched.
+  # niri can load any config file at runtime, so practice mode is just a
+  # config swap — no file edited, nothing home-manager owns is touched.
   practice-mode = pkgs.writeShellApplication {
     name = "practice-mode";
     runtimeInputs = [ pkgs.niri-unstable ]; # `niri msg`
@@ -31,17 +30,12 @@ in
     home.extraOptions =
       hm@{ pkgs, ... }:
       let
-        # This flake's own config with the binds section replaced by the
-        # single bind that swaps back. Everything else — layout, input,
-        # window rules, environment — carries over unchanged, so practice
-        # mode does not visibly rearrange the desktop.
-        #
-        # Stripping the block textually rather than re-rendering it from Nix
-        # is what keeps this out of an infinite recursion: the bind below
-        # spawns the script, and the script finds this file by path at
-        # runtime, so nothing in `binds` depends on this derivation.
-        # `niri validate` runs at build time, so a bad strip fails the build
-        # rather than the session.
+        # This flake's config with the binds section replaced by the single
+        # bind that swaps back; everything else carries over unchanged.
+        # Stripped textually rather than re-rendered from Nix to avoid
+        # infinite recursion (the bind spawns a script that finds this file
+        # by path at runtime, so `binds` never depends on this derivation).
+        # `niri validate` runs at build time, so a bad strip fails the build.
         practiceConfig = pkgs.runCommand "niri-practice-config.kdl" { } ''
           awk '
             /^binds \{/        { skip = 1 }
@@ -78,14 +72,12 @@ in
 
         xdg.configFile."niri/practice.kdl".source = practiceConfig;
 
-        # Mod+Escape is a different thing and cannot do this: it toggles the
-        # Wayland keyboard-shortcuts-inhibit protocol, which only works for a
-        # client that registered an inhibitor. niri looks the focused surface
-        # up in keyboard_shortcuts_inhibiting_surfaces and does nothing when
-        # it is absent, and terminals do not ask.
+        # Mod+Escape can't substitute: it toggles the Wayland
+        # keyboard-shortcuts-inhibit protocol, which only works for a client
+        # that registered an inhibitor, and terminals don't.
         #
-        # This bind is also the one bind practice.kdl keeps, so the same key
-        # both enters and leaves — you cannot strand yourself with no binds.
+        # This is also the one bind practice.kdl keeps, so the same key
+        # both enters and leaves — you can't strand yourself with no binds.
         programs.niri.settings.binds."Mod+Shift+Escape" = {
           allow-inhibiting = false;
           action.spawn = [

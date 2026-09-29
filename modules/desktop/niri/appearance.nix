@@ -16,11 +16,10 @@ in
         programs.niri = {
           config = lib.mkOptionDefault (
             lib.mkAfter [
-              # Blur behind every window. Only visible where a window is
-              # translucent (see the opacity window-rules in niri/rules.nix),
-              # e.g. the terminal, spotify, helium. xray = false so the blur
-              # samples the actual windows *behind* each window (blurred),
-              # not just the wallpaper.
+              # Blur behind every window, visible only where a window is
+              # translucent (opacity window-rules in niri/rules.nix). xray =
+              # false so the blur samples the windows behind, not just the
+              # wallpaper.
               (plain "window-rule" [
                 (plain "background-effect" [
                   (leaf "blur" true)
@@ -29,19 +28,15 @@ in
                   (leaf "saturation" 2.4)
                 ])
               ])
-              # DMS's own surfaces (bar, popouts, panels) get their blur from DMS
-              # itself over the ext-background-effect protocol (niri supports it —
-              # the BlurService log confirms), blurring only the card region, not
-              # the whole full-screen surface. So we do NOT enable blur here (that
-              # would frost the whole screen). We only set xray=false so the blur
-              # samples the actual windows *behind* each surface (blurred), not
-              # just the wallpaper — matching the window blur above. Protocol
-              # surfaces don't inherit niri's default xray, hence this rule. A
-              # background-effect with no `blur true` doesn't turn blur on, so
-              # this stays card-only. blurwallpaper is excluded (no protocol blur;
-              # handled by its own place-within-backdrop rule). Blur only *shows*
-              # where surfaces are translucent — see the lowered opacity in
-              # dms/theme.nix and dms/bar.nix.
+              # DMS's own surfaces (bar, popouts, panels) get their blur from
+              # DMS itself over the ext-background-effect protocol, blurring
+              # only the card region rather than the full surface. So no
+              # `blur true` here (that would frost the whole screen) — only
+              # xray=false, since protocol surfaces don't inherit niri's
+              # default xray, to match the window blur above. blurwallpaper
+              # is excluded (handled by its own place-within-backdrop rule).
+              # Blur only shows where surfaces are translucent, via the
+              # lowered opacity in dms/theme.nix and dms/bar.nix.
               (plain "layer-rule" [
                 (leaf "match" { namespace = "^dms:"; })
                 (leaf "exclude" { namespace = "blurwallpaper"; })
@@ -64,15 +59,11 @@ in
             hotkey-overlay.skip-at-startup = true;
             cursor = {
               hide-after-inactive-ms = 5000;
-              # home.pointerCursor (modules/theming/matugen.nix) already sets
-              # XCURSOR_THEME/XCURSOR_SIZE for the session, but niri draws its
-              # own compositor-side cursor from its own config rather than
-              # those env vars, and xcursor-size here is logical/unscaled so
-              # it does not grow with output scale (see the comment on
-              # theming.matugen.cursorSize in hosts/omnibook/default.nix) —
-              # so it needs to be told separately. Pulled from
-              # theming.matugen's cursorTheme/cursorSize rather than
-              # duplicated, so the two stay in sync.
+              # niri draws its own compositor-side cursor from its own config,
+              # not from the XCURSOR_THEME/XCURSOR_SIZE env vars that
+              # home.pointerCursor sets, so it needs telling separately.
+              # Pulled from theming.matugen's cursorTheme/cursorSize rather
+              # than duplicated, so the two stay in sync.
               theme = config.theming.matugen.cursorTheme;
               size = config.theming.matugen.cursorSize;
             };

@@ -85,12 +85,13 @@ extension) can drop their own extensions in. Anything you install from the
 marketplace by hand therefore survives a rebuild — and is invisible to this
 repo. Add it to `modules/apps/vscode.nix` or it is not part of the config.
 
-## Comments are the deliverable
+## Comments
 
-The long comments in these files are the documentation — the README says so
-explicitly. A workaround's comment must record **why it exists and when it can
-be removed**, not what the code does. A commit adding a workaround without one
-is incomplete.
+Keep them short and for humans. A comment explains **why**, never what the
+code already says. A workaround gets one to three lines: why it exists and
+when it can be removed (with the issue link). Longer explanations go in the
+README, not the code. A commit adding a workaround without that comment is
+incomplete.
 
 ## Verify before claiming done
 

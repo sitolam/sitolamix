@@ -6,12 +6,9 @@
         noArg = action: { action.${action} = [ ]; };
         withArg = action: value: { action.${action} = value; };
         spawn = command: { action.spawn = command; };
-        # set-window-width only touches width, which is fine for a tiled
-        # column but leaves a float looking stretched instead of scaled — so
-        # on a float, grow/shrink height by the same step too. niri anchors
-        # a resize at the top-left corner, which would drift the float off
-        # whatever position it was at, so shift it back by half the pixel
-        # delta on both axes to resize symmetrically in place.
+        # set-window-width only touches width, so on a float also resize
+        # height by the same step. niri anchors resizes at the top-left, so
+        # shift the float back by half the pixel delta to stay centered.
         mkFloatAwareResize =
           pct:
           spawn [
@@ -47,23 +44,12 @@
           ]
           ++ command;
 
-        # --- the grammar ------------------------------------------------
-        #
-        # Every navigation bind is generated, never hand-listed, so the
-        # grammar cannot drift out of sync with itself. One modifier, one
-        # meaning:
-        #
-        #   Mod        act on / focus the thing
-        #   Mod+Shift  move the focused thing
-        #   Mod+Ctrl   act one scope up (the monitor, or the workspace itself)
-        #   Mod+Alt    move without following (focus=false)
-        #
-        # See ./KEYBINDINGS.md for the full table and the two places the
-        # grammar deliberately bends.
+        # Grammar (every nav bind is generated, never hand-listed): Mod acts
+        # on/focuses; Mod+Shift moves; Mod+Ctrl acts one scope up (monitor or
+        # workspace); Mod+Alt moves without following. Full table and the
+        # two exceptions: ./KEYBINDINGS.md.
 
-        # Physical keys that mean each logical direction. Arrows and hjkl are
-        # always bound to the same action — no plane binds one without the
-        # other.
+        # Arrows and hjkl are always bound to the same action.
         directionKeys = {
           left = [
             "Left"
@@ -83,8 +69,7 @@
           ];
         };
 
-        # The workspace axis is vertical and separate from the direction keys
-        # above: up/down here move between workspaces, not between windows.
+        # Separate from directionKeys: up/down here move between workspaces.
         workspaceKeys = {
           up = [
             "U"
@@ -96,10 +81,8 @@
           ];
         };
 
-        # Bind one modifier plane over a key family. `args` is passed to every
-        # action in the plane — that is how the Alt plane gets `focus=false`
-        # without a second helper. Directions absent from `actions` stay
-        # unbound, which is how the Alt direction plane binds only left/right.
+        # Bind one modifier plane over a key family; `args` is passed to
+        # every action (how Alt gets focus=false without a second helper).
         mkBinds =
           keys: modifier: args: actions:
           builtins.listToAttrs (
@@ -123,9 +106,8 @@
             ) (lib.range 1 10)
           );
 
-        # Wheel binds follow the same grammar: Mod focuses, Mod+Shift moves.
-        # Vertical scroll crosses workspaces and needs a cooldown or one flick
-        # of the wheel walks several workspaces.
+        # Vertical scroll crosses workspaces and needs a cooldown, or one
+        # flick walks several workspaces.
         mkScrollBinds =
           modifier:
           {
@@ -147,20 +129,14 @@
             "${modifier}+WheelScrollLeft" = noArg left;
           };
 
-        # The Alt plane's whole point: niri takes `focus=false` as a property
-        # on every move-to-workspace action, so the same action that follows
-        # the window on Shift stays put on Alt.
+        # focus=false: the same action that follows on Shift stays put on Alt.
         stay = [ { focus = false; } ];
       in
       {
         programs.niri.settings.binds = lib.mkMerge [
           {
-            # --- launcher and shell surfaces ---------------------------
-            # omarchy-style root menu (dankMenu plugin, see ../dms/plugins.nix):
-            # one key to every command, with its own search and app list. This
-            # replaces DMS's spotlight as the general launcher — spotlight is
-            # still reachable for its trigger-based plugins, see Mod+Alt+E.
-            # The `dms` helper above already prepends `ipc call`.
+            # dankMenu replaces DMS's spotlight as the general launcher;
+            # spotlight is still reachable for its trigger plugins (Mod+Alt+E).
             "Mod+Space" = spawn (dms [
               "dankMenu"
               "toggle"
@@ -182,8 +158,7 @@
               "notifications"
               "toggle"
             ]);
-            # D is the dashboard family: the dash itself, then the two other
-            # full-screen system surfaces as its variants.
+            # dash plus its two full-screen variants.
             "Mod+D" = spawn (dms [
               "dash"
               "toggle"
@@ -197,12 +172,9 @@
               "toggle"
             ]);
 
-            # --- scratchpad --------------------------------------------
-            # scratchpad (argosnothing/niri-scratchpad-rs). `create 1` toggles
-            # register 1: it stashes the focused window to the "stash"
-            # workspace and shows it back as a float, so the one bind both
-            # minimises and restores. --as-float so the shown scratchpad
-            # floats over its workspace.
+            # `create 1` toggles register 1: stashes the focused window to a
+            # "stash" workspace, or restores it as a float — one bind both
+            # minimises and restores.
             "Mod+M" = spawn [
               "niri-scratchpad"
               "create"
@@ -210,22 +182,19 @@
               "--as-float"
             ];
 
-            # --- session -----------------------------------------------
-            # BackSpace is the session family: lock, lock+suspend, power menu,
-            # and monitors-off, in rising order of how much they turn off.
+            # lock / lock+suspend / power menu / monitors-off, rising order
+            # of how much they turn off.
             "Mod+BackSpace" = spawn (dms [
               "lock"
               "lock"
             ]);
-            # on-demand lock + suspend (swayidle also locks before sleep, but
-            # this locks explicitly first so we never flash the desktop).
+            # locks explicitly first so we never flash the desktop before
+            # swayidle's own before-sleep lock.
             "Mod+Shift+BackSpace" = spawn [
               "sh"
               "-c"
               "loginctl lock-session && systemctl suspend"
             ];
-            # built-in DMS power menu (option shortcuts patched to numbers in
-            # modules/desktop/dms/default.nix)
             "Mod+Ctrl+BackSpace" = spawn (dms [
               "powermenu"
               "toggle"
@@ -235,16 +204,11 @@
               allow-inhibiting = false;
               action.toggle-keyboard-shortcuts-inhibit = [ ];
             };
-            # The only bind that quits niri. There used to be a Mod+Shift+E as
-            # well, one Shift away from Mod+E (the file manager) — deleted.
+            # The only bind that quits niri.
             "Ctrl+Alt+Delete" = noArg "quit";
 
-            # --- media / volume ----------------------------------------
-            # wpctl (wireplumber), not pactl: this system has no
-            # pulseaudio-utils installed at all, so every pactl invocation
-            # here silently failed (127, command not found) until caught live.
-            # wpctl ships with pipewire/wireplumber (audio.nix), so no new
-            # package is needed.
+            # wpctl, not pactl: no pulseaudio-utils is installed, so pactl
+            # would silently fail (127).
             "XF86AudioRaiseVolume" = spawn [
               "wpctl"
               "set-volume"
@@ -263,9 +227,7 @@
               "@DEFAULT_AUDIO_SINK@"
               "toggle"
             ];
-            # F9's icon on this keyboard (mic-mute) — raw scancode confirmed via
-            # evtest as KEY_MICMUTE, which xkeyboard-config's evdev "inet" rules
-            # map to this keysym.
+            # F9's mic-mute icon; scancode confirmed via evtest as KEY_MICMUTE.
             "XF86AudioMicMute" = spawn [
               "wpctl"
               "set-mute"
@@ -284,15 +246,10 @@
               "playerctl"
               "previous"
             ];
-            # internal panel (no device arg = DMS's default, which is the
-            # eDP backlight whenever the internal panel is active) plus both
-            # external monitors (DMS controls one DDC device per call and has
-            # no "all" target). ddc:i2c-5 = HDMI-A-1, ddc:i2c-6 = DP-3 — if the
-            # i2c bus numbers ever shift, update these (ddcutil detect).
-            # The trailing "" is required, not optional — dms ipc's transport
-            # enforces the QML handler's full arity (increment(step, device)),
-            # so a bare `dms ipc call brightness increment 5` errors with "Too
-            # few arguments" instead of falling back to the default device.
+            # internal panel plus both external monitors — DMS has no "all"
+            # DDC target. ddc:i2c-5 = HDMI-A-1, ddc:i2c-6 = DP-3; update if
+            # the i2c bus numbers shift (ddcutil detect). The trailing "" is
+            # required: dms ipc enforces the handler's full arity.
             "XF86MonBrightnessUp" = spawn [
               "sh"
               "-c"
@@ -303,17 +260,14 @@
               "-c"
               ''dms ipc call brightness decrement 5 ""; dms ipc call brightness decrement 5 ddc:i2c-5; dms ipc call brightness decrement 5 ddc:i2c-6''
             ];
-            # F11's icon on this keyboard (blank/unlabeled) — raw scancode
-            # confirmed via evtest as KEY_PROG2 -> XF86Launch2.
+            # F11's blank icon; evtest confirms KEY_PROG2 -> XF86Launch2.
             "XF86Launch2" = spawn (dms [
               "virtualKeyboard"
               "toggle"
             ]);
 
-            # --- apps ---------------------------------------------------
-            # Plain Mod+letter for the three apps opened by reflex. Everything
-            # else that merely *runs* something lives on the Mod+Alt plane
-            # below, so Mod+Shift and Mod+Ctrl are never a launcher.
+            # Plain Mod+letter for the three apps opened by reflex; anything
+            # that merely runs something else lives on Mod+Alt below.
             "Mod+T" = {
               hotkey-overlay.title = "Open a terminal";
               action.spawn = "ghostty";
@@ -321,10 +275,8 @@
             "Mod+B" = spawn "helium";
             "Mod+E" = spawn "nautilus";
 
-            # --- Mod+Alt+<letter>: run a tool ---------------------------
-            # The tool plane. Alt on a letter always means "run this thing";
-            # Alt on a nav key always means "move without following". The two
-            # never collide because they use different key classes.
+            # Mod+Alt+<letter>: Alt on a letter means "run this thing"; Alt
+            # on a nav key means "move without following" — different key classes.
             "Mod+Alt+G" = spawn [
               "ghostty"
               "-e"
@@ -344,10 +296,8 @@
               "theme"
               "toggle"
             ]);
-            # the wallpaperCarousel plugin (../dms/plugins.nix), not
-            # dankdash's own grid: same job, but it browses the whole folder
-            # full-screen. dankdash's picker is still one row away in
-            # dankMenu ("Wallpaper").
+            # wallpaperCarousel, not dankdash's own grid: browses the whole
+            # folder full-screen. dankdash's picker is one row away in dankMenu.
             "Mod+Alt+W" = spawn (dms [
               "wallpaperCarousel"
               "toggle"
@@ -356,25 +306,21 @@
               "night"
               "toggle"
             ]);
-            # emoji / unicode picker (emojiLauncher plugin, trigger ":e"): open
-            # spotlight pre-filled with the trigger so it lands straight on the
-            # emoji search. Trailing space is intentional (starts the filter).
+            # emoji picker: opens spotlight pre-filled on the ":e" trigger.
+            # Trailing space is intentional (starts the filter).
             "Mod+Alt+E" = spawn (dms [
               "spotlight"
               "toggleQuery"
               ":e "
             ]);
-            # F2's icon on this keyboard: a plain literal F-key (confirmed via
-            # evtest as KEY_F2), not a dedicated media/XF86 key like F6-F11 —
-            # so it's Mod+F2 rather than bare F2, to avoid shadowing F2 in
-            # every app that binds it directly (rename, suspend-card, etc).
+            # F2 is a plain literal key (evtest: KEY_F2), bound as Mod+F2 to
+            # avoid shadowing bare F2 in apps that bind it directly.
             "Mod+F2" = spawn (dms [
               "spotlight"
               "toggleQuery"
               ":e "
             ]);
 
-            # --- window ops ---------------------------------------------
             "Mod+Q" = noArg "close-window";
             "Mod+O" = {
               repeat = false;
@@ -393,12 +339,9 @@
             "Mod+Equal" = mkFloatAwareResize "+10%";
             "Mod+Shift+Minus" = withArg "set-window-height" "-10%";
             "Mod+Shift+Equal" = withArg "set-window-height" "+10%";
-            # W is the floating family: float it, cross to the other layer,
-            # pin it above every workspace. Floating in needs its own nice
-            # size and position — niri keeps whatever size/place the window
-            # last had, which after a fresh toggle is usually its tiled
-            # column size in the corner — so only on tiled->float do we set
-            # a size and center; float->tiled leaves the tiling layout alone.
+            # Floating-in needs its own size/position — niri keeps whatever
+            # the window last had, usually its tiled corner size — so only
+            # tiled->float sets a size and centers.
             "Mod+W" = spawn [
               "sh"
               "-c"
@@ -419,32 +362,19 @@
               "toggle-active"
             ];
 
-            # column consume/expel. Un-stack with these before a Shift/Alt
-            # move if you want a single window on the target workspace — every
-            # move bind acts on the whole column.
+            # Un-stack with these before a Shift/Alt move — move binds
+            # otherwise act on the whole column.
             "Mod+BracketLeft" = noArg "consume-or-expel-window-left";
             "Mod+BracketRight" = noArg "consume-or-expel-window-right";
             "Mod+Comma" = noArg "consume-window-into-column";
             "Mod+Period" = noArg "expel-window-from-column";
 
-            # --- screen capture ------------------------------------------
-            # S is the capture family. The bare Print key keeps niri's own
-            # built-in screenshot UI; Mod+S opens a region capture in DMS's
-            # quickCapture annotation editor, and the two variants are the
-            # grim pipelines that bypass any editor.
-            #
-            # `edit` is quickCapture's action argument: it opens the shot in
-            # the annotator. `float` is the other one — the shot becomes an
-            # always-on-top window with no editor — and there is no keybind
-            # for it because the editor's Ctrl+F does the same thing once the
-            # shot is up.
-            #
-            # The Print binds below only fire from an external keyboard. The
-            # omnibook's internal keyboard has no Print keycode: the key
-            # printed with the scissors icon is a Windows "snip" key and emits
-            # Super+Shift+S in firmware, which lands on Mod+Shift+S here. That
-            # happens to be the region-to-clipboard bind, so the key does the
-            # right thing by accident -- do not "fix" it by moving Mod+Shift+S.
+            # Bare Print keeps niri's built-in screenshot UI; Mod+S opens
+            # quickCapture's annotation editor; the other variants are grim
+            # pipelines that bypass any editor. The Print binds only fire
+            # from an external keyboard — the omnibook's "snip" key emits
+            # Super+Shift+S in firmware and lands on Mod+Shift+S by accident;
+            # don't "fix" it by moving that bind.
             "Mod+S" = spawn (dms [
               "quickCapture"
               "screenshot"
@@ -470,14 +400,9 @@
               "grim -g \"$(slurp)\" - | wl-copy"
             ];
 
-            # --- workspace nav that has no family -------------------------
-            # Home/End used to focus and move a column to the first/last
-            # position. Unused in practice, so they are gone rather than
-            # sitting in the cheat sheet as noise.
             "Mod+Tab" = noArg "focus-workspace-previous";
           }
 
-          # --- direction keys: arrows and hjkl ----------------------------
           (mkBinds directionKeys "Mod" [ ] {
             left = "focus-column-left";
             down = "focus-window-down";
@@ -506,15 +431,13 @@
             right = "move-column-to-monitor-right";
           })
 
-          # Alt on the direction keys has no "without following" meaning —
-          # every target is on screen already — so the horizontal half is
-          # spent on swapping instead. Up/down stay unbound.
+          # Alt has no "without following" meaning here, so it's spent on
+          # swapping instead. Up/down stay unbound.
           (mkBinds directionKeys "Mod+Alt" [ ] {
             left = "swap-window-left";
             right = "swap-window-right";
           })
 
-          # --- workspace axis: U/I and Page_Up/Page_Down -------------------
           (mkBinds workspaceKeys "Mod" [ ] {
             up = "focus-workspace-up";
             down = "focus-workspace-down";
@@ -530,15 +453,13 @@
             down = "move-column-to-workspace-down";
           })
 
-          # The one bend in the grammar: on this axis plain Mod is already the
-          # scope-up (the workspace), so Ctrl reorders the workspace itself
-          # instead of reaching for the monitor.
+          # The bend: plain Mod is already scope-up here, so Ctrl reorders
+          # the workspace itself instead of reaching for the monitor.
           (mkBinds workspaceKeys "Mod+Ctrl" [ ] {
             up = "move-workspace-up";
             down = "move-workspace-down";
           })
 
-          # --- wheel -------------------------------------------------------
           (mkScrollBinds "Mod" {
             left = "focus-column-left";
             right = "focus-column-right";
@@ -553,7 +474,6 @@
             down = "move-column-to-workspace-down";
           })
 
-          # --- number row --------------------------------------------------
           (mkNumberBinds "Mod" [ ] "focus-workspace")
           (mkNumberBinds "Mod+Shift" [ ] "move-column-to-workspace")
           (mkNumberBinds "Mod+Alt" stay "move-column-to-workspace")

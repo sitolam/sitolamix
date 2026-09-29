@@ -21,8 +21,8 @@ in
     };
 
     environment = {
-      # GPU monitor (NVIDIA-only build — no AMD/Intel backends). Pulls unfree
-      # nvml; allowUnfree is set in modules/system/nix.nix.
+      # NVIDIA-only nvtop build; pulls unfree nvml (allowUnfree in
+      # modules/system/nix.nix).
       systemPackages = [ pkgs.nvtopPackages.nvidia ];
 
       variables = {

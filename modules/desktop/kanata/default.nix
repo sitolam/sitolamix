@@ -9,9 +9,9 @@ let
 
   unit = "kanata-default.service";
 
-  # Both the gamemode hooks and the dankMenu row drive kanata through these,
-  # rather than calling systemctl inline, so there is one place that knows the
-  # unit name and one place the polkit rule below has to match.
+  # Gamemode hooks and the dankMenu row both drive kanata through these
+  # wrappers, so there's one place that knows the unit name and one place
+  # the polkit rule below has to match.
   kanata-off = pkgs.writeShellScriptBin "kanata-off" ''
     exec ${pkgs.systemd}/bin/systemctl stop ${unit}
   '';
@@ -49,29 +49,26 @@ in
       kanata-toggle
     ];
 
-    # Home-row mods are tap-hold: every key you hold past the timeout becomes a
-    # modifier. That is exactly what holding W to walk or Shift to crouch does,
-    # so kanata has to be out of the way while a game has the keyboard.
+    # Home-row mods are tap-hold, which collides with holding W to walk or
+    # Shift to crouch, so kanata must step aside while a game has the
+    # keyboard. gamemode is the hook since it already knows when a game
+    # starts/stops, but only fires for games launched *through* it — a Steam
+    # title needs `gamemoderun %command%`; everything else uses the dankMenu
+    # toggle (trigger.toggle.kanata, ../dms/plugins.nix).
     #
-    # gamemode is the hook because it is the only thing on this machine that
-    # already knows a game started and stopped. It only fires for games
-    # launched *through* it, so a Steam title needs `gamemoderun %command%` in
-    # its launch options — everything else has the dankMenu toggle
-    # (trigger.toggle.kanata, ../dms/plugins.nix).
-    #
-    # gamemode's custom.start/end are single strings and more than one module
-    # wants them, so they are pooled in modules/suites/gaming.nix — append
-    # here, don't set programs.gamemode.settings.custom directly.
+    # gamemode's custom.start/end are pooled in modules/suites/gaming.nix
+    # since more than one module wants them — append here, don't set
+    # programs.gamemode.settings.custom directly.
     suites.gaming.gamemodeHooks = lib.mkIf config.programs.gamemode.enable {
       start = [ "${kanata-off}/bin/kanata-off" ];
       end = [ "${kanata-on}/bin/kanata-on" ];
     };
 
-    # gamemoded and the shell run as the user, and kanata-default is a *system*
-    # unit — without this every game launch and every menu toggle opens a
-    # password prompt. Scoped the same way as the winapps rule
-    # (../../services/winapps/default.nix): this one unit, these two verbs,
-    # this one group. `restart` is deliberately not granted.
+    # Without this, every game launch and menu toggle would prompt for a
+    # password (gamemoded/the shell run as the user, kanata-default is a
+    # *system* unit). Scoped like the winapps rule
+    # (../../services/winapps/default.nix): this unit, these two verbs, this
+    # group only — `restart` is deliberately not granted.
     security.polkit.extraConfig = ''
       polkit.addRule(function(action, subject) {
         if (action.id == "org.freedesktop.systemd1.manage-units" &&

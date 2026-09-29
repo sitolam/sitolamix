@@ -1,5 +1,4 @@
 {
-  # pipewire baseline — every graphical host wants sound.
   services.pipewire = {
     enable = true;
     alsa = {

@@ -22,19 +22,14 @@ in
           inputs.zen-browser.packages.${pkgs.stdenv.hostPlatform.system}.default
         ];
 
-        # This activation is feature work living in a suite rather than its
-        # own module — deliberately, for now: zen is a bare `home.packages`
-        # entry above with no options and nothing else to gate, so a whole
-        # `modules/apps/zen.nix` would exist only to hold this one activation.
-        # The day zen grows a second concern (flags, policies, an extension
-        # set — the shape helium.nix already has), split it out then.
+        # Lives here rather than its own apps/zen.nix since zen is a bare
+        # `home.packages` entry with nothing else to gate. Split out if zen
+        # grows a second concern (flags, policies, an extension set).
         #
-        # zen: DMS renders ~/.config/DankMaterialShell/zen.css from the wallpaper.
-        # zen only loads chrome/userChrome.css with the legacy stylesheet pref on,
-        # and profile directories are created by zen itself under a random name, so
-        # link into every profile that exists. A fresh machine picks this up on the
-        # first rebuild after zen has been started once. Drop this if zen-browser's
-        # flake grows a home-manager module with profile settings (then use that).
+        # DMS renders ~/.config/DankMaterialShell/zen.css. zen only loads
+        # userChrome.css with the legacy stylesheet pref on, and creates its
+        # profile dir under a random name itself, so link into every profile
+        # found — picked up on the first rebuild after zen has run once.
         home.activation.zenDmsChrome = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
           for root in "$HOME/.zen" "$HOME/.config/zen"; do
             [ -d "$root" ] || continue

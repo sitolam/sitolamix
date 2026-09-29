@@ -12,9 +12,8 @@ in
 
   config = lib.mkIf cfg.enable {
     environment.systemPackages = [
-      # texliveFull: matches every package a course PDF might \usepackage,
-      # same trade-off the CPW guide makes on Windows/macOS (~10 GB either way).
-      # (texlive.combined.scheme-full is deprecated, removed in nixpkgs 27.05.)
+      # texliveFull, not texlive.combined.scheme-full (deprecated, removed in
+      # nixpkgs 27.05): matches whatever a course PDF might \usepackage.
       pkgs.texliveFull
     ];
 
@@ -26,11 +25,8 @@ in
           # that module sets programs.vscode.enable = true.
           pkgs.vscode-extensions.james-yu.latex-workshop
 
-          # Companion to latex-workshop, not a competitor: word count, a
-          # format-on-save cleanup, hover-preview of citations/refs. Needs
-          # latex-workshop installed; ships no compiler of its own, so it
-          # doesn't hit the "don't stack LaTeX extensions" warning that
-          # applies to standalone language-support ones.
+          # companion to latex-workshop (word count, format-on-save, hover
+          # preview), not a competing LaTeX extension — ships no compiler
           pkgs.vscode-extensions.tecosaur.latex-utilities
         ];
 

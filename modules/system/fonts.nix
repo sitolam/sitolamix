@@ -15,18 +15,11 @@
       noto-fonts-color-emoji
       unifont
 
-      # Windows fonts. Documents from the outside world ask for these by name;
-      # without them fontconfig substitutes something with different metrics and
-      # the layout drifts (school .docx/.pptx are the usual offenders).
-      #   corefonts   -> Arial, Times New Roman, Courier New, Georgia, Verdana,
-      #                  Trebuchet MS, Comic Sans MS, Impact, Andale Mono, Webdings
-      #   vista-fonts -> the ClearType set: Calibri (Office's default since 2007),
-      #                  Cambria, Candara, Consolas, Constantia, Corbel
-      # Both are unfree-but-redistributable and allowUnfree is on (../system/nix.nix);
-      # vista-fonts is not in the binary cache, it extracts the fonts out of
-      # Microsoft's PowerPoint Viewer installer at build time.
-      # Segoe UI (the Windows shell font) has no redistributable source, so it is
-      # not packaged anywhere — nothing to add here for it.
+      # Windows fonts (Arial/Times/Calibri/etc, corefonts + vista-fonts): school
+      # .docx/.pptx ask for these by name, and without them fontconfig
+      # substitutes something with different metrics and the layout drifts.
+      # Both unfree-but-redistributable, allowUnfree is on (./nix.nix).
+      # Segoe UI has no redistributable source, so it isn't packaged anywhere.
       corefonts
       vista-fonts
       cascadia-code

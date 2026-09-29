@@ -21,7 +21,6 @@ in
     services.gvfs.enable = true;
     services.udisks2.enable = true;
 
-    # right-click "Open in Terminal" -> ghostty
     programs.nautilus-open-any-terminal = {
       enable = true;
       terminal = "ghostty";

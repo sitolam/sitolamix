@@ -22,8 +22,7 @@ in
           fzf = {
             enable = true;
             enableFishIntegration = true;
-            # atuin owns Ctrl-R (rich history search); leave fzf's other widgets intact
-            historyWidget.command = "";
+            historyWidget.command = ""; # atuin owns Ctrl-R
           };
           zoxide = {
             enable = true;
@@ -31,9 +30,7 @@ in
           };
           btop = {
             enable = true;
-            # TTY theme draws with the terminal's 16 ANSI colours, which DMS sets
-            # from the wallpaper through ghostty.
-            settings.color_theme = "TTY";
+            settings.color_theme = "TTY"; # draws with the terminal's ANSI palette
           };
           atuin = {
             enable = true;
@@ -48,8 +45,8 @@ in
 
         home.packages = with pkgs; [
           dust
-          ncdu # interactive TUI disk-usage browser (complements dust)
-          micro # simple modeless terminal editor
+          ncdu # interactive disk-usage browser
+          micro # modeless terminal editor
           ripgrep
           fd
           jq
@@ -61,7 +58,7 @@ in
           wget
           curl
 
-          # terminal eye candy — no config, so they sit here with the rest
+          # terminal eye candy, no config
           lavat # ASCII lava lamp: -g truecolor gradient, -G gravity, -p party
           pipes-rs # the pipes screensaver, rust rewrite of pipes.sh
           cmatrix # `cmatrix -ab` — the green rain

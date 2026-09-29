@@ -20,14 +20,12 @@ enable-switch, side by side.
 
 ![the desktop](assets/screenshots/desktop.png)
 
-<em>niri + DankMaterialShell — floating terminal toys, blur, every colour taken from the wallpaper (screenshots predate wallpaper theming)</em>
+<em>niri + DankMaterialShell — nitch in a terminal on the left, yazi floating on the right, every colour taken from the wallpaper</em>
 
 </div>
 
 <details>
-<summary><strong>More screenshots</strong> — the menu, the panels, the cheat sheet (predate wallpaper theming)</summary>
-
-<br>
+<summary><strong>More screenshots</strong> — the menu, the panels, the cheat sheet</summary>
 
 <div align="center">
 
@@ -39,11 +37,11 @@ enable-switch, side by side.
 
 ![dank dash](assets/screenshots/dash.png)
 
-**`Mod+Ctrl+D` — control center**: network, bluetooth, audio, brightness and the plugin toggles
+**`Mod+Ctrl+D` — control center**: network, bluetooth, audio, brightness and the plugin toggles (predates wallpaper theming)
 
 ![control center](assets/screenshots/control.png)
 
-**`Mod+Slash` — the keybind cheat sheet**, generated from the niri config itself
+**`Mod+Slash` — the keybind cheat sheet**, generated from the niri config itself (predates wallpaper theming)
 
 ![keybinds](assets/screenshots/keybinds.png)
 
@@ -51,7 +49,7 @@ enable-switch, side by side.
 
 ![system monitor](assets/screenshots/sysmon.png)
 
-**yazi** — the terminal file manager, with git status and full-border plugins
+**yazi** — the terminal file manager, with git status and full-border plugins (predates wallpaper theming)
 
 ![yazi](assets/screenshots/yazi.png)
 
@@ -100,14 +98,12 @@ Things this config does that a stock desktop does not:
 - 🦷 **Mouth guard** — a webcam watches whether your mouth stays closed and nags
   from the bar when it doesn't ([`dms-plugins/mouthguard`](https://github.com/sitolam/dms-plugins/tree/main/plugins/mouthguard),
   MediaPipe Face Mesh on OpenVINO, built straight from the flake input).
-- 🗂️ **One key to everything** — `Mod+Space` opens an omarchy-style root menu:
-  drill in with `Enter`, out with `Esc`, or just type and it searches every
-  command in the tree *and* every installed app
+- 🗂️ **One key to everything** — `Mod+Space` opens an omarchy-style root menu
+  (see the screenshot above): drill in with `Enter`, out with `Esc`, or just
+  type and it searches every command in the tree *and* every installed app
   ([`dms-plugins/dankmenu`](https://github.com/sitolam/dms-plugins/tree/main/plugins/dankmenu)).
-  Its tree is generated from this flake, so `Update ▸ Rebuild` runs against this
-  very checkout.
-
-  <img src="assets/screenshots/dankmenu.png" alt="dankMenu" width="600">
+  Its tree is generated from this flake, so `Update ▸ Rebuild` runs against
+  this very checkout.
 - ⌨️ **Home-row mods** — kanata turns `asdf`/`jkl;` into modifiers on hold, caps
   into Esc on tap, and holding `v` into a vim arrow layer — all of it below the
   compositor, so every app obeys.
@@ -124,44 +120,24 @@ Things this config does that a stock desktop does not:
   i2c, one `dms ipc` call per panel.
 - 🤖 **Claude Code, two ways** — a bar widget that tracks API usage, and `ccl`,
   which points Claude Code at a model running locally in LM Studio.
-- 🎧 **Bar full of plugins** — typing sounds, take-a-break, ambient sound, USB
-  manager, KDE Connect, Home Assistant, emoji launcher, calculator.
-- 🔣 **Launcher triggers** — type `=` for a calculator running on
+- 🎧 **Bar full of plugins** — take-a-break, ambient sound, USB manager, KDE
+  Connect, Home Assistant, emoji launcher, and a searchable list of every
+  keybind the compositor has loaded.
+- 🔣 **Launcher triggers** — type `=` for a calculator on
   [libqalculate](https://qalculate.github.io) (units, currencies, hex, result
-  to the clipboard) or `\` to search every keybind the compositor has loaded.
-  Both work in spotlight *and* in dankMenu, because the menu drives DMS's
-  launcher plugins rather than reimplementing them.
+  to the clipboard), in spotlight *and* dankMenu alike.
 - 🎨 **Theming that goes inside apps** — DMS re-derives a Material 3 scheme from
-  the current wallpaper and renders it into every registered
-  `theming.matugen.templates` entry: spicetify rebuilds Spotify's own CSS, a
-  generated `meta.json` recolors Anki, and Obsidian gets a matching CSS
-  snippet. Pick a new wallpaper, they all follow — no rebuild.
-
-  Nothing renders any of this until DMS has run matugen at least once, so the
-  very first boot after a wallpaper change (or after a fresh install) looks a
-  little off: ghostty can show a config-error banner for `theme =
-  "dankcolors"`, and zed, Obsidian, Anki and Spotify all sit on fallback
-  colours until then. It corrects itself as soon as a wallpaper is picked in
-  DMS or DMS restarts — every template renders together at that point. Anki
-  and Spotify are the two exceptions worth knowing about: both only read their
-  colour file at startup, so they need an actual restart of the app, not just
-  a new wallpaper, before they pick up the new colours.
-
-  GTK and Qt are a different kind of exception: DMS renders their colour
-  files (`dank-colors.css`, `qt5ct`/`qt6ct` colour schemes) on every matugen
-  run same as everything else, but only *wires* them in — the `@import` line
-  in `gtk.css`, the `[Appearance]` keys in `qt5ct.conf`/`qt6ct.conf` — from a
-  button in DMS's own Settings UI, not from the matugen run itself.
-  `theming.matugen` (`modules/theming/matugen.nix`) seeds that wiring once at
-  activation, the same way `session.json`/`cache.json` get seeded elsewhere in
-  this repo, so GTK/Qt apps follow the wallpaper without that click.
-- 📇 **Anki as config** — 17 addons deployed from Nix, credentials merged in from
-  sops, and GUI-made settings still survive a rebuild (§ Anki).
+  the current wallpaper and renders it into every `theming.matugen.templates`
+  entry: spicetify rebuilds Spotify's CSS, Anki and Obsidian get matching
+  colours. Pick a new wallpaper, they all follow — except Anki and Spotify,
+  which only read their colour file at startup and need a restart.
+- 📇 **Anki as config** — 23 addons deployed from Nix, credentials merged in
+  from sops, and GUI-made settings still survive a rebuild (§ Anki).
 - 🔒 **Lock before sleep** — swayidle locks, then suspends, and pauses the whole
   chain while media is playing.
 - 🎬 **Right-click, download** — a yt-dlp browser extension in helium talks to a
-  native-messaging host this flake ships; the video lands in `~/Videos` and a
-  notification with a thumbnail opens it in mpv on click
+  native-messaging host this flake ships; the video lands in `~/Videos` with a
+  notification that opens it in mpv on click
   ([`modules/apps/ytdlp-download/`](modules/apps/ytdlp-download/)).
 
 ## ⌨️ Keybinds
@@ -180,8 +156,6 @@ unrelated launcher behind a modifier.
 
 <details>
 <summary><code>Mod</code> is Super. <code>Mod+Slash</code> opens DMS's own searchable cheat sheet — this is the short version.</summary>
-
-<br>
 
 | Navigation | |
 |---|---|
@@ -283,42 +257,36 @@ hosts/<name>/          per-host: default.nix (suite toggles) + hardware.nix
 modules/
   hm.nix               home-manager bridge — the `home.extraOptions` mechanism
   system/              always-on baseline (base, nix, locale, users, boot, sops, openssh …)
-  hardware/            audio / bluetooth / graphics baseline; nvidia + gaze gated
-  desktop/             niri, dms, greetd, kanata, xdg (gated on the desktop suite)
-  theming/             matugen — `theming.matugen.*`
-  services/            kde-connect, docker, rclone, nas, printing, winapps … (gated)
-  apps/                one file (or directory) per app, each `apps.<name>.enable`
-  suites/              groups that flip a batch of enables (core, desktop, dev …)
-secrets/               sops-encrypted age ciphertext, one file per subsystem
-docs/                  install walkthrough + the design docs behind each feature
-assets/                screenshots, wallpaper, avatar
+  hardware/             audio / bluetooth / graphics baseline; nvidia + gaze gated
+  desktop/              niri, dms, greetd, kanata, xdg (gated on the desktop suite)
+  theming/               matugen — `theming.matugen.*`
+  services/              kde-connect, docker, rclone, nas, printing, winapps … (gated)
+  apps/                  one file (or directory) per app, each `apps.<name>.enable`
+  suites/                groups that flip a batch of enables (core, desktop, dev …)
+secrets/                sops-encrypted age ciphertext, one file per subsystem
+docs/                   install walkthrough + the design docs behind each feature
+assets/                 screenshots, wallpaper, avatar
 ```
 
-Two conventions worth knowing:
-
-- **A module with sidecar files is a directory.** `modules/apps/ccl/` carries
-  `ccl.sh`, `modules/desktop/kanata/` carries `config.kbd`,
-  `modules/apps/helium/` carries the update proxy and userscripts. A module
-  with no sidecars is a single `.nix` file.
-- **Data that is not a module goes in a `_`-prefixed directory.** import-tree's
-  filter skips any path containing `/_`, so `modules/apps/anki/_lib/` holds
-  Anki's whole addon tree right next to the module that uses it without being
-  mistaken for one.
+Two conventions: **a module with sidecar files is a directory**
+(`modules/apps/ccl/` carries `ccl.sh`; no sidecars means a single `.nix`
+file), and **data that isn't a module goes in a `_`-prefixed directory** —
+import-tree skips any path containing `/_`, so `modules/apps/anki/_lib/` holds
+Anki's addon tree beside its module without being mistaken for one.
 
 ### Enable-options + suites
 
-Each feature declares `options.<ns>.<name>.enable` and gates its config with
-`lib.mkIf`. Suites toggle groups of them; hosts just flip suites:
+Each feature declares `options.<ns>.<name>.enable`, gated with `lib.mkIf`.
+Suites toggle groups of them; hosts just flip suites:
 
 ```nix
 # hosts/gamingpc/default.nix
 suites = {
-  core.enable = true;         # shell + CLI programs
-  desktop.enable = true;      # niri + dms + matugen theming + greetd/dank-greeter
+  core.enable = true;      # shell + CLI programs
+  desktop.enable = true;   # niri + dms + matugen theming + greetd/dank-greeter
   development.enable = true;   # vscode, docker, tooling
   media.enable = true;
   gaming.enable = true;
-  # …
 };
 hardware.nvidia.enable = true;
 ```
@@ -328,71 +296,33 @@ hardware.nvidia.enable = true;
 Home-manager runs as a NixOS module (`modules/hm.nix`). Any file mixes system +
 HM config by writing `home.extraOptions` — an attrset, or a function
 `{ config, … }: { … }` when it needs HM's own `config` (e.g. font names from
-`fonts.fontconfig.defaultFonts`).
-It's a `deferredModule`, so every file's contribution merges into
-`home-manager.users.otis`. There is no separate `home/` tree.
-
-```nix
-{ config, lib, ... }:
-{
-  options.apps.ghostty.enable = lib.mkEnableOption "ghostty terminal";
-  config = lib.mkIf config.apps.ghostty.enable {
-    home.extraOptions.programs.ghostty.enable = true;   # home-manager, same file
-  };
-}
-```
+`fonts.fontconfig.defaultFonts`). It's a `deferredModule`, so every file's
+contribution merges into `home-manager.users.otis`. There is no separate
+`home/` tree — see the example in [`CLAUDE.md`](CLAUDE.md#the-one-rule).
 
 ## 💾 Install
 
 > [!WARNING]
 > This is a personal config, not a distro. It hardcodes the username **`otis`**
-> (21 references across 9 files — `grep -rn otis modules/`), and
+> (45 references across 21 files — `grep -rn otis modules/`), and
 > `hosts/gamingpc/hardware.nix` describes one specific machine: NVMe, AMD CPU,
-> NVIDIA GPU. Installing it unchanged gives you *my* machine's assumptions.
-> Fork it, or at minimum give your machine its own host directory.
-
-> [!TIP]
-> Installing `omnibook` specifically? [`docs/omnibook-install.md`](docs/omnibook-install.md)
-> is the same procedure written end-to-end for that machine — encrypted layout,
-> firmware settings, BitLocker warning, face enrollment, and what to do on
-> `gamingpc` first.
+> NVIDIA GPU. Fork it, or give your machine its own host directory. Installing
+> `omnibook` specifically? [`docs/omnibook-install.md`](docs/omnibook-install.md)
+> is the same procedure written end-to-end for that machine.
 
 ### 1. Boot the installer
 
 Any recent [NixOS ISO](https://nixos.org/download/) (graphical or minimal).
 Get networking up — `nmtui` on the minimal image — and become root: `sudo -i`.
-
-**On an HP laptop (`omnibook`), change two firmware settings first** — F10 at
-the HP logo:
-
-- **Secure Boot → off.** This flake has no lanzaboote/shim setup, so a
-  Secure-Boot-enabled machine refuses to boot the installer *and* the installed
-  system.
-- **Storage / SATA mode → AHCI**, not Intel RST (VMD). HP ships RST on, and
-  with it the NVMe does not appear in `lsblk` at all — there is nothing to
-  partition. `hosts/omnibook/hardware.nix` also carries the `vmd` initrd module
-  so a system installed in RST mode still boots, but AHCI is the setting you
-  want.
-
-> [!WARNING]
-> **Save your BitLocker recovery key before changing either setting.** Windows 11
-> on an HP laptop seals the BitLocker key to the TPM, and both changes above
-> alter the TPM's PCR measurements, which breaks that seal. The next Windows
-> boot then demands a 48-digit recovery key instead of unlocking silently.
->
-> Irrelevant for a wipe — fatal if you wanted to boot Windows once more to copy
-> files off. So either get your data off first, or grab the key:
-> `manage-bde -protectors -get C:` in an admin shell, or
-> <https://account.microsoft.com/devices/recoverykey>.
-
-Windows will not boot after the AHCI switch. That is fine here — `omnibook` is
-a wipe install. If you ever want it back, put the mode back to RST.
+Installing a laptop with Secure Boot or Intel RST/VMD enabled, or with
+BitLocker on an existing Windows install? [`docs/omnibook-install.md`](docs/omnibook-install.md)
+Parts 1–2 cover those firmware gotchas and the BitLocker warning in full, and
+apply to any similar machine, not just `omnibook`.
 
 ### 2. Partition, and **label the partitions**
 
-The labels are the whole trick: `hardware.nix` mounts
-`/dev/disk/by-label/NIXROOT` rather than a UUID, so the same file works on any
-disk that uses these three names.
+`hardware.nix` mounts `/dev/disk/by-label/NIXROOT` rather than a UUID, so the
+same file works on any disk that uses these three names.
 
 | label | mount | filesystem |
 | --- | --- | --- |
@@ -413,87 +343,21 @@ parted /dev/nvme0n1 -- mkpart root ext4 17GiB 100%
 mkfs.fat -F32 -n NIXBOOT /dev/nvme0n1p1
 mkswap        -L NIXSWAP /dev/nvme0n1p2
 mkfs.ext4     -L NIXROOT /dev/nvme0n1p3
-```
 
-Mount them:
-
-```sh
 mount /dev/disk/by-label/NIXROOT /mnt
 mkdir -p /mnt/boot
 mount -o umask=077 /dev/disk/by-label/NIXBOOT /mnt/boot
 swapon /dev/disk/by-label/NIXSWAP
 ```
 
-#### On `omnibook` — encrypted, so a different layout
-
-The laptop leaves the house, so it gets full-disk encryption and the desktop
-doesn't. The concrete reason, beyond the obvious: `modules/system/sops.nix`
-decrypts `secrets/home-assistant.yaml` with `/etc/ssh/ssh_host_ed25519_key`. On a plain
-disk, whoever walks off with the machine mounts it, reads that key, and has your
-Home Assistant token.
-
-LUKS2 with LVM inside it, one passphrase for the lot:
-
-```
-nvme0n1p1  NIXBOOT   vfat ESP, /boot, unencrypted
-nvme0n1p2  NIXCRYPT  LUKS2
-           └─ vg0    LVM
-              ├─ swap  32G   (= RAM, so hibernate has somewhere to land)
-              └─ root  rest, ext4
-```
-
-`/boot` stays outside the container so GRUB never touches an encrypted volume —
-no `enableCryptodisk`, no second prompt. GRUB loads the kernel and initrd, then
-the initrd asks for the passphrase once.
-
-```sh
-parted /dev/nvme0n1 -- mklabel gpt
-parted /dev/nvme0n1 -- mkpart NIXBOOT fat32 1MiB 1GiB
-parted /dev/nvme0n1 -- set 1 esp on
-parted /dev/nvme0n1 -- mkpart NIXCRYPT 1GiB 100%
-
-mkfs.fat -F32 -n NIXBOOT /dev/nvme0n1p1
-
-# LUKS2. Choose a passphrase you can type at a bare console — this prompt has
-# no keymap loaded yet, so it is US-QWERTY regardless of your layout.
-cryptsetup luksFormat --type luks2 /dev/nvme0n1p2
-cryptsetup open /dev/nvme0n1p2 cryptroot
-
-# LVM inside it
-pvcreate /dev/mapper/cryptroot
-vgcreate vg0 /dev/mapper/cryptroot
-lvcreate -L 32G -n swap vg0
-lvcreate -l 100%FREE -n root vg0
-
-mkfs.ext4 -L NIXROOT /dev/vg0/root
-mkswap    -L NIXSWAP /dev/vg0/swap
-```
-
-The partition *names* matter here, not filesystem labels:
-`hosts/omnibook/hardware.nix` opens `/dev/disk/by-partlabel/NIXCRYPT`, which is
-the GPT name `parted -- mkpart NIXCRYPT` sets. A LUKS container has no
-filesystem label of its own to use instead.
-
-Mount:
-
-```sh
-mount /dev/vg0/root /mnt
-mkdir -p /mnt/boot
-mount -o umask=077 /dev/disk/by-label/NIXBOOT /mnt/boot
-swapon /dev/vg0/swap
-```
-
-> [!NOTE]
-> The 32G swap LV is sized for 32 GB of RAM, so hibernate works. `hardware.nix`
-> sets `boot.resumeDevice` explicitly — systemd stage 1 (the nixpkgs default
-> now) only passes `resume=` to the kernel when that option is set, unlike the
-> old scripted stage 1 which inferred it from `swapDevices`. Miss it and
-> hibernate half-works: the image is written, and the next boot ignores it.
+`omnibook` uses LUKS2 + LVM instead of a plain disk — full detail, including
+why the laptop gets encryption and the desktop doesn't, is in
+[`docs/omnibook-install.md`](docs/omnibook-install.md).
 
 ### 3. Give your machine a host
 
-The flake lives in your home directory, not `/etc/nixos` — clone it straight to
-where it will live after boot, so nothing has to be moved later:
+The flake lives in `~`, not `/etc/nixos` — clone it straight to where it will
+live after boot, so nothing has to be moved later:
 
 ```sh
 nix-shell -p git
@@ -506,198 +370,81 @@ nixos-generate-config --root /mnt --show-hardware-config > hosts/myhost/hardware
 cp hosts/gamingpc/default.nix hosts/myhost/default.nix
 ```
 
-Then edit `hosts/myhost/default.nix`: set `networking.hostName = "myhost"`,
-drop `hardware.nvidia.enable` if you have no NVIDIA card, drop the `rclone`
-block, and turn off any suites you don't want. Hosts are auto-discovered, so
-creating the directory is all the registration there is.
-
-If you labelled your partitions as above, you can replace the generated
-`fileSystems` blocks in `hosts/myhost/hardware.nix` with the by-label ones from
-`hosts/gamingpc/hardware.nix` — the generated UUIDs work fine too, they're just
-tied to that one disk.
+Edit `hosts/myhost/default.nix`: set `networking.hostName = "myhost"`, drop
+`hardware.nvidia.enable` if you have no NVIDIA card, drop the `rclone` block,
+and turn off any suites you don't want. Hosts are auto-discovered, so creating
+the directory is all the registration there is. Generated UUIDs in
+`fileSystems` work fine, or swap in the by-label ones from
+`hosts/gamingpc/hardware.nix` if you labelled your partitions as above.
 
 ### 4. Re-key the secrets *before* installing
 
-`modules/system/sops.nix` decrypts `secrets/home-assistant.yaml` with **this machine's SSH
-host key**, converted to age. A new machine has a different key, so it is not a
-recipient and the build fails. You have to add it as one.
-
-There is an ordering trap: the installed system generates its host key on first
-boot (`modules/system/openssh.nix`), but you need that key *before* installing,
-to add it as a recipient. It goes away if you create the key yourself, in the
-installer:
+`modules/system/sops.nix` decrypts `secrets/home-assistant.yaml` with **this
+machine's SSH host key**, converted to age. A new machine isn't a recipient
+yet, so the build fails until you add it — and the key has to exist *before*
+install, since the installed system otherwise only generates it on first boot:
 
 ```sh
 mkdir -p /mnt/etc/ssh
 ssh-keygen -t ed25519 -N "" -C "myhost" -f /mnt/etc/ssh/ssh_host_ed25519_key
-chmod 600 /mnt/etc/ssh/ssh_host_ed25519_key
+chmod 600 /mnt/etc/ssh/ssh_host_ed25519_key   # back this up — USB stick or a password manager
+nix run nixpkgs#ssh-to-age < /mnt/etc/ssh/ssh_host_ed25519_key.pub   # age1... — copy this
 ```
 
-NixOS preserves an existing host key rather than replacing it, so this is the
-key the installed system will decrypt with — sshd adopts it instead of making
-its own. **Back it up** to a USB stick or a password manager — not to the other
-machine, which would put both machines' keys on one disk for no benefit. Lose it
-and the encrypted secrets are unrecoverable from the new machine.
-
-Now turn it into an age recipient:
+NixOS preserves an existing host key, so this becomes the key the installed
+system decrypts with; lose it and the secrets are unrecoverable from this
+machine. **On a machine that can already decrypt** (an existing install), add
+the printed recipient to `.sops.yaml` next to `gamingpc`'s, then:
 
 ```sh
-nix run nixpkgs#ssh-to-age < /mnt/etc/ssh/ssh_host_ed25519_key.pub
-# age1... — copy this
+just updatekeys secrets/home-assistant.yaml     # asks for sudo, see § Secrets
+git commit -am "chore(sops): add myhost as a recipient" && git push
 ```
 
-### Which key is which — nothing gets copied between machines
+Back in the installer, `cd /mnt/home/otis/sitolamix && git pull` — both
+machines can now decrypt.
 
-This is the part that reads as confusing. There are **two** host keys, one per
-machine, and neither ever moves:
+No machine that can decrypt (forking, or the old key is gone)? Replace the
+`gamingpc` key in `.sops.yaml` with your own and write fresh ciphertext with
+`nix run nixpkgs#sops -- secrets/home-assistant.yaml` — or, with no Home
+Assistant at all, delete `modules/system/sops.nix` **and** the
+`homeAssistantMonitor`/`haTokenPath` bits in `modules/desktop/dms/plugins.nix`
+together, or evaluation breaks.
 
-| Key | Lives on | Travels? |
-| --- | --- | --- |
-| `gamingpc`'s `/etc/ssh/ssh_host_ed25519_key` | gamingpc, since its own install | Never |
-| `the new machine`'s `/mnt/etc/ssh/ssh_host_ed25519_key` | the new machine (`/mnt/...` while you are in the installer) | Never |
-
-The only thing that crosses the room is the `age1…` **recipient string** — the
-public half, derived from the `.pub` file. Public is fine on paper, in git,
-anywhere.
-
-So why does `gamingpc`'s own private key come into it? Because adding a
-recipient is two operations, not one:
-
-1. **decrypt** `secrets/home-assistant.yaml` — which needs a key that is *already* a
-   recipient, i.e. gamingpc's
-2. re-encrypt the result to both recipients
-
-Step 1 is where it fails if sops cannot find gamingpc's key. That failure is
-about the *old* key, not the new one, even though the error appears right after
-sops has offered to add the new recipient — which is what makes it look like
-the new key is at fault.
-
-Adding someone to a shared safe: you need *your* key to open it and *their*
-address to add them. Neither key changes hands.
-
-**On a machine that can already decrypt** (your existing install — do this
-before wiping it, or from any other machine already listed), add that recipient
-to `.sops.yaml`:
-
-```yaml
-keys:
-  - &gamingpc age1lag4wn9wz90qmfkwcgq55sg56htag4hpfnkxj4ur0mm0txwr4yeq7xpsrr
-  - &myhost   age1...            # the key you just printed
-creation_rules:
-  - path_regex: secrets/[^/]+\.yaml$
-    key_groups:
-      - age:
-          - *gamingpc
-          - *myhost
-```
-
-`.sops.yaml` only governs *new* files, so re-encrypt the existing one to the new
-recipient list and push.
-
-```sh
-just updatekeys secrets/home-assistant.yaml     # asks for sudo, see below
-
-git commit -am "chore(sops): add myhost as a recipient"
-git push
-```
-
-The recipe handles the part that trips people up: `sops` searches only *user*
-key locations (`~/.ssh/`, `~/.config/sops/age/keys.txt`, a handful of env vars),
-so on its own it will **not** find the SSH **host** key this repo actually
-encrypts to — bare `sops updatekeys` fails with *"Failed to get the data key
-required to decrypt the SOPS file"*. And `/etc/ssh/ssh_host_ed25519_key` is
-root-only, hence the sudo prompt. `just updatekeys` converts it to age and
-passes it to that one command only. Don't run `sops` under `sudo` instead — it
-works, but rewrites the file as root inside your checkout.
-
-Then back in the installer, pull that commit into the clone:
-
-```sh
-cd /mnt/home/otis/sitolamix && git pull
-```
-
-Both machines can now decrypt, and the install will succeed.
-
-<details>
-<summary><strong>No machine that can decrypt?</strong> (forking, or the old key is gone)</summary>
-
-<br>
-
-Then the existing ciphertext is unreadable to you — nobody can re-key a secret
-they cannot read. Start your own:
-
-```sh
-# .sops.yaml: replace the gamingpc key with your own recipient, then
-rm secrets/home-assistant.yaml
-nix run nixpkgs#sops -- secrets/home-assistant.yaml     # opens $EDITOR, writes fresh ciphertext
-```
-
-Put a `hass_token:` key in it to match what `modules/system/sops.nix` declares.
-If you have no Home Assistant at all, delete `modules/system/sops.nix` **and**
-the `homeAssistantMonitor` block plus the `haTokenPath` binding in
-`modules/desktop/dms/plugins.nix` — both, because `plugins.nix` reads
-`config.sops.secrets.hass_token.path` and removing only the module breaks
-evaluation.
-
-</details>
-
-### 5. Install
+### 5. Install, then first boot
 
 The installer ISO ships with flakes disabled, so enable them for this shell
-first — this covers `nixos-install --flake` and any `nix run` in step 4:
+first. This builds the whole system, so expect a long first run:
 
 ```sh
 export NIX_CONFIG="experimental-features = nix-command flakes"
-```
-
-```sh
 nixos-install --flake /mnt/home/otis/sitolamix#myhost   # or #omnibook
-```
-
-This builds the whole system, so expect a long first run and a lot of
-downloading. Set a password for the user before rebooting, or greetd will have
-nothing to let you in with:
-
-```sh
-nixos-enter --root /mnt -c 'passwd otis'
+nixos-enter --root /mnt -c 'passwd otis'   # or greetd has nothing to let you in with
 reboot
 ```
 
-### 6. After first boot
+After first boot:
 
 ```sh
 gh auth login              # so `git push` works — see GitHub auth below
-rclone config              # only if you kept services.rclone
+rclone config               # only if you kept services.rclone
+sudo chown -R otis:users ~/sitolamix   # it was cloned as root
 ```
 
-On `omnibook`, face unlock still needs a one-off enrollment on the machine —
-see [Face unlock](#-face-unlock-gaze) below.
-
-The checkout is already at `~/sitolamix`, which is what the dankMenu
-`Update ▸ Rebuild` rows assume (`flakeDir` in
-`modules/desktop/dms/plugins.nix`). It was cloned as root, so take ownership
-once:
-
-```sh
-sudo chown -R otis:users ~/sitolamix
-```
-
-From then on it is `just rebuild` from that directory. Monitors are configured
-in DMS's settings UI, not in the flake.
+On `omnibook`, face unlock still needs a one-off enrollment — see
+[Face unlock](#-face-unlock-gaze) below. The checkout is already at
+`~/sitolamix`, which is what the dankMenu `Update ▸ Rebuild` rows assume
+(`flakeDir` in `modules/desktop/dms/plugins.nix`); from here on it is
+`just rebuild`. Monitors are configured in DMS's settings UI, not the flake.
 
 ### Just trying it out?
 
-You don't have to install anything to look at it. Build the system closure on
-any NixOS machine:
-
-```sh
-nix build github:sitolam/sitolamix#nixosConfigurations.gamingpc.config.system.build.toplevel
-```
-
+No install needed — build the closure on any NixOS machine:
+`nix build github:sitolam/sitolamix#nixosConfigurations.gamingpc.config.system.build.toplevel`.
 Or cherry-pick: the modules are self-contained enough that copying
 `modules/desktop/dms/` or a single `modules/apps/*.nix` into your own config
-usually works with only the `home.extraOptions` bridge (`modules/hm.nix`) to
-port along with it.
+usually works, with only the `home.extraOptions` bridge (`modules/hm.nix`)
+to port along with it.
 
 ## 🔧 Rebuild
 
@@ -719,78 +466,47 @@ the lot.
 | `just secret <file>` | edit an encrypted secret — see § Secrets |
 | `just updatekeys <file>` | re-encrypt a secret after adding a host |
 
-Fish also wraps `just` so it works from any cwd (see `modules/apps/fish.nix`).
-
-For working *on* the flake rather than with it, `nix develop` (or `direnv allow`,
-since `.envrc` is just `use flake`) gives you `nvd`, `deadnix`, `statix`, `nil`,
-`nixd`, `nh`, `just` and `nixfmt` without installing any of them globally.
-
-> [!TIP]
-> After a rebuild that touches DankMaterialShell plugins or settings, run
-> `dms restart` so the shell reloads them.
+Fish also wraps `just` so it works from any cwd (`modules/apps/fish.nix`). For
+working *on* the flake, `nix develop` (or `direnv allow`) gives you `nvd`,
+`deadnix`, `statix`, `nil`, `nixd`, `nh`, `just` and `nixfmt` without
+installing any of them globally. After a rebuild that touches DankMaterialShell
+plugins or settings, run `dms restart` so the shell reloads them.
 
 ## 🔑 GitHub auth
 
-Pushing uses HTTPS with the **GitHub CLI** as the credential helper — no token in
-the remote URL, nothing auth-related committed to the repo. On a new machine:
-
-```sh
-gh auth login   # GitHub.com → HTTPS → login via browser
-```
-
-`gh` stores the token in `~/.config/gh/` (user-only, outside the flake) and wires
-itself in as git's credential helper, so `git push` just works afterwards.
+Pushing uses HTTPS with the **GitHub CLI** as the credential helper — no token
+in the remote URL, nothing auth-related committed to the repo. On a new
+machine, `gh auth login` (GitHub.com → HTTPS → login via browser); `gh` stores
+the token in `~/.config/gh/` and wires itself in as git's credential helper,
+so `git push` just works afterwards.
 
 ## 🔐 Secrets (sops)
 
 <details>
 <summary>Encrypted with <b>sops-nix</b> + age, committed as ciphertext, decrypted at activation to <code>/run/secrets/&lt;name&gt;</code> — tmpfs, never in the store or git in plaintext. The config references the decrypted <em>path</em>, never the value.</summary>
 
-<br>
-
-- `modules/system/sops.nix` — imports the sops module, sets the sops file and the
-  decryption key (the machine's SSH host key), and declares each secret.
-- `.sops.yaml` — the age recipients allowed to decrypt (creation rules).
+- `modules/system/sops.nix` — sops module, decryption key, and each secret's
+  declaration.
+- `.sops.yaml` — the age recipients allowed to decrypt.
 - `secrets/*.yaml` — the encrypted secret files.
 
-The decryption key is `/etc/ssh/ssh_host_ed25519_key`, converted to age — which
-is why `modules/system/openssh.nix` is part of the always-on baseline rather
-than a suite: sshd is what creates and preserves that key. Get the matching
-**public** key (the recipient for `.sops.yaml`) with:
-
-```sh
-nix run nixpkgs#ssh-to-age < /etc/ssh/ssh_host_ed25519_key.pub
-```
-
-Add / edit a secret (opens `$EDITOR` with decrypted content, re-encrypts on save):
-
-```sh
-just secret secrets/home-assistant.yaml
-```
-
-The recipe exists because `sops` searches only *user* key locations (`~/.ssh/`,
-`~/.config/sops/age/keys.txt`, a few env vars) and so never finds the SSH
-**host** key this repo encrypts to — bare `sops secrets/home-assistant.yaml` fails with
-*"Failed to get the data key required to decrypt the SOPS file"*. `just secret`
-converts `/etc/ssh/ssh_host_ed25519_key` (root-only, so it asks for sudo) to age
-and passes it to sops for that one command, without exporting it into your
-shell. Don't run `sops` under `sudo` instead — it works, but rewrites the file
-as root inside your checkout.
-
-Then declare it and reference the runtime path:
+The decryption key is `/etc/ssh/ssh_host_ed25519_key`, converted to age.
+Add or edit a secret with `just secret secrets/home-assistant.yaml` — it opens
+`$EDITOR` with the decrypted content and re-encrypts on save. Plain `sops` on
+that file fails, because sops only searches *user* key locations
+(`~/.ssh/`, `~/.config/sops/age/keys.txt`); the recipe converts the root-only
+host key to age and hands it to sops for that one command instead. Don't run
+`sops` under `sudo` — it works, but rewrites the file as root.
 
 ```nix
 # modules/system/sops.nix
 sops.secrets.hass_token = { owner = "otis"; mode = "0400"; };
-
 # consumer, e.g. modules/desktop/dms/plugins.nix
 config.sops.secrets.hass_token.path   # => /run/secrets/hass_token
 ```
 
-Adding another machine: add its age key to `.sops.yaml`, then re-encrypt every
-existing secret to the new recipient list with `just updatekeys secrets/home-assistant.yaml`
-(same host-key handling as `just secret`). To rotate a secret, edit it as above
-and replace the value — the old ciphertext is overwritten.
+New machine: add its age key to `.sops.yaml`, then
+`just updatekeys secrets/home-assistant.yaml` to re-encrypt everything.
 
 </details>
 
@@ -799,95 +515,30 @@ and replace the value — the old ciphertext is overwritten.
 <details>
 <summary><code>omnibook</code> only — the laptop's Windows Hello IR camera used as a login shortcut, via <a href="https://github.com/GunduLabs/gaze">gaze</a>, running its models on the NPU. Convenience, <b>not</b> a full security upgrade: read the warning first.</summary>
 
-<br>
-
 > [!WARNING]
-> **Gaze is still not Windows Hello.** It does more than howdy did — a local
-> MiniFASNet-V2 presentation-attack model runs on every detected face crop
-> (`[liveness]`, on by default), so a photo held up to the camera is rejected
-> rather than accepted — but it is one camera, not Hello's structured-light
-> depth sensor.
+> **Gaze is still not Windows Hello.** A local MiniFASNet-V2 liveness model
+> runs on every detected face crop, so a photo held up to the camera is
+> rejected — but it is one camera, not Hello's structured-light depth sensor.
 >
-> `modules/hardware/gaze.nix` is wired accordingly:
->
-> - the PAM rule is `sufficient` — a face match unlocks, a miss falls *silently
->   through to the password prompt*. Your password never stops working.
-> - scoped to the services in `hardware.gaze.pamServices`: `login` (what the DMS
->   lock screen authenticates against — DMS mirrors it into a user-local
->   `dankshell` service at first lock rather than shipping a PAM file of its
->   own), `greetd` (the dms-greeter login screen), `sudo` and `polkit-1`. Gaze's
->   own default list is *replaced*, not extended, so nothing reaches `sshd`.
-> - gaze's own `abort_if_ssh` and `abort_if_lid_closed` guards stay on.
->
-> Want it as a real second factor instead? There is no `control` knob on this
-> module; set `security.pam.services.<svc>.gaze.control = "required"` on the
-> host — then a failed scan **blocks** the login rather than falling back.
+> `modules/hardware/gaze.nix` is wired accordingly: the PAM rule is
+> `sufficient` (a miss falls back to the password prompt, silently), scoped to
+> `login`, `greetd`, `sudo` and `polkit-1` — never `sshd`. For face as a real
+> second factor, set `security.pam.services.<svc>.gaze.control = "required"`
+> on the host instead.
 
-### Why gaze replaced howdy
+Gaze replaced howdy here: the password prompt is no longer blocked while the
+scan runs (`pam_gaze_grosshack.so` races it concurrently), it does liveness
+detection, and it dropped the dlib/Python stack howdy needed (−2.1 GiB
+closure). Inference runs on the NPU (`hardware.gaze.device = "npu"`) via a
+gaze build with the OpenVINO Cargo feature enabled, falling back to CPU if
+OpenVINO fails to come up (`gaze doctor` shows which is live). Enrollment is
+per-machine data under `/var/lib/gaze`, never committed.
 
-Two reasons, both structural:
+### Setup
 
-- **The password prompt is no longer blocked.** PAM runs auth modules one at a
-  time, in stack order, and howdy sat ahead of `pam_unix` — so the password
-  field could not even appear until its scan returned, and its timeout had to be
-  cut to 1s to keep that bearable. Gaze ships `pam_gaze_grosshack.so`, which
-  runs the scan *concurrently* with the password prompt, the way DMS already
-  races the fingerprint reader against the password. It is used for `login` and
-  `greetd` (`hardware.gaze.simultaneousServices`); `sudo` and `polkit-1` stay
-  sequential, where the scan is short and there is nothing to race.
-- **Liveness detection**, described in the warning above.
-
-It is also a smaller machine: the dlib / `face-recognition` / Python stack howdy
-dragged in left the closure along with it (−2.1 GiB).
-
-### Inference runs on the NPU
-
-`hardware.gaze.device = "npu"` on this host. Face detection and recognition are
-exactly the small fixed-shape CNNs Panther Lake's NPU exists for, and keeping
-them off the CPU is what makes a scan that races the password prompt cheap
-enough to run on every unlock, on battery.
-
-The chain that makes this work, none of which needs anything built specially:
-
-- `hardware.cpu.intel.npu.enable` on the host ships `intel-npu-driver` and
-  `level-zero`, and the `ivpu` kernel driver exposes `/dev/accel/accel0`.
-- nixpkgs' `onnxruntime` is built with the OpenVINO execution provider
-  (`libonnxruntime_providers_openvino.so`), and nixpkgs' `openvino` carries
-  `libopenvino_intel_npu_plugin.so`.
-- the module rebuilds gaze, its CLI and its GUI with the `openvino` Cargo
-  feature, which the stock packages do not set — without it the daemon has no
-  OpenVINO provider to register and the CLI and GUI only know `device = "cpu"`.
-  That override is `hardware.gaze.openvino.enable`, implied by any `device`
-  other than `"cpu"`.
-- the module puts `level-zero` and `/run/opengl-driver/lib` on `gazed`'s
-  `LD_LIBRARY_PATH`. OpenVINO's NPU plugin dlopens `libze_loader.so.1` by bare
-  name rather than linking it, and the loader then looks for the driver's
-  `libze_intel_npu.so`; neither is on a system daemon's link path by default, so
-  without this OpenVINO enumerates no NPU at all.
-
-If OpenVINO ever fails to come up, gaze logs the reason and **falls back to the
-ONNX Runtime CPU provider** rather than failing the login. Check which one is
-live with `gaze doctor`.
-
-The config is declarative, the enrollment is not: face templates are per-machine
-data under `/var/lib/gaze`, so they are a post-install step and never live in
-the repo. The recognition models themselves are downloaded by the daemon into
-`/var/cache/gaze` on first use, so the first scan after a fresh install needs
-network.
-
-### 1. Find the IR camera
-
-A Windows Hello module enumerates as *two* V4L2 devices — the colour webcam and
-the infrared one. Only the IR node works in the dark, which is the whole point.
-
-```sh
-lsusb                                        # VID:PID of the camera module
-v4l2-ctl --list-devices
-v4l2-ctl -d /dev/videoN --list-formats-ext   # the IR one is GREY-only
-gaze doctor                                  # what gaze itself sees
-```
-
-### 2. Point the config at it
+Find the IR node (`lsusb`, `v4l2-ctl --list-devices`, `gaze doctor`), then
+point the config at it — a `usb:VVVV:PPPP` id survives `/dev/videoN`
+renumbering; a `/dev/v4l/by-path/…` symlink does **not** work:
 
 ```nix
 # hosts/omnibook/default.nix
@@ -898,176 +549,52 @@ hardware.gaze = {
 };
 ```
 
-Give it the **`usb:VVVV:PPPP`** hex VID:PID from `lsusb`, not a device node:
-gaze resolves that to the module's infrared V4L2 node itself, so it survives the
-`/dev/videoN` renumbering that happens when another camera is plugged in. A bare
-`/dev/video2` also works.
-
-> [!CAUTION]
-> A `/dev/v4l/by-path/…` symlink does **not** work, even though it is the stable
-> path howdy wanted. Gaze special-cases only literal `/dev/video<number>`,
-> `usb:VVVV:PPPP` and `primary`; anything else is passed to `gst_parse_launch`
-> as a source element, and enrollment dies with
-> `no source element for URI "/dev/v4l/by-path/…"`.
-
-Then `just rebuild`.
-
-Leave `irDevice` unset and gaze authenticates off the colour camera alone
-(`cameras.rgb = "primary"`, resolved through PipeWire at runtime).
-
-> [!NOTE]
-> `/etc/gaze/config.toml` is **seeded** from the Nix `settings`, not owned by
-> them: `services.gaze.mutableConfig` is true so the GUI's settings page can
-> write to it. Changing the module afterwards does not rewrite an existing file.
-> Either change it in the GUI, or `sudo rm /etc/gaze/config.toml` and
-> `just rebuild` to re-seed.
-
-### 3. Enrol a face
+`just rebuild`, then enrol (no `sudo` — it goes through the daemon over D-Bus,
+authorized by polkit):
 
 ```sh
 gaze add-face default          # guided multi-angle capture
-gaze refine-face default       # add captures: glasses on, glasses off, dim room
-gaze list-faces                # what is enrolled
-gaze remove-face default       # drop one
-gaze auth --verbose            # test a scan without locking anything
+gaze refine-face default       # add captures: glasses on/off, dim room
+gaze auth --verbose            # test without locking anything
 ```
 
-No `sudo`: enrollment goes through the daemon over D-Bus and is authorized by
-polkit. Lock the session (`Super+L`) to try it for real — it should unlock on
-sight, and drop to the password field if it does not recognise you. The GTK4
-settings app (`hardware.gaze` installs it) does the same thing with a preview.
-
-### 4. If the image is black
-
-Some Windows Hello modules need their IR LEDs kicked on explicitly. Symptom: the
-device is right, but every frame comes back dark.
-
-```nix
-hardware.gaze.irEmitter.enable = true;
-```
-
-### Turning it off
-
-```nix
-hardware.gaze.enable = false;
-```
-
-`just rebuild`, and PAM goes back to password-only immediately. Enrolled
-templates are left under `/var/lib/gaze`; `gaze clear-user` (or deleting the
-directory) removes them.
+Lock the session (`Super+L`) to try it for real. If every frame is black, some
+modules need their IR LEDs switched on: `hardware.gaze.irEmitter.enable = true;`.
+`/etc/gaze/config.toml` is a read-only link to the Nix store, so the GTK4 app's
+settings page can't save. Change `settings` in the module instead. Turn gaze off with
+`hardware.gaze.enable = false;` — PAM goes back to password-only immediately;
+templates stay under `/var/lib/gaze` until `gaze clear-user`.
 
 </details>
 
-## 💤 Idle & hibernate
+## 💤 Idle, hibernate & display glitches
 
 <details>
-<summary><code>omnibook</code> only — lid close and idle both sleep instantly, then hibernate for real after a delay, but only on battery.</summary>
+<summary><code>omnibook</code> only — sleep/hibernate timing, and three Xe3 display-engine bugs worked around with kernel params. Recheck the display params after every kernel bump.</summary>
 
-<br>
+**Idle & hibernate.** `modules/desktop/niri/idle.nix` runs the shared swayidle
+timers (lock at 6 min, blank at 10 min, sleep at 15 min). `hosts/omnibook/default.nix`
+adds lid-switch and hibernate-delay config, keyed off `boot.resumeDevice`
+(only `omnibook` sets it — a no-op elsewhere). Lid close or 15 min idle →
+`systemctl suspend-then-hibernate`: sleeps immediately, then after
+`HibernateDelaySec` (30 min) still suspended, hibernates for real. On AC,
+hibernate is skipped for plain suspend.
 
-`modules/desktop/niri/idle.nix` runs the shared swayidle timers (lock at
-6 min, blank outputs at 10 min, sleep at 15 min idle). `hosts/omnibook/default.nix`
-adds the lid-switch and hibernate-delay config. Both key off
-`boot.resumeDevice`, which only omnibook sets (swap sized to RAM in
-`hosts/omnibook/hardware.nix`) — so on any other host this is all a no-op and
-idle-suspend stays plain `systemctl suspend`.
-
-The behaviour:
-
-- **Lid close or 15 min idle** → `systemctl suspend-then-hibernate`: sleeps
-  immediately (RAM suspend), then after `HibernateDelaySec` (30 min) still
-  suspended, wakes briefly to write RAM to swap and hibernate for real.
-- **On AC power**, hibernate is skipped — plain suspend instead, since there's
-  no point burning a resume-from-hibernate on something that's plugged in.
-  Lid switch uses logind's `HandleLidSwitchExternalPower`; the idle timer has
-  no such built-in, so it greps `/sys/class/power_supply/*/online` itself
-  before deciding.
-
-Tune the delay or add a battery-percentage cutoff in
-`systemd.sleep.settings.Sleep` (`hosts/omnibook/default.nix`).
-
-</details>
-
-## 🩹 Display glitches (Panther Lake / Xe3)
-
-<details>
-<summary><code>omnibook</code> only — the driver stack is right; several of the display engine's features are not. Recheck after every kernel bump.</summary>
-
-<br>
-
-**The driver side is already correct**, and worth stating plainly so it isn't
-re-debugged: `hosts/omnibook/default.nix` sets `hardware.intelgpu.driver =
-"xe"` (Panther Lake is xe-only — `common/gpu/intel` from nixos-hardware still
-defaults to `i915`, which is wrong here) and
-`vaapiDriver = "intel-media-driver"`. `vainfo` reports the iHD driver with
-H.264/HEVC/VP9/AV1 decode, and GuC, HuC, GSC and DMC firmware all load. Nothing
-about video decode is broken.
-
-**nixos-hardware has no Panther Lake module.** As of the current pin,
-`common/cpu/intel/` and `common/gpu/intel/` stop at `lunar-lake` — no
-`panther-lake`, and no `hp-omnibook` under the vendor directories either. That
-is why the host imports the generic `common-cpu-intel` +
-`common-pc-laptop{,-ssd}` stack and sets the two GPU options by hand.
-**Recheck this after `nix flake update nixos-hardware`:**
+**Display (Panther Lake / Xe3).** The driver side is already correct
+(`hardware.intelgpu.driver = "xe"`, `vaapiDriver = "intel-media-driver"`) —
+video decode is not the problem. nixos-hardware has no Panther Lake module
+yet, so the host sets these by hand; recheck after `nix flake update
+nixos-hardware`. Two display-engine bugs are worked around with
+`boot.kernelParams`: `xe.enable_dsb=0` (Display State Buffer errors that drop
+frames) and PSR, dropped on 2026-08-26 to retest since it saves real idle
+battery — if half-panel blackouts return, put `xe.enable_psr=0` back. VRR is
+the third, still-open issue (`Atomic update failure` / `VRR push send still
+pending` during video); it's toggled in DMS's settings UI, not Nix. Recheck a
+param by dropping it, rebooting, and counting:
 
 ```bash
-ls "$(nix eval --raw --impure --expr \
-  '(builtins.getFlake (toString ./.)).inputs.nixos-hardware.outPath')/common/cpu/intel"
-```
-
-If a `panther-lake` (or `hp/omnibook`) directory shows up, import it and drop
-the hand-set `hardware.intelgpu` block — upstream will keep it more current
-than we will.
-
-**What actually glitches** is the Xe3 display engine, in three separate ways.
-
-One feature is disabled by `boot.kernelParams` in the host file:
-
-| Param | Kernel symptom | What you see |
-|---|---|---|
-| `xe.enable_dsb=0` | `[CRTC:151:pipe A] DSB 0 poll error`, roughly once per vblank — 660k lines in a single boot before the workaround | Stuttering and dropped frames, most obvious in video playback |
-
-`xe.enable_psr=0` (Panel Self Refresh) sat alongside it until 2026-08-26, for
-`Timed out waiting PSR idle state`, `Selective fetch area calculation failed in
-pipe A` and `CPU pipe A FIFO underrun` — half the screen randomly going black
-or garbled. It was **dropped to retest on zen 7.1.9**, because PSR is the
-display feature that actually saves idle battery and is therefore the one worth
-reclaiming. If the blackouts return, put the param back; if they don't, the bug
-was fixed upstream and it can stay gone.
-
-Both are display-engine only: rendering, VA-API decode and the NPU are
-untouched.
-
-**VRR is the third, and is still open.** With PSR and DSB handled, the glitches
-that remain during video playback log as:
-
-```
-[drm] *ERROR* Atomic update failure on pipe A (start=... time 18 us, min 1836, max 1859, ...)
-[drm] *ERROR* [CRTC:151:pipe A] VRR push send still pending
-```
-
-The `min`/`max` vblank window shifts from one event to the next, which is VRR
-retiming the frame window; the compositor misses it and the panel shows a stale
-or black frame. Video is hit hardest because a varying framerate drives VRR
-hardest. VRR is enabled on `eDP-1` — **DMS owns
-`~/.config/niri/dms/outputs.kdl`, so toggle it in the DMS settings UI, not in
-Nix.** niri's `variable-refresh-rate on-demand` is a middle option, but
-on-demand activates on fullscreen video, which is precisely the case that
-glitches. Note that VRR is a poor battery trade here regardless: PSR saves real
-power, and simply running the panel at 60Hz instead of 120Hz saves more than
-VRR ever does.
-
-These are workarounds for driver bugs, not permanent settings. After a kernel
-bump, drop one param at a time, reboot, use the machine for a while, and count:
-
-```bash
-# `command` bypasses the grep -> rg alias set in modules/apps/fish.nix —
-# ripgrep reads -E as --encoding and errors out on this pattern.
 journalctl -k -b | command grep -cE "DSB 0 poll error|PSR idle state|FIFO underrun"
 ```
-
-Zero means the fix landed upstream and the param can stay gone. Anything else,
-put it back.
 
 </details>
 
@@ -1075,8 +602,6 @@ put it back.
 
 <details>
 <summary>Google Drive — and any other rclone remote — mounted at <code>~/Cloud/&lt;remote&gt;</code> by one systemd <b>user</b> service per remote. <em>Which</em> remotes to mount is declared in Nix; the accounts themselves are set up with <code>rclone config</code>, so no OAuth token ever touches the repo.</summary>
-
-<br>
 
 `modules/services/rclone.nix` turns every entry of `services.rclone.remotes`
 into its own `rclone-<name>.service`:
@@ -1089,79 +614,23 @@ services.rclone = {
 };
 ```
 
-### Adding a Google Drive
-
-1. **Make your own OAuth client id** (recommended — the id built into rclone is
-   shared by every rclone user on earth and heavily rate-limited):
-   [rclone.org → making your own client id](https://rclone.org/drive/#making-your-own-client-id).
-
-2. **Authenticate.** Interactive, once per machine — this is the part that
-   *cannot* be declarative:
-
-   ```sh
-   rclone config
-   ```
-
-   `n` (new remote) → name it (e.g. `gdrive_personal`) → storage `drive` →
-   paste `client_id` + `client_secret` → scope `1` (full access) → leave
-   root_folder_id / service_account_file empty → `n` (no advanced config) →
-   `y` to open a browser and sign in → `n` (not a shared drive) → `q`.
-   Full walkthrough: [rclone.org/drive](https://rclone.org/drive/).
-
-3. **Declare it** under `services.rclone.remotes` in `hosts/<host>/default.nix`,
-   using the same name, then `just rebuild`.
-
-The mount comes up during the rebuild and at every login afterwards. `rclone
-listremotes` shows the names rclone knows about — they must match the
-attribute names.
-
-### Everyday use
-
-| Command | |
-|---|---|
-| `rclone-mounts` | status of every mount (`status` is the default subcommand) |
-| `rclone-mounts restart` | remount everything — `reload-rclone` still works too |
-| `rclone-mounts start` / `stop` | … one-way |
-| `rclone-mounts logs` | follow the journal of all mounts |
-
-### Options
-
-| Option | Default | |
-|---|---|---|
-| `services.rclone.mountBase` | `%h/Cloud` | parent directory of every mount |
-| `services.rclone.configFile` | `%h/.config/rclone/rclone.conf` | |
-| `services.rclone.flags` | see below | flags applied to every mount |
-| `…remotes.<name>.remote` | `<name>:` | set to `<name>:Sub/Dir` to mount a subfolder |
-| `…remotes.<name>.mountPoint` | `<mountBase>/<name>` | |
-| `…remotes.<name>.extraFlags` | `[ ]` | flags for this remote only, e.g. `[ "--read-only" ]` |
-
-The default flags worth knowing: `--vfs-cache-mode=full` means files are cached
-on disk, so editing in place behaves like a local disk (capped at 5G / 24h), and
-`--dir-cache-time=1000h` is paired with `--poll-interval=15s` — Drive supports
-change polling, so an effectively infinite directory cache still notices changes
-made from your phone or the web UI within seconds.
-
-### Troubleshooting
-
-| Symptom | Fix |
-|---|---|
-| `Failed to configure token … expired` | `rclone config reconnect <name>:` |
-| Unit inactive, mount point empty | `rclone-mounts logs` — usually the name doesn't match `rclone listremotes` |
-| `Transport endpoint is not connected` | leftover from a crash; `rclone-mounts restart` clears it (the unit unmounts stale mount points before starting) |
-| Nothing started at all | the unit is *skipped* while `~/.config/rclone/rclone.conf` doesn't exist — run `rclone config` first |
-
-> [!IMPORTANT]
-> `~/.config/rclone/rclone.conf` holds live OAuth refresh tokens. It stays in
-> `$HOME` at mode `600` and must never be committed — this repo is public.
+Adding a Google Drive: [make your own OAuth client id](https://rclone.org/drive/#making-your-own-client-id)
+(the built-in one is shared and rate-limited), `rclone config` once per
+machine (interactive — cannot be declarative), then declare the remote and
+`just rebuild`. `rclone-mounts [status|restart|start|stop|logs]` manages the
+mounts. Default flags: `--vfs-cache-mode=full` (edits behave like local disk, capped at
+5G/24h) and `--dir-cache-time=1000h` with `--poll-interval=15s` (Drive
+supports change polling, so remote edits show up within seconds). Per-remote
+options: `mountPoint`, `remote` (`<name>:Sub/Dir` to mount a subfolder),
+`extraFlags`. `~/.config/rclone/rclone.conf` holds live OAuth refresh tokens —
+stays in `$HOME` at mode `600`, never committed.
 
 </details>
 
 ## 🗄️ NAS shares (SMB)
 
 <details>
-<summary>The home NAS's SMB shares mounted under <code>/mnt/nas/&lt;share&gt;</code> as real kernel <code>cifs</code> mounts, mounted automatically whenever the network comes up and listed in the Nautilus sidebar, with the share password held in sops — no keyring prompt, no GVFS, available to every process and to root.</summary>
-
-<br>
+<summary>The home NAS's SMB shares mounted under <code>/mnt/nas/&lt;share&gt;</code> as real kernel <code>cifs</code> mounts, mounted automatically whenever the network comes up and listed in the Nautilus sidebar, with the share password held in sops.</summary>
 
 `modules/services/nas.nix` turns each entry of `services.nas.shares` into a
 `fileSystems` entry:
@@ -1175,22 +644,10 @@ services.nas = {
 };
 ```
 
-The mounts are `noauto`, so boot never waits on the NAS and a laptop away from
-the home network still boots normally. A NetworkManager dispatcher script
-starts the mount units whenever a connection comes up and stops them once no
-connection is left; away from home the attempt just times out after 10 s.
-`x-systemd.automount` stays as a fallback: touching the path retries a mount
-that failed. `x-gvfs-show` puts each mounted share in the Nautilus sidebar as a
-drive, so there are no bookmarks.
-
-### Credentials
-
-`secrets/nas.yaml` holds one key, `nas_credentials`, whose value is a
-`mount.cifs` credentials file:
-
-```sh
-just secret secrets/nas.yaml
-```
+Mounts are `noauto`; a NetworkManager dispatcher script starts/stops them as
+the network comes and goes, so a laptop away from home still boots normally.
+Credentials live in `secrets/nas.yaml` (`nas_credentials`, a `mount.cifs`
+credentials file, `just secret secrets/nas.yaml` to set):
 
 ```yaml
 nas_credentials: |
@@ -1198,44 +655,12 @@ nas_credentials: |
   password=<smb password>
 ```
 
-`just secret` is what hands sops the decryption key — plain `sops secrets/nas.yaml`
-fails with *"Failed to get the data key required to decrypt the SOPS file"*,
-because sops never looks at the SSH **host** key this repo encrypts to. See
-[Secrets (sops)](#-secrets-sops).
-
-sops-nix decrypts it to `/run/secrets/nas_credentials` (tmpfs, root-only) and
-the mount options point `credentials=` at that path, so the password is never in
-the nix store, in `/etc/fstab`, or in git as plaintext.
-
-### Everyday use
-
-| Command | |
-|---|---|
-| `ls /mnt/nas/media` | triggers the mount if it isn't up |
-| `systemctl status mnt-nas-media.automount` | is the trigger armed |
-| `systemctl status mnt-nas-media.mount` | is it actually mounted, and why not |
-| `sudo systemctl restart mnt-nas-media.mount` | remount after changing credentials |
-
-Files show up owned by `otis` (`uid=1000,gid=100`) — SMB carries no usable Unix
-ownership here, so it is fixed at mount time.
-
-The module also adds a GTK bookmark per share, so they show up in the Nautilus
-sidebar next to the XDG folders from `modules/desktop/xdg.nix`. That is the part
-that has to be declared: gio auto-displays mounts only under `/media`,
-`/run/media/$USER` or `$HOME`, and the fstab flag that would force it
-(`x-gvfs-show`) is read only by GVFS's udisks2 monitor, which handles block
-devices — a `//host/share` device is invisible to it. A bookmark works even
-while the share is idle-unmounted: opening it touches the path, which triggers
-the automount. Restart the file manager (`nautilus -q`) after a rebuild that
-changes the bookmark list.
-
-### Options
-
-| Option | Default | |
-|---|---|---|
-| `services.nas.server` | — | host or IP serving the shares |
-| `services.nas.shares` | `[ ]` | share names to mount |
-| `services.nas.mountRoot` | `/mnt/nas` | parent directory of every mount |
+`systemctl status mnt-nas-media.mount` shows if it's mounted and why not;
+`sudo systemctl restart mnt-nas-media.mount` remounts after changing
+credentials. Files show up owned by `otis` (SMB carries no usable Unix
+ownership). The module also adds a GTK bookmark per share so it appears in
+Nautilus even while idle-unmounted — restart the file manager (`nautilus -q`)
+after a rebuild that changes the bookmark list.
 
 </details>
 
@@ -1244,109 +669,29 @@ changes the bookmark list.
 <details>
 <summary>CUPS with driverless IPP discovery over Avahi/mDNS — printers on the LAN show up without typing an IP or installing a vendor driver.</summary>
 
-<br>
-
-`modules/services/printing.nix` is enabled for every host through
-`suites.core` (`services.printing-cups.enable = true;`). It turns on:
-
-```nix
-services.printing.enable = true;   # CUPS
-services.avahi = {
-  enable = true;
-  nssmdns4 = true;      # resolve .local mDNS names
-  openFirewall = true;  # let mDNS/IPP discovery broadcasts through
-};
-```
-
-### Everyday use
-
-Add a printer with `system-config-printer` (in every host's packages) or the
-CUPS web UI at `http://localhost:631`. A driverless/AirPrint/IPP-Everywhere
-printer on the same LAN should just appear in the discovery list — no driver
-to pick.
-
-`lpstat -p` lists configured printers; `lpq` / `lpq -P <name>` shows the
-queue.
-
-### Vendor drivers
-
-If a printer isn't driverless-capable and needs a vendor driver (older
-HP/Brother/Epson models), add the driver package to `drivers` in
-`modules/services/printing.nix`:
-
-```nix
-services.printing.drivers = [ pkgs.hplip ];   # example: HP
-```
-
-### Options
-
-| Option | Default | |
-|---|---|---|
-| `services.printing-cups.enable` | `false` | turn on CUPS + Avahi discovery |
+Enabled for every host through `suites.core`
+(`services.printing-cups.enable = true;`). Add a printer with
+`system-config-printer` or the CUPS web UI at `http://localhost:631` — a
+driverless/AirPrint/IPP-Everywhere printer on the LAN should just appear
+(`lpstat -p` lists configured printers). If one needs a vendor driver, add it
+to `services.printing.drivers` in `modules/services/printing.nix` (e.g.
+`[ pkgs.hplip ]` for HP).
 
 </details>
 
 ## 🤖 Local models (ccl)
 
 <details>
-<summary><code>ccl</code> runs Claude Code against a model served by LM Studio instead of Anthropic's API — LM Studio speaks the OpenAI API, Claude Code speaks Anthropic's, and <a href="https://github.com/musistudio/claude-code-router">claude-code-router</a> sits between them and translates. <code>ccl</code> picks the model, configures the router, starts it, and hands off.</summary>
+<summary><code>ccl</code> runs Claude Code against a model served by LM Studio instead of Anthropic's API, via <a href="https://github.com/musistudio/claude-code-router">claude-code-router</a>, which translates between LM Studio's OpenAI API and Claude Code's Anthropic one. <code>ccl</code> picks the model, configures the router, starts it, and hands off.</summary>
 
-<br>
-
-Enabled by `suites.ai.enable`.
-
-### Everyday use
-
-```
-ccl                            pick a model interactively, then launch
-ccl <model-id>                 launch with a specific model
-ccl --list                     list selectable models and exit
-ccl --print-config <model-id>  print the router config without writing it
-ccl <model-id> -- --version    pass everything after -- to claude
-ccl -h                         usage summary
-```
-
-Start LM Studio and load a model first — `ccl` only lists what LM Studio reports.
-
-The router runs detached from `ccl` and from your shell: once started it keeps
-serving in the background, surviving Ctrl-C, closing the terminal, and quitting
-Claude Code. Relaunching `ccl` with the same model reuses it instantly; a different
-model restarts it. It only stops when you run `ccr stop`, or at logout.
-
-### Options
-
-| Variable | Default | Meaning |
-|---|---|---|
-| `CCL_LMSTUDIO_URL` | `http://127.0.0.1:1234` | LM Studio base URL |
-| `CCL_ROUTER_PORT` | `4141` | Port the router listens on |
-
-`ccl` owns `~/.claude-code-router/config.json` and rewrites it on every launch. A
-config it did not write is preserved once as `config.json.pre-ccl`.
-
-### Troubleshooting
-
-**"LM Studio is not answering"** — LM Studio's local server is off. Developer tab →
-Status: Running.
-
-**Context warning at launch** — the model was loaded with too small a context window.
-Claude Code's system prompt and tool definitions alone exceed a few thousand tokens.
-Raise "Context Length" in the model's settings in LM Studio and reload it.
-
-**"the router never became healthy"** — something else holds port 4141, or the router
-rejected the config. The message includes the tail of the router's log.
-
-**Picked a `○ not-loaded` model and Claude Code hangs** — LM Studio loads it on the
-first request, which can take minutes for a large model. `ccl` says so at launch;
-wait it out, or load the model in LM Studio before starting.
-
-**A not-loaded model still ran out of context** — for those, `ccl` can only see the
-model's ceiling (`max_context_length`), not the context LM Studio will actually load
-it with, so the context warning can stay silent and the session fail anyway. Load the
-model in LM Studio first and `ccl --list` will show its real context.
-
-**Malformed tool calls, or the session derails** — expected with small quantised
-models. Claude Code leans hard on well-formed tool calls; a 3-bit quant will not
-always produce them. This is the model, not `ccl`.
+Enabled by `suites.ai.enable`. Start LM Studio and load a model first — `ccl`
+only lists what LM Studio reports. `ccl` picks a model interactively, `ccl
+<model-id>` launches one directly, `ccl --list` lists selectable models. The
+router runs detached and keeps serving across restarts of `ccl`, the shell, or
+Claude Code — only `ccr stop` or logout ends it. "LM Studio is not answering"
+means its local server is off (Developer tab → Status: Running); malformed
+tool calls are usually the model, not `ccl` — expected with small quantised
+models.
 
 </details>
 
@@ -1355,142 +700,33 @@ always produce them. This is the model, not `ccl`.
 <details>
 <summary>Microsoft Office runs in a Windows VM and shows up as ordinary windows — Word is a launcher entry, <code>.docx</code> opens in it, and there is no second desktop to alt-tab into. <code>modules/services/winapps/</code> holds the whole thing.</summary>
 
-<br>
+The VM does not start at boot — it costs ~4 GB RAM and steady CPU. Start it
+from `Mod+Space` → Windows → Start VM, or `systemctl start docker-windows`.
+**First boot, once per machine:** read the generated password (`sops -d
+secrets/winapps.yaml`), start the VM, wait 20–40 minutes at the Web Console
+(`http://127.0.0.1:8006`) while Windows and Office install unattended, then
+sign in to Office once in that viewer — activation persists under
+`/var/lib/winapps/storage`. After that, `Mod+Space` → an app name launches
+Word/Excel/PowerPoint/Outlook/OneNote like any other app.
 
-**The VM does not run at boot.** That is deliberate: it costs ~4 GB of RAM and a
-steady slice of CPU, which on the laptop is a battery bill for something used a
-few times a week. Start it from `Mod+Space` → Windows → Start VM, or:
+**On-Demand** (toggle in the Windows submenu) starts the VM on first use and
+stops it after `services.winapps.idleTimeout` minutes (15 by default) idle;
+off, you start and stop by hand. It's a full VM (QEMU/KVM), not a container,
+so idle Windows still ticks over and costs real battery — stop it when done.
+The home directory is redirected into the RDP session with nothing copied.
+`services.winapps.rdpScale` must match the output scale (FreeRDP only accepts
+100/140/180). Ports are loopback-only (`127.0.0.1:3389`, `127.0.0.1:8006`) —
+don't drop those prefixes. Add an application via `services.winapps.apps`;
+the `id` must name a directory in WinApps' own app list.
 
-```sh
-systemctl start docker-windows
+If WinApps says "another user is still signed in", the guest predates the
+`AutoAdminLogon = 0` step (it only runs on a fresh install). Sign the console
+out once via the web viewer on `127.0.0.1:8006`, then run this in an elevated
+shell in the guest:
+
+```bat
+reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon" /v AutoAdminLogon /t REG_SZ /d 0 /f
 ```
-
-The submenu's first row is a live readout — `Stopped`, or
-`Running · CPU 4% · RAM 2.1GiB` — sampled when you open the menu. Start and Stop
-are one button: only whichever one currently does something is on screen.
-
-### First boot, once per machine
-
-Everything after `just rebuild` is unattended, but it is slow and it needs one
-interactive step at the end. In order:
-
-1. **Read your Windows password before you need it.** It was generated during
-   setup and you have never seen it:
-
-   ```sh
-   sops -d secrets/winapps.yaml
-   ```
-
-2. **Start the VM** — `Mod+Space` → Windows → Start VM, or
-   `systemctl start docker-windows`. Neither prompts for a password; a polkit
-   rule grants exactly `start` and `stop` on exactly this unit to `wheel`.
-
-3. **Wait 20–40 minutes**, watching the Web Console
-   (<http://127.0.0.1:8006>). Windows installs
-   itself from a generated answer file, then Office 365 installs from
-   Microsoft's Deployment Tool. Nothing needs clicking during this.
-
-4. **Sign in to Office once.** In that same browser viewer, open Word and sign
-   in with your Microsoft 365 account. The activation lives in the VM's disk at
-   `/var/lib/winapps/storage` and survives every restart after this.
-
-   The guest itself is unactivated Windows — a Microsoft 365 sign-in licenses
-   Office, not Windows. Expect a desktop watermark and locked personalization
-   settings. RDP and Office both work fine regardless.
-
-5. **Launch Word from Linux.** It is a normal application now: hit `Mod+Space`,
-   type `word`, press enter. Double-clicking a `.docx` in Nautilus opens it too.
-   The VM must be running; if it is not, WinApps says so with a notification
-   rather than failing silently.
-
-If Office is missing when the install finishes, look for
-`C:\OfficeSetup\FAILED.txt` in the guest — the script writes it on both a failed
-download and a failed install. `C:\OEM\install.bat` is re-runnable by hand.
-
-### Day to day
-
-Start and stop from the Windows submenu. The applications themselves are
-ordinary launcher entries, so they are not repeated in that submenu — it owns
-the VM's lifecycle, nothing else:
-
-| Where | What is there |
-|---|---|
-| `Mod+Space` → Windows | Status, Start **or** Stop VM, On-Demand, Full Desktop, Web Console |
-| `Mod+Space` → type an app name | Word, Excel, PowerPoint, Outlook, OneNote |
-
-**On-Demand** is a toggle. With it on, opening Word starts the VM and waits for
-it (with a notification, since a cold boot takes the better part of a minute),
-and the VM stops itself once no Office window has been open for
-`services.winapps.idleTimeout` minutes — 15 by default. With it off the VM is
-yours to start and stop from the two rows above; the idle watcher will not touch
-a VM you started by hand.
-
-Idle is counted in consecutive one-minute checks rather than wall-clock, so
-closing the lid for three hours does not mean the VM is killed the moment you
-open it again.
-
-The figures come from `labelCmd`, a condition kind added to
-[dankMenu](https://github.com/sitolam/dms-plugins) for this: unlike
-`when`/`checked`/`disabled`, which are judged by exit status, its stdout replaces
-the row's label. That is the only way to get a changing number into a menu whose
-tree is a static file.
-
-All of the VM's notifications are **low urgency** — starting, up, stopping, off.
-They are status, not decisions, so they should not interrupt a fullscreen window.
-
-**Full Desktop vs Web Console.** Full Desktop is the everyday one — the whole
-Windows desktop over RDP, fast and integrated. The Web Console is dockur's HTTP
-view of the guest's actual screen; it is slower and clunkier, and it is the only
-way in when RDP is not answering: during first boot, or afterwards if Windows
-breaks in a way that takes RDP down with it.
-
-There is no bar widget. `dockerManager` is installed but disabled
-(`modules/desktop/dms/plugins.nix`) — the VM is off most of the time, so a
-permanent widget would spend its life showing nothing.
-
-**Battery.** This is a full VM, not a container in the Linux sense: QEMU with
-KVM running a real Windows 11. Idle Windows is never really idle — Defender,
-Search indexing, and Update all tick over — so the host CPU never settles into
-its deep idle states, and the 4 GB is gone for as long as the VM is up. On the
-laptop, expect a noticeable dent in battery life. Nothing suspends it
-automatically: WinApps has an `AUTOPAUSE` feature, but it only works under its
-`libvirt` backend, and this setup uses `WAFLAVOR="manual"` precisely so that
-WinApps never touches the VM's lifecycle. Stop it when you are done — that is
-what the menu row is for. On `gamingpc` (8 GB, 6 cores, wall power) leaving it
-running is fine.
-
-**Your files.** The home directory is redirected into the RDP session
-(`services.winapps.rdpFlags`), so it appears in Windows Explorer under "This PC"
-as a drive whenever an app is open. Nothing is copied and there is no share to
-mount. There used to be a second path in — a `~/Windows` folder bind-mounted as
-`\\host.lan\Data` — and it was removed: one way in is enough, and two only
-raised the question of which folder a given file was supposed to be in.
-
-**Scaling.** `services.winapps.rdpScale` must match the output scale the windows
-land on, or Windows renders 1:1 and Office text comes out tiny beside everything
-else. FreeRDP only accepts 100, 140 or 180; omnibook's panel is niri scale 1.75,
-so it is set to 180 in its host file.
-
-**Disk.** The default is 32G, and it is a ceiling rather than a reservation —
-the image is sparse and only consumes what Windows has written. Raising it later
-is easy (dockur grows the disk on the next boot); lowering it means deleting
-`/var/lib/winapps/storage` and reinstalling. omnibook is pinned at 64G because
-its VM was built before the default changed.
-
-**Adding an application** — add it to `services.winapps.apps` in the host file.
-The `id` must name a directory in WinApps' own list:
-
-```sh
-ls "$(nix build --no-link --print-out-paths 'github:winapps-org/winapps#winapps')/src/apps"
-```
-
-A wrong id fails the build rather than producing a launcher that does nothing —
-the entry's name, icon and MIME associations are read out of WinApps' own
-definition for that id at build time, so nothing is hand-maintained here.
-
-**Ports are loopback-only** (`127.0.0.1:3389` and `127.0.0.1:8006`). Do not drop
-those prefixes — the VM has an RDP host with a fixed password, and Docker's
-default would publish it on every network the laptop joins.
 
 </details>
 
@@ -1499,162 +735,48 @@ default would publish it on every network the laptop joins.
 <details>
 <summary>Winamp 2.x as a terminal player: one config written from Nix, the Spotify provider on a sops-held client ID, and <code>Mod+Alt+C</code> to float it on workspace 10. <code>modules/apps/cliamp.nix</code>.</summary>
 
-<br>
-
 ![cliamp](assets/screenshots/cliamp.png)
 
-Enabled by `suites.media`. The module is the whole feature — package wrapper,
-`config.toml`, the sops secret and the two niri bits.
+Enabled by `suites.media`. `~/.config/cliamp/config.toml` is written by an
+activation script rather than symlinked, since cliamp rewrites it itself on
+every runtime toggle — installed writable (0600) each rebuild, so Nix values
+win again at the next `just rebuild`. Spotify provider is 320kbps (**needs
+Premium**); its `client_id` lives in `secrets/cliamp.yaml`, expanded from the
+environment at launch — missing it falls back to cliamp's shared built-in ID.
+Register your own at [developer.spotify.com/dashboard](https://developer.spotify.com/dashboard)
+(redirect URI `http://127.0.0.1:19872/login`, Web API enabled) and store it
+with `just secret secrets/cliamp.yaml`.
 
-### The config
-
-`~/.config/cliamp/config.toml` is **written by an activation script, not
-symlinked**. cliamp rewrites that file itself every time you toggle shuffle or
-repeat, pick a theme, cycle the visualiser or save an EQ curve, so a read-only
-store symlink would either break those writes or be silently replaced by a real
-file. Instead the file is installed writable (0600) on every rebuild: your
-runtime toggles hold until the next `just rebuild`, then the Nix values win
-again. It is one of the files in CLAUDE.md's "this repo owns them" list.
-
-What it sets:
-
-| Key | Value | Why |
-|---|---|---|
-| `sample_rate` | `192000` | the highest cliamp accepts |
-| `resample_quality` | `4` | best of 1–4 |
-| `bit_depth` | `32` | lossless PCM for FFmpeg-decoded formats (default is 16) |
-| `buffer_ms` | `250` | upstream's default, left alone on purpose: this one is latency, not quality — the 5000 maximum would mean ~5s before playback starts or a seek lands. Raise it toward `2000` only if a radio stream underruns |
-| `visualizer` | `"BarsDot"` | |
-| `provider` | `"spotify"` | the provider selected on startup |
-| `[spotify] bitrate` | `320` | the top bitrate Spotify serves |
-
-### Spotify
-
-The `[spotify]` section is what registers the provider at all; `client_id` only
-swaps cliamp's built-in fallback (the librespot keymaster ID, whose rate-limit
-quota is shared with every librespot client) for our own developer app.
-**Playback needs Spotify Premium.**
-
-The ID lives in `secrets/cliamp.yaml` as `cliamp_spotify_client_id`, never in
-the store. cliamp expands a value of exactly `"${NAME}"` from the environment,
-so the config file only ever contains `client_id = "${CLIAMP_SPOTIFY_CLIENT_ID}"`
-and a `makeWrapper` wrapper exports that variable from `/run/secrets/…` at
-launch. If the secret is missing the expansion yields `""` and cliamp falls back
-to the built-in ID — degraded, not broken.
-
-To register your own app (`just secret secrets/cliamp.yaml` to store the
-result):
-
-1. Go to [developer.spotify.com/dashboard](https://developer.spotify.com/dashboard) and sign in.
-2. **Create app**, give it a name (`cliamp`) and a description.
-3. Add `http://127.0.0.1:19872/login` as a Redirect URI.
-4. Tick **Web API** under "Which API/SDKs are you planning to use?".
-5. **Save**, then copy the Client ID out of the app's Settings.
-
-First sign-in happens in the browser and completes two steps in one tab: the
-Web API grant for library/playlist/search, and Spotify's own identity for
-playback.
-
-### The binds
-
-`Mod+Alt+C` — the "run a tool" plane. Its sibling `Mod+Alt+F` does the same for
-Spotify (`modules/apps/spotify/default.nix`). Both just launch: no workspace switching
-or pinning, the window opens floating wherever you currently are.
-
-cliamp opens floating and centred at 60% × 60%, Spotify at 75% × 80% — it is a
-full GUI client with a sidebar, not a 24-row TUI.
+`Mod+Alt+C` opens cliamp floating at 60%×60%; `Mod+Alt+F`
+(`modules/apps/spotify/default.nix`) does the same for Spotify at 75%×80%.
 
 ![cliamp floating over the desktop](assets/screenshots/cliamp-workspace.png)
-
-cliamp's window rule matches on `com.mitchellh.ghostty.cliamp`, an app-id the
-bind sets with ghostty's `--class` so it never catches an ordinary terminal.
-
-### Also installed
-
-`pactl` (from `pulseaudio`). cliamp's audio-device picker shells out to it —
-nothing else on this system did, since the niri volume binds deliberately use
-`wpctl`. pipewire-pulse answers `pactl` fine; only the client binary was
-missing.
 
 </details>
 
 ## 📇 Anki (declarative addons)
 
 <details>
-<summary>17 addons deployed from Nix into Anki's <em>real</em> mutable addon folder — GUI config still survives rebuilds, two addons get their credentials from sops, and ReColor follows the current wallpaper. <code>modules/apps/anki/</code>.</summary>
+<summary>23 addons deployed from Nix into Anki's <em>real</em> mutable addon folder — GUI config still survives rebuilds, two addons get their credentials from sops, and ReColor follows the current wallpaper. <code>modules/apps/anki/</code>.</summary>
 
-<br>
+`pkgs.anki.withAddons` was rejected — it replaces `addons21` wholesale and
+breaks Anki's own "save config" flow. Instead a home-manager activation script
+rsyncs addon *code* from the store on every rebuild, excluding `meta.json` and
+`user_files/` — once those exist, Anki owns them, so GUI config sticks. Three
+exceptions: `secretMerges` re-merges HyperTTS/Anki Leaderboard credentials
+from `/run/secrets/*` with `jq` every activation; `themedFiles` rebuilds
+ReColor's `meta.json` from `recolor-schema.json` every activation;
+`disabledIds` keeps Anki Leaderboard off. ReColor's dark colours themselves
+come from matugen: a rendered colours file feeds a `jq` post-hook
+(`recolorApply`) that patches only the dark slot of the addon's live
+`meta.json`. Anki only reads `meta.json` at startup, so a new wallpaper's
+colours show up on the next launch, not while Anki is running.
 
-The obvious approach — `pkgs.anki.withAddons` — was rejected. It replaces
-`addons21` wholesale via `ANKI_ADDONS`, which makes every addon read-only in the
-store and breaks Anki's own "save config" flow. So instead a home-manager
-activation script *deploys into* the real folder:
-
-- **Code** is rsynced from the store on every activation, so a rebuild is what
-  updates an addon.
-- **`meta.json` and `user_files/` are excluded** from that rsync. Once they
-  exist, Anki owns them — anything you change in the addon's GUI config sticks.
-- **First install only**, a captured config from `_lib/seeds/<id>.json` is
-  written as the initial `meta.json`.
-
-Three things override that "leave it alone" rule on purpose:
-
-| Mechanism | Applies to | Why |
-|---|---|---|
-| `secretMerges` | HyperTTS (Azure key), Anki Leaderboard (auth token) | Live credentials. Stripped from the seed, re-merged from `/run/secrets/*` with `jq` on every activation, so they are never in git. |
-| `themedFiles` | ReColor | Its `meta.json` is rewritten wholesale on every activation from a base built out of `recolor-schema.json` (labels, light values, and every dark slot defaulted to the light value). |
-| `disabledIds` | Anki Leaderboard | The one addon that was off on the old machine, and stays off. |
-
-ReColor's dark colours themselves come from matugen, not from `themedFiles`.
-`theming.matugen.templates.anki-recolor` (`modules/apps/anki/default.nix`)
-renders `_lib/recolor-template.nix` — a flat JSON map of ReColor's colour keys
-to `{{colors.*}}`/`{{dank16.*}}` placeholders — into a colours file under
-`~/.local/state/sitolamix/`, then runs `recolorApply` (`_lib/default.nix`) as
-its post-hook. `recolorApply` is a small `jq` script that patches just the
-dark slot of each entry in the addon's live `meta.json` from that colours
-file, leaving the light slot (and everything else a rebuild wrote) alone.
-Home-manager activation runs `recolorApply` again after the base `meta.json`
-above is rewritten, so a rebuild does not reset Anki back to the light
-values. Anki only reads `meta.json` at startup, so a new wallpaper's colours
-show up the next time Anki is started, not while it is running — same as
-Spotify (below).
-
-### Layout
-
-```
-modules/apps/anki/
-  default.nix        the module: apps.anki.enable, sops secrets, activation,
-                      theming.matugen.templates.anki-recolor
-  _lib/
-    default.nix           addon set + mkActivationScript + recolorApply
-    recolor-template.nix  ReColor colour keys -> matugen placeholders
-    fetched/         addons built from upstream sources, with patches
-    vendored/        addons committed here (forks, or ones with no clean source)
-    seeds/           captured first-install meta.json config per addon id
-    recolor-schema.json   ReColor's shipped labels / light values / css vars
-```
-
-`_lib` is not a typo — import-tree skips any path containing `/_`, so the addon
-tree lives beside its module without being loaded as one.
-
-### Adding an addon
-
-**From upstream** — add it to `_lib/fetched/default.nix` with its source and, if
-needed, a patch under `_lib/fetched/patches/`.
-
-**Vendored** — drop the addon folder into `_lib/vendored/<ankiweb-id>/` and add
-that id to `vendoredIds` in `_lib/default.nix`. The id only has to be unique;
-`advanced_deck_maker` and `efficiency_tracker` are locally-written addons whose
-"id" is just a name.
-
-**With a config you want as the default** — install it, configure it in the GUI,
-then copy the `config` object out of its `meta.json` into
-`_lib/seeds/<id>.json` and add the id to `seededIds`.
-
-> [!NOTE]
-> Anki's own "Update Add-ons" dialog will still offer to update these. Letting it
-> is harmless but pointless — the next `just rebuild` rsyncs the pinned code back
-> over the top. Bump the flake or the vendored folder instead.
+`modules/apps/anki/default.nix` is the module; `_lib/fetched/` builds addons
+from upstream sources, `_lib/vendored/` holds addons committed here (forks, or
+no clean source), `_lib/seeds/` captures first-install `meta.json` per addon.
+Adding one: from upstream, add it to `_lib/fetched/default.nix`; vendored,
+drop the folder into `_lib/vendored/<id>/` and list it in `vendoredIds`.
 
 </details>
 
@@ -1663,57 +785,19 @@ then copy the `config` object out of its `meta.json` into
 <details>
 <summary>Flags, Chrome Enterprise policies and the whole extension set declared in Nix — including a local proxy that keeps the extension updater from breaking on Helium's version string. <code>modules/apps/helium/</code>.</summary>
 
-<br>
+Extensions are installed *by policy*, so the set, the pinning, and the
+*absence* of anything removed all travel with the flake rather than with
+`~/.config/net.imput.helium`. The catch-all `"*".installation_mode = "allowed"`
+means the declared set is a floor, not a whitelist — to actually uninstall an
+extension that used to be declared, add its id to `removedExtensions`.
 
-Helium is a Chromium fork, so extensions can be installed *by policy* rather than
-by hand: `ExtensionSettings` in `/etc/chromium/policies/` names each extension
-id, its update URL and whether it gets a toolbar button, and the browser acts on
-that at startup. That is what makes the extension set reproducible — the set, the
-pinning and the *absence* of anything removed all travel with the flake instead
-of with `~/.config/net.imput.helium`.
-
-Four things had to be solved to get there, and each is worth knowing before
-touching this module:
-
-- **The packaging matters.** This uses
-  [`oxcl/nix-flake-helium-browser`](https://github.com/oxcl/nix-flake-helium-browser),
-  which repacks the official `.deb` with `patchelf`. The previous input
-  (`FKouhai/helium2nix`) ran an AppImage inside bwrap and never bound
-  `/etc/chromium`, so policies could not reach the browser at all — no policies,
-  no declarative extensions.
-- **Naming any id blocks every id you did not name.** The earlier
-  `ExtensionInstallForcelist` approach combined with a blocklist in a way that
-  blocked everything *else*, manually-installed extensions included. The fix is
-  the `"*".installation_mode = "allowed"` catch-all: the declared set is a floor,
-  not a whitelist.
-- **The update endpoint needs a patched `prodversion`.** Google's update service
-  rejects Helium's version string, so `update-proxy.py` sits in front of it and
-  rewrites `prodversion` to a Chrome version the endpoint accepts. Without it
-  every extension update 400s.
-- **Deleting an id does not uninstall the extension.** Because the catch-all is
-  `allowed`, an extension already sitting in the profile from an earlier
-  generation just stops being managed and keeps running. `removedExtensions`
-  exists for this: it maps ids to `installation_mode = "removed"`, the only mode
-  that actually uninstalls and blocks a reinstall. Ids stay listed there for as
-  long as any profile might still carry them.
-
-Two smaller things the module decides:
-
-- **Pinning is declarative.** `pin = true` on an entry emits
-  `toolbar_pin = "force_pinned"`. Only the extensions worth a one-click button
-  get it; everything else is left at Chromium's default, which is unpinned but
-  still pinnable by hand.
-- **uBlock Origin comes from the Web Store, not from Helium.** Helium ships its
-  own compiled-in uBO with its own fork of the filter lists, and neither a policy
-  nor a pref can turn it off — only the **Settings → Services → uBlock** switch,
-  which has to be flipped by hand once per profile. Leaving both on gives every
-  page two element pickers and two sets of cosmetic filters.
-
-Policies are read at startup, so a rebuild is not enough: **quit Helium
-completely and reopen it** before concluding a change did not apply.
-
-`userscripts/` holds page scripts loaded through the extension set rather than
-through any Nix mechanism — they are data for a userscript manager.
+Google's update endpoint rejects Helium's version string, so `update-proxy.py`
+rewrites `prodversion` to a Chrome version it accepts — without it every
+extension update 400s. uBlock Origin comes from the Web Store, not Helium's
+own compiled-in copy; turn Helium's off by hand once per profile (Settings →
+Services → uBlock) or every page gets two element pickers. Policies are read
+at startup: **quit Helium completely and reopen it** before concluding a
+change did not apply.
 
 </details>
 
@@ -1722,13 +806,9 @@ through any Nix mechanism — they are data for a userscript manager.
 <details>
 <summary><code>apps.android</code> — adb, scrcpy, and auto-reconnect to a phone paired over Wi-Fi, so mirroring is one command and never a USB cable hunt.</summary>
 
-<br>
-
-Enabled by `suites.development`. The design notes are in
-[`docs/design/specs/2026-08-05-android-adb-scrcpy-design.md`](docs/design/specs/2026-08-05-android-adb-scrcpy-design.md).
-
-Pair the phone once (Developer options → Wireless debugging → Pair device with
-pairing code):
+Enabled by `suites.development`.
+Pair the phone once (Developer options → Wireless debugging → Pair device
+with pairing code):
 
 ```sh
 adb pair <phone-ip>:<pairing-port>
@@ -1736,8 +816,8 @@ adb connect <phone-ip>:<port>
 scrcpy
 ```
 
-After that the wireless auto-connect handles reconnection, so `scrcpy` on its
-own is usually enough.
+After that, wireless auto-connect handles reconnection, so `scrcpy` alone is
+usually enough.
 
 </details>
 
@@ -1746,45 +826,23 @@ own is usually enough.
 <details>
 <summary>The plugin set is pinned by <code>flake.lock</code>, not cloned and self-updated by Claude — so a rebuild is the only thing that changes it. <code>modules/apps/claude-code.nix</code>.</summary>
 
-<br>
-
 Claude Code normally clones plugin marketplaces into `~/.claude/plugins` and
-updates them on its own schedule. This module writes that tree from Nix instead,
-which means the plugin set is reproducible and moves only when you say so.
+updates them on its own schedule. This module writes that tree from Nix
+instead, so the plugin set is reproducible. Five marketplaces are `flake =
+false` inputs holding a `.claude-plugin/marketplace.json`
+(`claude-marketplace-official`, `-caveman`, `-skills`, `-flutter`, `-ui-ux`).
+Four more plugins are pinned as their own single-repo inputs rather than read
+out of a marketplace tree: `claude-plugin-superpowers` and `claude-plugin-figma`
+(the official marketplace only points at them by URL), plus
+`claude-plugin-mattpocock` and `claude-plugin-pstack` (not listed in any
+marketplace this repo tracks). Bump one with `nix flake update <input-name>`,
+then `just rebuild`.
 
-Each marketplace is a `flake = false` input holding a
-`.claude-plugin/marketplace.json`:
-
-| Input | Repo |
-|---|---|
-| `claude-marketplace-official` | `anthropics/claude-plugins-official` |
-| `claude-marketplace-caveman` | `JuliusBrussee/caveman` |
-| `claude-marketplace-skills` | `alirezarezvani/claude-skills` |
-| `claude-marketplace-flutter` | `cleydson/flutter-claude-code` |
-| `claude-marketplace-ui-ux` | `nextlevelbuilder/ui-ux-pro-max-skill` |
-
-Two plugins need their own pins because the official marketplace only *points*
-at them (`{"source":"url"}` entries naming another repo, so the marketplace tree
-does not contain them): `claude-plugin-superpowers` and `claude-plugin-figma`.
-
-Bump one with `nix flake update <input-name>`, then `just rebuild`.
-
-### House rules for the agent
-
-[`CLAUDE.md`](CLAUDE.md) at the repo root carries the conventions for working on
-this flake — one file per feature, the namespace/directory mapping, when a module
-becomes a directory, what `_`-prefixed directories are for, which files this repo
-owns that applications also try to write, and the verification gates.
-
-Claude Code loads it automatically in any session whose working directory is this
-repo. That is the point: these are rules that only help at the moment you would
-otherwise break one, so they need to be present unconditionally rather than
-discovered. It started as a `/sitolamix` skill pinned into the plugin set above,
-which was strictly worse — a skill has to match before it loads, and a silent
-miss gives you exactly the mistake it existed to prevent.
-
-`ccl` (§ Local models) execs `ccr code`, which launches `claude` — so those
-sessions get this same pinned set.
+[`CLAUDE.md`](CLAUDE.md) carries the conventions Claude Code loads
+automatically in this repo — one file per feature, the namespace/directory
+mapping, which files this repo owns that applications also try to write, and
+the verification gates. `ccl` (§ Local models) execs `ccr code`, which
+launches `claude`, so those sessions get this same pinned set.
 
 </details>
 
@@ -1796,13 +854,13 @@ sessions get this same pinned set.
 
 Two things the licence deliberately does *not* cover:
 
-- **`modules/apps/anki/_lib/vendored/`** — Anki add-ons committed into this tree
-  keep the licences their own authors chose (AGPL-3.0, GPL, Apache-2.0, BSD, MIT,
-  and some bundled media with separate attribution terms). A per-add-on table is
-  in [that directory's README](modules/apps/anki/_lib/vendored/README.md). Read
+- **`modules/apps/anki/_lib/vendored/`** — Anki add-ons committed into this
+  tree keep the licences their own authors chose. A per-add-on table is in
+  [that directory's README](modules/apps/anki/_lib/vendored/README.md). Read
   it before redistributing any of them.
 - **Everything behind a flake input** — nixpkgs, niri, DankMaterialShell,
-  Helium, WinApps and the rest are fetched at build time under their own terms.
+  Helium, WinApps and the rest are fetched at build time under their own
+  terms.
 
 The two add-ons written for this repo, `advanced_deck_maker` and
 `efficiency_tracker`, are GPL-3.0 like the rest of the configuration.
@@ -1813,12 +871,12 @@ The HM + NixOS same-file mechanism (`home.extraOptions` + deferred module) and
 the enable-options / suites layout are adapted from a previous personal repo,
 `quickhyprnix`.
 
-**Vibe coded with [Claude Code](https://claude.com/claude-code).** Nearly every
-module here — and this README — was written in a conversation with Claude rather
-than typed out by hand: describe the behaviour, read the diff, rebuild, keep
-what survives. The long comments in the `.nix` files are part of that workflow;
-they are the reasoning behind each decision, kept in the file so the next
-session (human or model) does not have to rediscover it. Treat them as the real
-documentation.
+**Vibe coded with [Claude Code](https://claude.com/claude-code).** Nearly
+every module here — and this README — was written in a conversation with
+Claude rather than typed out by hand: describe the behaviour, read the diff,
+rebuild, keep what survives. Comments in the `.nix` files stay short —
+why something exists and, for a workaround, when it can be removed — rather
+than a full design writeup; the design reasoning that doesn't fit that space
+lives here, in this README and in `docs/`.
 
 <div align="center"><sub>Built with Nix · themed with matugen, from the wallpaper · broken and fixed on <code>main</code></sub></div>

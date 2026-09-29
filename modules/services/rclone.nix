@@ -45,7 +45,6 @@ let
     esac
   '';
 
-  # muscle memory from quickhyprnix.
   reload-rclone = pkgs.writeShellScriptBin "reload-rclone" ''
     exec ${rclone-mounts}/bin/rclone-mounts restart
   '';

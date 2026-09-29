@@ -1,7 +1,7 @@
-# The Obsidian CSS snippet as a matugen template. Nix fills in what is
-# static (font names, the callout list); matugen fills every colour from the
-# wallpaper whenever DMS regenerates its scheme. Imported by ../default.nix;
-# lives under _lib so import-tree skips it.
+# The Obsidian CSS snippet as a matugen template. Nix fills in what's static
+# (font names, the callout list); matugen fills every colour from the
+# wallpaper. Imported by ../default.nix; lives under _lib so import-tree
+# skips it.
 { lib, fonts }:
 let
   c = role: "{{colors.${role}.default.hex}}";
@@ -20,8 +20,7 @@ let
     (c "on_surface_variant")
   ];
 
-  # Same hue families as the old catppuccin table: statements blue-ish,
-  # constructions in the accent, proofs deliberately quiet.
+  # Statements blue-ish, constructions in the accent, proofs deliberately quiet.
   callouts = {
     theorem = ansi 4;
     lemma = ansi 12;

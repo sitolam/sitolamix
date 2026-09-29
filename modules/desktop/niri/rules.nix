@@ -14,12 +14,11 @@
         # is clearly visible everywhere.
         opacity = 0.8;
         # niri draws the focus ring/border as a solid rect *behind* the window;
-        # on a translucent window that fills it with the (mauve) ring colour.
-        # Draw it as a hollow ring instead so the blur shows, not the tint.
+        # on a translucent window that fills it with the ring colour. Draw it
+        # as a hollow ring instead so the blur shows, not the tint.
         draw-border-with-background = false;
       }
       {
-        # extra glassy for the apps we want frosted.
         matches = [
           { app-id = "^spotify$"; }
           { app-id = "^Spotify$"; }
@@ -27,7 +26,7 @@
         opacity = 0.65;
       }
       {
-        # browsers: a little less frosted than the 0.8 global.
+        # a little less frosted than the 0.8 global.
         matches = [
           { app-id = "^helium$"; }
           { app-id = "^zen$"; }

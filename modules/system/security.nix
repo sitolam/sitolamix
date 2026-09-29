@@ -12,10 +12,9 @@
     enableSSHSupport = true;
   };
 
-  # The agent that actually runs is wired up in modules/desktop/niri/default.nix
-  # (which also masks niri-flake's own conflicting one); the package lives
-  # here rather than there since a display manager other than niri would still
-  # want a polkit agent installed.
+  # The running agent is wired up in modules/desktop/niri/default.nix (which
+  # also masks niri-flake's own conflicting one); the package lives here
+  # since any display manager would still want a polkit agent installed.
   environment.systemPackages = with pkgs; [
     polkit_gnome
   ];

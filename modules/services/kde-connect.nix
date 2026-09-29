@@ -3,15 +3,10 @@ let
   cfg = config.services.kde-connect;
 
   # kdeconnect_runcommand has no home-manager option — it's a KDE-app-native
-  # config file the plugin reads on its own, keyed by *this device's* local
-  # kdeconnect identity (not the phone's). That ID is generated once from
-  # privateKey.pem/certificate.pem and only changes if those are deleted, so
-  # deviceId is safe to hardcode per host but must be set per host (each
-  # machine has its own identity — find it as the UUID directory name under
-  # ~/.config/kdeconnect/).
-  #
-  # The on-disk format is a Qt QByteArray literal holding JSON, itself
-  # embedded in an INI string value, hence the escaped quotes:
+  # config file, keyed by this device's own kdeconnect identity (not the
+  # phone's), so deviceId must be set per host. On-disk format is a Qt
+  # QByteArray literal holding JSON, itself embedded in an INI string value,
+  # hence the escaped quotes:
   #   commands="@ByteArray({\"<uuid>\":{\"command\":\"...\",\"name\":\"...\"}})"
   commandsJson = builtins.toJSON (
     lib.mapAttrs' (name: command: {
@@ -30,9 +25,8 @@ in
       default = null;
       description = ''
         This machine's own kdeconnect device ID (the UUID directory name
-        under ~/.config/kdeconnect/), needed to place the run-command config
-        where the KDE Connect Android app expects it. Leave null to skip
-        declaring run commands.
+        under ~/.config/kdeconnect/). Leave null to skip declaring run
+        commands.
       '';
     };
 
@@ -50,7 +44,6 @@ in
     home.extraOptions =
       { pkgs, lib, ... }:
       {
-        # HM module runs kdeconnectd + the tray indicator (DMS has a system tray).
         services.kdeconnect = {
           enable = true;
           indicator = true;
@@ -64,20 +57,14 @@ in
         };
 
         # "Send via KDE Connect" in Nautilus's right-click menu. The extension
-        # ships inside kdeconnect-kde as a nautilus-python script, but only
-        # under the *profile* that installs it
-        # (/etc/profiles/per-user/otis/share/...), and nautilus-python scans
-        # the XDG_DATA_DIRS nautilus itself was wrapped with — the per-user
-        # profile is not among them, so the script is installed and never
-        # loaded. ~/.local/share is always scanned (nautilus-python puts it
-        # first), so link it there. Drop this if nixpkgs ever wraps nautilus
-        # with the per-user profile on XDG_DATA_DIRS, or if the extension
-        # moves into the system profile.
+        # ships in kdeconnect-kde but nautilus-python never scans the
+        # per-user profile's XDG_DATA_DIRS, only ~/.local/share, so link it
+        # there by hand. Drop if nixpkgs ever wraps nautilus with that dir.
         home.file.".local/share/nautilus-python/extensions/kdeconnect-share.py".source =
           lib.mkIf config.apps.nautilus.enable "${pkgs.kdePackages.kdeconnect-kde}/share/nautilus-python/extensions/kdeconnect-share.py";
       };
 
-    # the HM module does not open the firewall; KDE Connect needs 1714-1764.
+    # HM module doesn't open the firewall; KDE Connect needs 1714-1764.
     networking.firewall = {
       allowedTCPPortRanges = [
         {

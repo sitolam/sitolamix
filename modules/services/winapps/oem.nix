@@ -7,10 +7,8 @@
 let
   cfg = config.services.winapps;
 
-  # Office Deployment Tool answer file. `MatchOS` follows the guest's language;
-  # the excluded apps are the ones nobody asked for and which slow the install
-  # measurably. AUTOACTIVATE is 0 because activation happens through the one
-  # interactive Microsoft 365 sign-in, not through a key baked into the config.
+  # Office Deployment Tool answer file. AUTOACTIVATE is 0 because activation
+  # happens through the interactive Microsoft 365 sign-in, not a baked-in key.
   officeConfig = pkgs.writeText "winapps-office-configuration.xml" ''
     <Configuration>
       <Add OfficeClientEdition="64" Channel="Current">
@@ -29,8 +27,7 @@ let
   '';
 
   # Runs once, as administrator, at the end of the unattended Windows install.
-  # Line endings must be CRLF — cmd.exe mis-parses a LF-only batch file in ways
-  # that look like syntax errors in unrelated lines.
+  # Line endings must be CRLF — cmd.exe mis-parses an LF-only batch file.
   installBat = pkgs.runCommand "winapps-install.bat" { } ''
     ${pkgs.dos2unix}/bin/unix2dos < ${pkgs.writeText "install.bat.lf" ''
       @echo off
@@ -60,7 +57,7 @@ let
       rem
       rem Only affects a *fresh* install: /oem runs once, at the end of setup.
       rem An already-installed guest needs the same key set by hand — see
-      rem docs/design/specs/2026-08-23-winapps-windows-vm-design.md.
+      rem the WinApps section of the sitolamix README.
       reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon" /v AutoAdminLogon /t REG_SZ /d 0 /f
 
       rem ── Office 365 ──────────────────────────────────────────────────────
@@ -87,12 +84,11 @@ let
 in
 {
   config = lib.mkIf cfg.enable {
-    # C+ copies and replaces: the OEM directory is a plain bind mount into the
-    # container, and a symlink into /nix/store would not resolve from inside it.
-    # Replacing on every activation keeps the host-side copy current with the
-    # script above — but dockurr/windows only ever runs /oem once, at the end
-    # of the unattended install, so this refreshes what the *next* install will
-    # run, not anything on an already-installed guest.
+    # C+ copies and replaces: the OEM directory is a plain bind mount, and a
+    # symlink into /nix/store wouldn't resolve inside the container.
+    # dockurr/windows only ever runs /oem once, at the end of the unattended
+    # install, so this refreshes what the *next* install runs, not an
+    # already-installed guest.
     systemd.tmpfiles.rules = [
       "C+ ${cfg.stateDir}/oem/install.bat 0644 root root - ${installBat}"
       "C+ ${cfg.stateDir}/oem/configuration.xml 0644 root root - ${officeConfig}"

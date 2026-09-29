@@ -1,9 +1,7 @@
 # Addons with a clean public upstream repo: fetched at build time instead of
-# vendored, so no bytes land in git. Recipes below are lifted straight from
-# nixpkgs' own pkgs/by-name/an/anki/addons/* (hashes and patches included) for
-# the ones nixpkgs already packages; HyperTTS has no nixpkgs recipe so its
-# fetch is written from scratch (its repo root already matches Anki's addon
-# layout, no sourceRoot juggling needed).
+# vendored, so no bytes land in git. Recipes for nixpkgs-packaged addons are
+# lifted from nixpkgs' own pkgs/by-name/an/anki/addons/*; HyperTTS has no
+# nixpkgs recipe so its fetch is written from scratch.
 { pkgs }:
 let
   inherit (pkgs) fetchFromGitHub;
@@ -12,9 +10,8 @@ in
 {
   # AnkiConnect — the localhost HTTP API (port 8765) that Obsidian_to_Anki
   # talks to, so flashcards written in the vault land in this collection.
-  # Enabled here rather than in modules/apps/obsidian because it is an Anki
-  # addon: without it that plugin's "Scan Vault" silently does nothing.
-  # nixpkgs packages it, so no recipe of our own.
+  # Without it that plugin's "Scan Vault" silently does nothing. Listed here
+  # rather than in modules/apps/obsidian because it's an Anki addon.
   "2055492159" = pkgs.ankiAddons.anki-connect;
 
   "1374772155" = anki-utils.buildAnkiAddon (finalAttrs: {
@@ -38,7 +35,7 @@ in
       repo = "review-heatmap";
       tag = "v${finalAttrs.version}";
       hash = "sha256-CL98DYikumoPR/QTWcMMwpd/tEpKLIDVC1Rj5NEvWJ8=";
-      # Needed files are set to export-ignore in .gitattributes.
+      # needed files are export-ignore in .gitattributes
       forceFetchGit = true;
     };
     patches = [ ./patches/review-heatmap-vite-style.patch ];

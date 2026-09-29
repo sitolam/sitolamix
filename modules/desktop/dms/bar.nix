@@ -1,31 +1,22 @@
 { config, lib, ... }:
 {
   config = lib.mkIf config.desktop.dms.enable {
-    # general shell settings + the bar layout and control-center widgets. These
-    # merge with the theme/blur settings in ./theme.nix.
+    # General shell settings + bar layout/control-center widgets; merges
+    # with the theme/blur settings in ./theme.nix.
     home.extraOptions.programs.dank-material-shell.settings = {
       use24HourClock = true;
       showDock = false;
-      # DMS recolours GTK (adw-gtk3 + dank-colors.css) and Qt (qt5ct/qt6ct)
-      # apps from the wallpaper; see modules/theming/matugen.nix.
+      # DMS recolours GTK and Qt apps from the wallpaper; see matugen.nix.
       gtkThemingEnabled = true;
       qtThemingEnabled = true;
 
       animationSpeed = 2;
-      # animation style (SettingsData.AnimationVariant): 0=Material, 1=Fluent,
-      # 2=Dynamic.
-      animationVariant = 1; # Fluent
+      animationVariant = 1; # Fluent (SettingsData.AnimationVariant: 0=Material, 1=Fluent, 2=Dynamic)
 
-      # Low-battery notifications. Used to be the dankBatteryAlerts plugin;
-      # dms-plugin-registry dropped it (registry commit 098a7f6) once DMS
-      # folded the same alerts into core Settings > Battery > Alerts.
-      # batteryNotifyCritical already defaults to true; batteryNotifyLow
-      # defaults to false, so it's set here to match what the plugin did.
+      # batteryNotifyLow: matches DMS core Settings > Battery > Alerts.
       batteryNotifyLow = true;
 
-      # default app launcher: compact Spotlight style rather than the "full"
-      # app-drawer grid.
-      launcherStyle = "spotlight";
+      launcherStyle = "spotlight"; # compact style, not the "full" app-drawer grid
 
       showWorkspaceIndex = false;
       showOccupiedWorkspacesOnly = true;
@@ -78,13 +69,8 @@
             "weather"
           ];
           rightWidgets = [
-            # barDropdown (local plugin, see plugins.nix). One button holding
-            # ambientSound, the system tray, usbManager and mouthGuard; click drops them in
-            # a panel below the bar, click again closes it. Its members
-            # are deliberately absent from this list — the panel renders them
-            # itself. Nothing here expands sideways, so unlike the two
-            # collapsers this replaced, the button's position on the bar is
-            # free.
+            # barDropdown drops ambientSound, systemTray, usbManager and
+            # mouthGuard below the bar; those members stay off this list.
             {
               id = "barDropdown";
               enabled = true;
@@ -101,16 +87,13 @@
               id = "claudeCodeUsage";
               enabled = true;
             } # moved out of hidden bar, next to HA
-            # unified cpu/ram/disk gauges (systemMonitorPlus plugin) — replaces
-            # the built-in memUsage + diskUsage widgets. Config in plugins.nix.
+            # unified cpu/ram/disk gauges (systemMonitorPlus, config in plugins.nix)
             {
               id = "systemMonitorPlus";
               enabled = true;
             }
-            # no notificationButton: notification history is left off the bar
-            # to keep it uncluttered.
-            # battery/power widget removed from the bar — power lives only in the
-            # control center now (the battery tile has the power-profile switcher).
+            # no notificationButton, to keep the bar uncluttered; power lives
+            # only in the control center now.
             {
               id = "controlCenterButton";
               enabled = true;
@@ -118,15 +101,10 @@
               showBrightnessIcon = false;
               showBrightnessPercent = false;
               showMicIcon = false;
-              # battery icon off: the batteryPlus widget to the right of this
-              # pill is the battery readout now, so the pill drawing one too was
-              # the same information twice.
-              showBatteryIcon = false;
-              showIdleInhibitorIcon = true; # show the keep-awake icon when active
+              showBatteryIcon = false; # batteryPlus widget (right) is the battery readout now
+              showIdleInhibitorIcon = true;
             }
             # arcatva/dms-battery-plus (plugins.nix) — far right of the bar.
-            # Charge-history popout + power profiles; replaces the pill's
-            # battery icon above.
             {
               id = "batteryPlus";
               enabled = true;
@@ -135,9 +113,8 @@
           spacing = 8;
           innerPadding = 2;
           bottomGap = 0;
-          # translucent so the ext-background-effect blur behind the bar/widgets
-          # is visible (fully opaque = no visible blur). Lower = more see-through.
-          transparency = 0.7;
+          transparency = 0.7; # translucent so the ext-background-effect blur behind it shows
+
           widgetTransparency = 0.3;
           squareCorners = false;
           noBackground = false;
@@ -150,10 +127,8 @@
           visible = true;
           popupGapsAuto = true;
           popupGapsManual = 4;
-          # reveal a widget's popout on hover (not just on click), near-instantly
-          # (ms before the popout opens; DMS defaults to 150).
-          hoverPopouts = true;
-          hoverPopoutDelay = 50;
+          hoverPopouts = true; # reveal a popout on hover, not just click
+          hoverPopoutDelay = 50; # ms before it opens (DMS default: 150)
         }
       ];
 
@@ -179,8 +154,8 @@
           enabled = true;
           width = 50;
         }
-        # tunnel itself is modules/services/wireguard-laxoi.nix — this only
-        # needs NetworkManager (already on) plus a VPN-type connection to show.
+        # tunnel is modules/services/wireguard-laxoi.nix; this just needs
+        # NetworkManager (already on) plus a VPN-type connection to show.
         {
           id = "builtin_vpn";
           enabled = true;
@@ -206,17 +181,15 @@
           enabled = true;
           width = 50;
         }
-        # battery tile — its detail view is DMS's native power-profile switcher
-        # (performance/balanced/power-saver via power-profiles-daemon, enabled in
-        # ./default.nix). There is no standalone power-profile CC widget.
+        # battery tile's detail view is DMS's native power-profile switcher
+        # (power-profiles-daemon, ./default.nix); no standalone CC widget for it.
         {
           id = "battery";
           enabled = true;
           width = 50;
         }
-        # plugin control-center toggles (id = "plugin_<pluginId>"). takeABreak's
-        # tile is intentionally omitted — its pause toggle reaches the daemon via
-        # an unreliable cross-instance lookup, so it's not useful here.
+        # plugin toggles (id = "plugin_<pluginId>"); takeABreak omitted — its
+        # pause toggle's cross-instance lookup is unreliable.
         {
           id = "plugin_niriDS";
           enabled = true;

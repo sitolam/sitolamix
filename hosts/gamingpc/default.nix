@@ -10,23 +10,20 @@
   networking.hostName = "gamingpc";
   system.stateVersion = "25.11";
 
-  # hardware
   hardware.nvidia.enable = true;
 
-  # amd_pstate: was in modules/system/boot/kernel.nix, which every host imports.
-  # Moved here when omnibook (Intel) joined — it is a CPU-specific param.
+  # CPU-specific: amd_pstate only applies here, not on Intel omnibook.
   boot.kernelParams = [ "amd_pstate=active" ];
 
   services = {
-    # cloud mounts — the remotes themselves are created with `rclone config`
-    # (see README → Cloud mounts), only *which* ones to mount lives here.
+    # Remotes are created with `rclone config` (README → Cloud mounts); this
+    # only says which ones to mount.
     rclone = {
       enable = true;
       remotes.gdrive_personal = { };
     };
 
-    # NAS shares (see modules/services/nas.nix). Automounted on first access, so
-    # the paths exist even when the NAS is unreachable.
+    # Automounted on first access, so the paths exist even when unreachable.
     nas = {
       enable = true;
       server = "192.168.68.148";
@@ -37,20 +34,17 @@
       ];
     };
 
-    # On-demand Windows VM for Office (see modules/services/winapps). Same VM as
-    # on omnibook, given the headroom this machine has and the laptop does not.
+    # On-demand Windows VM for Office. Same VM as omnibook; more headroom here.
     winapps = {
       enable = true;
       ram = "8G";
       cores = 6;
     };
 
-    # Home WireGuard tunnel, toggled from DMS's control center (see
-    # modules/services/wireguard-laxoi.nix).
+    # Home tunnel, toggled from DMS's control center.
     wireguard-laxoi.enable = true;
   };
 
-  # feature suites
   suites = {
     core.enable = true;
     desktop.enable = true;
@@ -63,7 +57,6 @@
     ai.enable = true;
   };
 
-  # Monitors are managed by DMS (settings UI -> ~/.config/niri/dms/outputs.kdl,
-  # included via desktop.dms). Don't also declare outputs here — a second
-  # definition in hm.kdl conflicts and DMS's changes wouldn't apply.
+  # Monitors are managed by DMS (~/.config/niri/dms/outputs.kdl). Don't
+  # declare outputs here too — it would conflict with DMS's changes.
 }

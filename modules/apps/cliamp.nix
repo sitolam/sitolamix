@@ -2,22 +2,13 @@
 let
   cfg = config.apps.cliamp;
 
-  # sops decrypts to /run/secrets/<name>; the wrapper below reads it at launch.
+  # wrapper below reads the decrypted secret at launch
   clientIdPath = config.sops.secrets.cliamp_spotify_client_id.path;
 
-  # cliamp's config.toml. It is written to $HOME by the activation script rather
-  # than symlinked from the store: cliamp rewrites this file itself whenever you
-  # toggle shuffle/repeat, pick a theme, change the visualiser or save an EQ
-  # curve (config.Save in the upstream source), and a read-only store symlink
-  # would either break those writes or be replaced by a real file behind
-  # home-manager's back. The file is ours (see CLAUDE.md): runtime toggles
-  # survive until the next rebuild, then these values win again.
-  #
-  # client_id is *not* the literal ID: cliamp expands a value of exactly
-  # "${NAME}" from the environment (config.parseString), so the secret stays in
-  # /run/secrets and never enters the nix store. If the variable is unset the
-  # expansion yields "", and cliamp falls back to its built-in librespot
-  # client_id — degraded (shared rate-limit quota), not broken.
+  # Written to $HOME by activation, not symlinked, because cliamp rewrites
+  # this file itself on every shuffle/repeat/theme/EQ change; runtime toggles
+  # survive until the next rebuild. client_id expands from the environment
+  # (cliamp's config.parseString), so the secret never enters the nix store.
   configFile = builtins.toFile "cliamp-config.toml" ''
     # Managed by modules/apps/cliamp.nix — edits here are overwritten on rebuild.
 
@@ -55,9 +46,7 @@ in
     home.extraOptions =
       { pkgs, lib, ... }:
       let
-        # cliamp reads the client_id out of the environment; a wrapper is the
-        # only place that can put it there for every launch route (terminal,
-        # the niri bind below, the .desktop entry).
+        # a wrapper is the only place that can set client_id for every launch route
         cliamp-wrapped = pkgs.symlinkJoin {
           name = "cliamp-wrapped";
           paths = [ pkgs.cliamp ];
@@ -72,12 +61,7 @@ in
       {
         home.packages = [
           cliamp-wrapped
-          # cliamp's audio-device picker (and its sink switching) shells out to
-          # `pactl` — see player/audio_device_linux.go. Nothing else here
-          # installs it: niri/bindings.nix deliberately uses wpctl because this
-          # system had no pulseaudio-utils at all. pipewire-pulse answers pactl
-          # fine, we just need the client binary.
-          pkgs.pulseaudio
+          pkgs.pulseaudio # cliamp's audio-device picker shells out to pactl
         ];
 
         home.activation.cliampConfig = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
@@ -85,14 +69,11 @@ in
           run install -m 0600 ${configFile} "$HOME/.config/cliamp/config.toml"
         '';
 
-        # niri bits live here rather than in niri/bindings.nix + niri/rules.nix
-        # so the whole feature stays in one file; both option types merge.
+        # niri bits live here, not niri/bindings.nix + niri/rules.nix, so the
+        # whole feature stays in one file
         programs.niri.settings = lib.mkIf config.desktop.niri.enable {
-          # Mod+Alt+<letter> is the "run a tool" plane — see
-          # ../desktop/niri/KEYBINDINGS.md. Just opens cliamp as a small
-          # floating window wherever you currently are — no workspace
-          # switching or pinning.
           binds."Mod+Alt+C".action.spawn = [
+            # Mod+Alt+<letter> is the "run a tool" plane
             "ghostty"
             "--class=com.mitchellh.ghostty.cliamp"
             "-e"
@@ -101,13 +82,9 @@ in
 
           window-rules = lib.mkAfter [
             {
-              # --class above is the only reason this matches: every other
-              # ghostty window is com.mitchellh.ghostty.
-              matches = [ { app-id = "^com\\.mitchellh\\.ghostty\\.cliamp$"; } ];
+              matches = [ { app-id = "^com\\.mitchellh\\.ghostty\\.cliamp$"; } ]; # --class above is the only match
               open-floating = true;
-              # niri centres a floating window it opens with no stored position,
-              # so size is all we set.
-              default-column-width.proportion = 0.6;
+              default-column-width.proportion = 0.6; # niri centres a floating window; size is all we set
               default-window-height.proportion = 0.6;
             }
           ];
