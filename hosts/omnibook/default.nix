@@ -26,6 +26,7 @@
       enable = true;
       irDevice = "usb:0408:5494";
       device = "npu";
+      unlockKeyring = true;
     };
   };
 
