@@ -5,22 +5,15 @@
   ...
 }:
 let
-  # sitolam/mywalls — my own collection, a flake input so the images live in
-  # the Nix store and nowhere else. Flat: one directory of images, no category
-  # folders, which is what makes cycling cover the whole collection —
-  # Services/WallpaperCyclingService.qml derives the folder it cycles from the
-  # current wallpaper's own directory:
-  #
-  #   const wallpaperDir = currentWallpaper.substring(0, currentWallpaper.lastIndexOf('/'))
-  #
-  # (dharmx/walls, which this replaced, is split into ~50 category folders, so
-  # cycling there only ever covered the category the current wallpaper sat in.)
+  # sitolam/mywalls — own collection, kept flat (no category folders) so DMS's
+  # WallpaperCyclingService, which cycles the current wallpaper's own
+  # directory, covers the whole set rather than one subfolder.
   collection = inputs.wallpapers;
 
-  # The wallpaper DMS starts on: first image by natural sort. Plain readDir on
-  # a store path, so no import-from-derivation, and nothing to break when the
-  # input gains or loses files. The .gif/.mp4 in the collection are left out —
-  # DMS's still-image pipeline is what seeds cleanly; pick those in the UI.
+  # First image by natural sort: the wallpaper DMS starts on. Plain readDir
+  # on the store path, so nothing to break when the input gains or loses
+  # files. Static .gif/.mp4 are left out — only DMS's still-image pipeline
+  # seeds cleanly; pick those in the UI.
   images = lib.naturalSort (
     lib.attrNames (
       lib.filterAttrs (
@@ -50,21 +43,14 @@ in
         ...
       }:
       {
-        # `home.file` with a directory source symlinks the store path — it does
-        # not copy. ~/Pictures/Wallpapers is a pointer costing no disk; it exists
-        # only so DMS's browser has a *stable* path, since the store path changes
-        # with every input update.
+        # Symlink, not a copy: gives DMS's browser a *stable* path, since the
+        # store path changes with every input update.
         home.file."Pictures/Wallpapers".source = collection;
 
-        # Open DMS's wallpaper browser there on a fresh machine. DMS keeps the
-        # last browsed directory in its *cache* (Common/CacheData.qml ->
-        # cache.json) rather than in settings, so it cannot be a declared
-        # setting — but the cache can be seeded, exactly like session.json.
-        #
-        # Only written when cache.json is absent, i.e. before DMS has ever run.
-        # DMS holds this file in memory and rewrites it wholesale when you browse
-        # elsewhere, so editing it underneath a running shell would just be
-        # undone — and would fight a folder you had deliberately picked.
+        # Seeds DMS's last-browsed wallpaper folder (cache.json, not a
+        # setting) so a fresh machine opens the browser here. Only written
+        # when cache.json is absent — DMS rewrites it wholesale once you
+        # browse elsewhere, so editing it later would just be undone.
         home.activation.seedDmsWallpaperFolder =
           let
             folder = "${config.home.homeDirectory}/Pictures/Wallpapers";

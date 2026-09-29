@@ -7,27 +7,20 @@ in
   options.services.wireguard-laxoi = {
     enable = lib.mkEnableOption ''
       Laxoi (home) WireGuard tunnel as a NetworkManager connection, toggleable
-      from DMS's control center (see modules/desktop/dms/bar.nix's builtin_vpn
-      widget). Peer/address/DNS came from the wg-quick .conf DMS's VPN import
-      produced; only the private key is secret.
+      from DMS's control center (builtin_vpn widget)
     '';
   };
 
   config = lib.mkIf cfg.enable {
-    # Only the private key is sensitive — peer public key, endpoint and
-    # address below are not, and live in the profile in plain sight.
+    # Only the private key is sensitive — peer, endpoint and address below
+    # live in the profile in plain sight.
     sops.secrets.wireguard_laxoi_env = {
       sopsFile = ../../secrets/wireguard.yaml;
       mode = "0400";
     };
 
-    # ensureProfiles envsubst-expands $WG_PRIVATE_KEY (from environmentFiles)
-    # into the profile it writes to /run/NetworkManager/system-connections/,
-    # never the Nix store. This profile replaces the one DMS's VPN import
-    # created by hand in /etc/NetworkManager/system-connections/sitolamix.nmconnection
-    # — delete that file (or `nmcli connection delete sitolamix`) once this is
-    # switched in, or NetworkManager ends up with two connections of the same
-    # name.
+    # ensureProfiles envsubst-expands $WG_PRIVATE_KEY into the profile it
+    # writes to /run/NetworkManager/system-connections/, never the Nix store.
     networking.networkmanager.ensureProfiles = {
       environmentFiles = [ envPath ];
       profiles = {
@@ -36,8 +29,7 @@ in
             id = "laxoi";
             type = "wireguard";
             interface-name = "laxoi";
-            # Off by default — toggle from DMS's control center (builtin_vpn
-            # tile). autoconnect=true would bring it up at boot/NM-reload.
+            # Off by default; toggled from DMS's control center.
             autoconnect = false;
           };
           wireguard = {

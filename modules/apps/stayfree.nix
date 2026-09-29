@@ -11,9 +11,8 @@ in
   options.apps.stayfree.enable = lib.mkEnableOption "StayFree desktop (screen-time tracker / website blocker)";
 
   config = lib.mkIf cfg.enable {
-    # StayFree is proprietary and absent from nixpkgs, so the packaging lives in
-    # our own flake (see the `stayfree` input). The overlay builds the wrapped
-    # AppImage against this config's nixpkgs rather than the input's.
+    # Proprietary, absent from nixpkgs; packaged in our own `stayfree` input,
+    # overlay builds the wrapped AppImage against this config's nixpkgs.
     nixpkgs.overlays = [ inputs.stayfree.overlays.default ];
 
     home.extraOptions =

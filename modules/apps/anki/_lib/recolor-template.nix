@@ -27,13 +27,9 @@ let
     CANVAS = c "surface";
     CANVAS_CODE = c "surface_container_low";
     CANVAS_ELEVATED = c "surface_container_low";
-    # 8-digit hex with alpha, pasted straight into CSS. `hex` already carries
-    # the leading `#`, so appending an alpha suffix to it would double up
-    # ("##..." after ReColor concatenates it into the property, silently
-    # dropping the whole declaration); `hex_stripped` has no `#`, and the
-    # literal `#` here is the one and only leading hash, still satisfying the
-    # no-hardcoded-hex-value rule since the colour itself still comes from
-    # matugen.
+    # 8-digit hex with alpha. Uses `hex_stripped` (no leading `#`) plus one
+    # literal `#`, since appending an alpha suffix to `hex` would double the
+    # hash and drop the whole CSS declaration.
     CANVAS_GLASS = "#{{colors.surface_container_low.default.hex_stripped}}66";
     CANVAS_INSET = c "surface_container_lowest";
     CANVAS_OVERLAY = c "surface_container_low";
@@ -69,7 +65,7 @@ let
   };
 
   # Fail at eval time if ReColor's schema gains or loses a key, rather than
-  # silently leaving a slot on its light value.
+  # silently leaving a slot at its light value.
   missing = lib.subtractLists (lib.attrNames map') keys;
   extra = lib.subtractLists keys (lib.attrNames map');
 in

@@ -12,20 +12,16 @@ let
 
   appIds = cfg.apps;
 
-  # Flag file for the on-demand toggle. State rather than config: it is flipped
-  # from the menu at runtime, so it cannot live in the Nix store. Its *presence*
-  # means enabled — a flag file has no third "file exists but says garbage"
-  # state to handle.
+  # Flag file for the on-demand toggle. State, not config, flipped from the
+  # menu at runtime — presence means enabled.
   autoFlag = "/home/otis/.local/state/winapps/on-demand";
 
-  # Where WinApps drops one file per live FreeRDP session (src/bin/winapps:75).
-  # Their absence is how the idle watcher knows nothing is open.
+  # One file per live FreeRDP session (src/bin/winapps:75); absence is how
+  # the idle watcher knows nothing is open.
   procGlob = "/home/otis/.local/share/winapps/FreeRDP_Process_*.cproc";
 
-  # ── winapps-run ───────────────────────────────────────────────────────────
   # Every launcher goes through this rather than calling `winapps` directly.
-  # With on-demand off it is a straight pass-through; with it on, it starts the
-  # VM first and waits for RDP to answer.
+  # On-demand off: pass-through. On: starts the VM first, waits for RDP.
   winapps-run = pkgs.writeShellScriptBin "winapps-run" ''
     set -u
 
@@ -39,25 +35,9 @@ let
         exit 1
       fi
 
-      # Wait until the guest can actually *run* a RemoteApp. Nothing cheaper is
-      # a real readiness signal, and connecting early does not merely fail:
-      #
-      #   - Docker publishes 3389 the instant the container starts, so a TCP
-      #     probe answers about a second in, before QEMU has booted anything.
-      #   - Authentication starts working roughly 80 seconds before RemoteApp
-      #     launches do (measured: `/auth-only` at +11s, a RemoteApp that runs
-      #     and returns at +97s).
-      #   - A connection made in that gap wedges the session. Windows 11 client
-      #     editions have exactly one, so every later connection joins the
-      #     wedged one and hangs too — including the ones a user makes by
-      #     clicking the launcher again — until the first client gives up. That
-      #     is the "it said it was starting and then nothing ever opened".
-      #
-      # So the gate is the thing we need: a RemoteApp that runs `echo` into a
-      # redirected drive. Each attempt is capped, and a capped attempt takes
-      # its own half-built session down with it, so probing too early costs
-      # twenty seconds instead of poisoning everything after it.
-      #
+      # Wait until the guest can actually *run* a RemoteApp: a bare TCP/auth
+      # probe connects too early and wedges Windows 11's one RDP session,
+      # hanging every later attempt. Probe with a real RemoteApp instead, capped per try.
       # shellcheck source=/dev/null
       . /home/otis/.config/winapps/winapps.conf
       probe="''${XDG_RUNTIME_DIR:-/tmp}/winapps-probe"
@@ -66,10 +46,8 @@ let
 
       waited=0
       until [ -e "$probe/ready" ]; do
-        # Under Xvfb, not the real display: FreeRDP maps a "RemoteApp Marker
-        # Window" for every RAIL connection, and on niri that window appears
-        # and takes focus. Harmless but it steals your keyboard mid-typing,
-        # once per probe attempt, while you wait for the app you asked for.
+        # Under Xvfb, not the real display: FreeRDP's "RemoteApp Marker
+        # Window" would otherwise appear and steal keyboard focus on niri.
         ${pkgs.xvfb-run}/bin/xvfb-run -a \
           ${pkgs.coreutils}/bin/timeout 20 ${pkgs.freerdp}/bin/xfreerdp \
           /v:127.0.0.1:3389 /u:"$RDP_USER" /p:"$RDP_PASS" /cert:ignore \
@@ -80,8 +58,7 @@ let
         [ -e "$probe/ready" ] && break
 
         sleep 5
-        # One attempt plus its pause; the ceiling is generous because the very
-        # first boot installs the OS.
+        # One attempt plus pause; the ceiling is generous since first boot installs the OS.
         waited=$((waited + 25))
         if [ "$waited" -ge 300 ]; then
           ${pkgs.libnotify}/bin/notify-send --app-name="Windows" --icon=dialog-error \
@@ -96,9 +73,7 @@ let
     exec ${winappsPkg}/bin/winapps "$@"
   '';
 
-  # ── winapps-on-demand ─────────────────────────────────────────────────────
-  # The toggle behind the dankMenu row. `status` is what the menu's `checked`
-  # snippet calls.
+  # The toggle behind the dankMenu row; `status` is what the menu's `checked` snippet calls.
   winapps-on-demand = pkgs.writeShellScriptBin "winapps-on-demand" ''
     set -u
     flag=${autoFlag}
@@ -126,28 +101,22 @@ let
     esac
   '';
 
-  # ── winapps-idle-stop ─────────────────────────────────────────────────────
   # Run on a timer. Stops the VM once no RemoteApp session has been open for
-  # `idleTimeout` minutes.
-  #
-  # Counting consecutive idle ticks in a file, rather than reading an uptime or
-  # a last-used timestamp, keeps this honest across suspend: the count only
-  # advances when the timer actually fires, so a laptop asleep for three hours
-  # does not wake up and immediately kill a VM you were using.
+  # `idleTimeout` minutes. Ticks are counted in a file rather than a
+  # timestamp so the count stays honest across suspend.
   winapps-idle-stop = pkgs.writeShellScriptBin "winapps-idle-stop" ''
     set -u
     counter=/home/otis/.local/state/winapps/idle-ticks
     ${pkgs.coreutils}/bin/mkdir -p "$(dirname "$counter")"
 
-    # Only ever acts when on-demand is on: if you started the VM by hand, it is
-    # yours to stop by hand.
+    # Only acts when on-demand is on: a VM started by hand is stopped by hand.
     if [ ! -e ${autoFlag} ] || ! ${pkgs.systemd}/bin/systemctl is-active --quiet docker-windows; then
       ${pkgs.coreutils}/bin/rm -f "$counter"
       exit 0
     fi
 
     # A stale .cproc from a crashed FreeRDP would pin the VM on forever, so
-    # check the pid is really alive rather than trusting the file's existence.
+    # check the pid is actually alive.
     live=0
     for f in ${procGlob}; do
       [ -e "$f" ] || continue
@@ -177,15 +146,7 @@ let
     fi
   '';
 
-  # ── winapps-vm ────────────────────────────────────────────────────────────
-  # What the menu's single start/stop row calls. Exists so that a manual
-  # start or stop announces itself the same way an on-demand one does —
-  # otherwise the VM coming up would be silent when you asked for it and noisy
-  # when it asked itself.
-  #
-  # All notifications here are low urgency on purpose: this is status, not
-  # something needing a decision, and it should never interrupt a fullscreen
-  # window or survive in a do-not-disturb queue.
+  # What the menu's start/stop row calls; low-urgency so it never interrupts fullscreen.
   winapps-vm = pkgs.writeShellScriptBin "winapps-vm" ''
     set -u
     notify() {
@@ -217,30 +178,11 @@ let
     esac
   '';
 
-  # ── winapps-status ────────────────────────────────────────────────────────
-  # One line for the menu's `labelCmd`. Reads "Stopped", or
-  # "Running  ·  CPU 4%  ·  RAM 2.1GiB" when it is up.
-  #
-  # The numbers come out of the container's cgroup rather than out of
-  # `docker stats`. `docker stats --no-stream` is one sample, which is what a
-  # menu row wants, but it costs ~1.1s: the daemon samples twice a second apart
-  # to have a CPU percentage to report. dankMenu blocks nothing on this, but the
-  # row still sits there saying "Status" for that whole second, and a menu that
-  # settles a second after it opens reads as a slow menu.
-  #
-  # Reading the cgroup directly is the same two samples with an interval we
-  # choose: 200ms is long enough for a stable percentage and short enough to be
-  # invisible. Total cost is ~250ms, the `docker inspect` for the container id
-  # included.
-  #
-  # Semantics are kept identical to docker's: CPU% is cpu-time over wall-time,
-  # so 100% means one core fully busy and a 4-vCPU guest can read 400%; memory
-  # is `memory.current` less `inactive_file`, which is exactly what the daemon
-  # subtracts before reporting MemUsage.
-  #
-  # The `docker stats` path stays as the fallback for a host whose cgroup layout
-  # this does not find — rootless docker, a cgroup namespace, cgroup v1. Drop
-  # the fallback only if this is ever the last such host.
+  # One line for the menu's `labelCmd`, e.g. "Running · CPU 4% · RAM 2.1GiB".
+  # Reads the container's cgroup directly instead of `docker stats
+  # --no-stream` (~1.1s, would make the menu row settle late) — same
+  # two-sample approach at 200ms, ~250ms total. `docker stats` is the
+  # fallback for cgroup layouts this doesn't find (rootless, cgroup v1, ...).
   winapps-status = pkgs.writeShellScriptBin "winapps-status" ''
     set -u
 
@@ -249,14 +191,13 @@ let
       exit 0
     fi
 
-    # Up, but the container is not answering yet — during boot, or while it is
-    # being torn down.
+    # Up, but not answering yet — during boot, or while being torn down.
     starting_up() {
       echo "Running  ·  starting up"
       exit 0
     }
 
-    # ~1.1s, and only reached when the cgroup is not where this expects it.
+    # Only reached when the cgroup isn't where this expects it (~1.1s).
     slow_path() {
       stats=$(${pkgs.docker}/bin/docker stats --no-stream \
         --format '{{.CPUPerc}}\t{{.MemUsage}}' windows 2>/dev/null) || stats=""
@@ -264,10 +205,8 @@ let
 
       cpu=''${stats%%	*}
       mem=''${stats#*	}
-      # docker reports MemUsage as "used / limit", but no memory limit is set
-      # on this container, so the limit half is the host's total RAM — nothing
-      # to do with the VM's own RAM_SIZE, and actively misleading next to it.
-      # Keep the used half only.
+      # docker's "used / limit" is misleading here: no limit is set, so that
+      # half is just the host's total RAM. Keep the used half only.
       mem=''${mem%% /*}
       echo "Running  ·  CPU $cpu  ·  RAM $mem"
       exit 0
@@ -293,8 +232,8 @@ let
 
     mem=$(cat "$cg/memory.current")
     # memory.current counts page cache the kernel would drop under pressure;
-    # docker subtracts the inactive part of it before reporting, so this does
-    # too. Absent (an older kernel), the raw figure is close enough.
+    # subtract the inactive part like docker does (absent on an older kernel,
+    # the raw figure is close enough).
     inactive=$(${pkgs.gawk}/bin/awk '$1 == "inactive_file" { print $2 }' "$cg/memory.stat" 2>/dev/null)
 
     ${pkgs.gawk}/bin/awk -v c0="$c0" -v c1="$c1" -v t0="$t0" -v t1="$t1" \
@@ -313,13 +252,9 @@ let
       }'
   '';
 
-  # WinApps ships one directory per supported application, each with an `info`
-  # file (a shell fragment defining NAME, FULL_NAME, WIN_EXECUTABLE, CATEGORIES,
-  # MIME_TYPES). Upstream's setup.sh reads those at *install* time, probing a
-  # running VM and writing into ~/.local behind home-manager's back. Reading
-  # them at *build* time instead means the launchers exist after a rebuild
-  # whether or not the VM has ever booted, and a bad app id fails the build
-  # rather than producing a launcher that silently does nothing.
+  # WinApps ships one directory per app with an `info` file. Reading it at
+  # build time (unlike upstream's install-time VM probe) means launchers
+  # exist whether or not the VM has booted, and a bad app id fails the build.
   desktopEntries = pkgs.runCommand "winapps-desktop-entries" { } ''
     mkdir -p "$out"
 
@@ -344,13 +279,9 @@ let
         echo "Exec=${winapps-run}/bin/winapps-run $id %f"
         echo "Icon=${winappsPkg}/src/apps/$id/icon.svg"
         echo "Terminal=false"
-        # FreeRDP sets the RemoteApp window's class from the Windows-side
-        # application name, so this is what lets niri match the window to this
-        # entry (and what makes the taskbar icon correct).
+        # FreeRDP names the RemoteApp window's class after this, letting niri match it.
         echo "StartupWMClass=$FULL_NAME"
-        # winapps only ever reads its second argument, so %f (one file) rather
-        # than %F (a list) — opening several files at once would silently drop
-        # all but the first.
+        # winapps only reads its second argument, so %f — %F would silently drop all but the first file.
         echo "Categories=''${CATEGORIES:-WinApps};"
         echo "MimeType=''${MIME_TYPES:-}"
       } > "$out/$id.desktop"
@@ -370,23 +301,14 @@ let
     } > "$out/windows.desktop"
   '';
 
-  # winapps.conf is a plain shell file the launcher sources, and it has to carry
-  # the RDP password — so it cannot be a store file. Written at activation
-  # instead, as root (which can read the sops secret regardless of owner), then
-  # handed to the user 0600.
-  #
-  # This runs as a *system* activation script rather than a home-manager one so
-  # it can be ordered after sops-nix's `setupSecrets`; home-manager activation
-  # has no such ordering guarantee, and on a fresh boot would read a secret that
-  # is not decrypted yet.
+  # winapps.conf carries the RDP password, so it can't be a store file.
+  # Written at activation as root, then handed to the user 0600 — a *system*
+  # activation script so it can be ordered after sops-nix's `setupSecrets`.
   writeConf = pkgs.writeShellScript "winapps-write-conf" ''
     set -eu
-    # NixOS activation runs under umask 0022, which is inherited here. Without
-    # this, `cat >` below would create winapps.conf mode 0644 (world-readable,
-    # root-owned) for the brief window before the explicit chmod/chown land —
-    # and if chown fails, `set -eu` aborts and leaves that world-readable
-    # plaintext-password file behind for good. Do not delete this as
-    # "redundant" with the chmod calls below: it is what makes them race-free.
+    # Without this, `cat >` below inherits activation's umask 0022 and briefly
+    # creates winapps.conf world-readable before the chmod lands — and if
+    # chown then fails, `set -eu` leaves that plaintext password exposed.
     umask 077
     secret=${config.sops.secrets.winapps_vm_env.path}
     dir=/home/otis/.config/winapps
@@ -429,9 +351,8 @@ in
         winapps-status
       ];
 
-      # Ticks once a minute; `idleTimeout` counts those ticks, so the unit of
-      # the option is simply "minutes of idle". The service exits immediately
-      # when on-demand is off or the VM is down, so this is close to free.
+      # Ticks once a minute; `idleTimeout` counts those ticks. Exits
+      # immediately when on-demand is off or the VM is down.
       systemd.user.services.winapps-idle-stop = {
         Unit.Description = "Stop the Windows VM when no RemoteApp session is open";
         Service = {
@@ -459,9 +380,8 @@ in
           ) (appIds ++ [ "windows" ])
         )
         // {
-          # Required, not decorative: `winapps <id>` looks for the app
-          # definition here. The package keeps its copy under src/apps, which is
-          # not on any path the launcher searches. See src/bin/winapps:841-852.
+          # `winapps <id>` looks for the app definition here; the package's
+          # own copy under src/apps isn't on any path the launcher searches.
           "winapps/apps".source = "${winappsPkg}/src/apps";
         };
     };

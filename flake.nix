@@ -2,7 +2,6 @@
   description = "sitolamix — enable-options NixOS: niri + DankMaterialShell, themed from the wallpaper";
 
   nixConfig = {
-    # garnix / hyprland / lantian / noctalia were dropped — see modules/system/nix.nix.
     extra-substituters = [
       "https://niri.cachix.org"
       "https://nix-community.cachix.org"
@@ -16,191 +15,133 @@
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
 
-    # Escape hatch, not a second base: the current stable release, surfaced as
-    # `pkgs.stable.<name>` by modules/system/nixpkgs-stable.nix. Deliberately
-    # does NOT follow nixpkgs — following it would defeat the entire point.
-    # Nothing uses it by default; see that module for when to reach for it.
+    # Escape hatch for packages broken on unstable (`pkgs.stable.<name>`, see modules/system/nixpkgs-stable.nix); deliberately not following nixpkgs.
     nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-26.05";
 
+    # Structures this flake's outputs (auto-discovers hosts, merges modules).
     flake-parts = {
       url = "github:hercules-ci/flake-parts";
       inputs.nixpkgs-lib.follows = "nixpkgs";
     };
 
+    # Auto-imports every module under modules/ — no manual imports list.
     import-tree.url = "github:vic/import-tree";
 
+    # Home-manager itself; not in nixpkgs as a usable module set.
     home-manager = {
       url = "github:nix-community/home-manager/master";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # niri's own NixOS/home-manager module; upstream niri ships none.
     niri = {
       url = "github:sodiboo/niri-flake";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # keydrill — our own keyboard-shortcut trainer (Rust/ratatui), drilled
-    # against niri's own binds. Nothing in nixpkgs does this: the field is
-    # KeyCombiner and ShortcutFoo, both closed and hosted.
+    # Our own keyboard-shortcut trainer, drilled against niri's binds; nothing comparable in nixpkgs.
     keydrill = {
       url = "github:sitolam/keydrill";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # niri scratchpad (Rust). packages.default = the `niri-scratchpad` binary.
+    # Scratchpad terminal for niri, not in nixpkgs.
     niri-scratchpad = {
       url = "github:argosnothing/niri-scratchpad-rs";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # heyoeyo/niri_tweaks — stdlib-only python IPC scripts (no flake); we run
-    # niri_tile_to_n.py at startup. flake=false => the repo is a plain src path.
+    # Python IPC scripts for niri (we run niri_tile_to_n.py at startup); no flake, not in nixpkgs.
     niri-tweaks = {
       url = "github:heyoeyo/niri_tweaks";
       flake = false;
     };
 
-    # DankMaterialShell (Quickshell + Go) — the bar, panels, control center,
-    # lock screen and plugin host. Drives blur via niri's ext-background-effect.
+    # DankMaterialShell: the bar, panels, control center, lock screen and plugin host. Not in nixpkgs.
     dms = {
       url = "github:AvengeMedia/DankMaterialShell/stable";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # AvengeMedia/dank-greeter — the greetd login screen that matches the DMS
-    # lock screen. The flake's own nixpkgs only feeds its `packages` output; the
-    # NixOS module builds dms-greeter from the importing config's pkgs.
+    # The greetd login screen matching the DMS lock screen. Not in nixpkgs.
     dank-greeter = {
       url = "github:AvengeMedia/dank-greeter";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # Zen browser packaging; not in nixpkgs.
     zen-browser = {
       url = "github:0xc000022070/zen-browser-flake";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # oxcl/nix-flake-helium-browser — repacks imputnet's official .deb with
-    # patchelf (the Brave/Vivaldi approach) and ships a NixOS module with
-    # `flags` and `policies`. Replaced FKouhai/helium2nix, whose AppImage/bwrap
-    # sandbox never bound /etc/chromium, so Chrome Enterprise policies — how
-    # extensions get installed declaratively — could not reach the browser.
+    # Repacks imputnet's official Helium .deb with patchelf and ships a NixOS module. Not in nixpkgs.
     helium = {
       url = "github:oxcl/nix-flake-helium-browser";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # winapps-org/winapps — runs a single Windows application over RDP in
-    # RemoteApp mode, so it paints as its own native window rather than inside a
-    # desktop. Not in nixpkgs. The flake exposes `packages` only (no NixOS
-    # module), so modules/services/winapps does all the wiring itself; the
-    # package's wrapper already carries FreeRDP 3.
+    # Runs a single Windows app over RDP in RemoteApp mode. Not in nixpkgs, no module either — modules/services/winapps does the wiring.
     winapps = {
       url = "github:winapps-org/winapps";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # Spotify theming/module; not in nixpkgs.
     spicetify-nix = {
       url = "github:Gerg-L/spicetify-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # nix-community/nix-vscode-extensions — a daily-regenerated mirror of the
-    # VS Code Marketplace and Open VSX, surfaced as `pkgs.vscode-marketplace.*`.
-    # modules/apps/vscode.nix takes all but five of its extensions from nixpkgs
-    # (cached, versioned with the rest of the tree) and reaches in here only for
-    # the handful nixpkgs has no derivation for. Those five are fetched from
-    # Microsoft's CDN at build time, so they are not in any binary cache.
-    # `nix flake update nix-vscode-extensions` moves every marketplace
-    # extension at once — expect a real rebuild, not a no-op.
+    # Daily mirror of the VS Code Marketplace/Open VSX, used only for the few extensions nixpkgs lacks.
     nix-vscode-extensions = {
       url = "github:nix-community/nix-vscode-extensions";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # DMS plugin registry — source for modules/desktop/dms/plugins.nix builds.
     dms-plugin-registry = {
       url = "github:AvengeMedia/dms-plugin-registry";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # sitolam/dms-plugins — home-grown DMS plugins. dms-plugin-registry has
-    # adopted all of them, and modules/desktop/dms/plugins.nix takes the
-    # registry's build for each; this input stays for mouthGuard alone, which
-    # needs the plugin subtree plus this flake's own `mouthguard-detector`
-    # package wrapped together (see the `let` block there). Testing a working
-    # checkout does not go through the pin either — use `--override-input
-    # dms-plugins path:…` — so this only has to be current enough for
-    # mouthGuard.
+    # Our own DMS plugins; kept only for mouthGuard, which needs wrapping with this flake's own `mouthguard-detector` package (see modules/desktop/dms/plugins.nix).
     dms-plugins = {
       url = "github:sitolam/dms-plugins";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # sitolam/dms-take-a-break — fork of hthienloc/dms-take-a-break adding
-    # countOnlyActiveUse: the break countdown only runs while the seat is
-    # active (idle-notify), so idle time no longer eats into the break
-    # interval. dms-plugin-registry still builds the unforked upstream, so
-    # modules/desktop/dms/plugins.nix overrides `src` for this one plugin —
-    # same shape as mouthGuard's dms-plugins override above. Test a working
-    # checkout with `--override-input dms-take-a-break path:…` before
-    # pushing/updating this pin.
+    # Fork of dms-take-a-break adding countOnlyActiveUse; modules/desktop/dms/plugins.nix overrides `src` for this one plugin.
     dms-take-a-break = {
       url = "github:sitolam/dms-take-a-break";
       flake = false;
     };
 
-    # AvengeMedia/base46 — DMS's fork of NvChad's base46 colour engine. DMS's
-    # neovim matugen template (~/.config/nvim/colors/dms.lua) requires it and
-    # checks for its `_DMS_SUPPORT` marker, so nixpkgs' vimPlugins.base46
-    # (upstream NvChad, no harmonise API) does not work. flake=false: it is a
-    # plain plugin tree, built with vimUtils in modules/apps/neovim.nix.
+    # DMS's fork of NvChad's base46 colour engine, carrying the `_DMS_SUPPORT` marker nixpkgs' unforked copy lacks.
     base46-dms = {
       url = "github:AvengeMedia/base46";
       flake = false;
     };
 
-    # sitolam/mywalls — our own wallpaper collection, linked into
-    # ~/Pictures/Wallpapers by modules/desktop/wallpapers.nix so DMS can browse
-    # it; DMS derives every colour on the desktop from the image picked, so
-    # this input is effectively the theme. flake=false: it is images, not a
-    # flake. Flat (no category folders) on purpose — see that module. ~490 MB.
-    # It replaced dharmx/walls, which is a far larger (3.3 GB fetched),
-    # category-sorted collection worth browsing when hunting for new ones; its
-    # README credits that repo and orangci/walls-catppuccin-mocha as sources.
+    # Our wallpaper collection (modules/desktop/wallpapers.nix); DMS derives every desktop colour from these. Images, not a flake.
     wallpapers = {
       url = "github:sitolam/mywalls";
       flake = false;
     };
 
-    # nmcbride/claude-desktop-nix — repacks Anthropic's official Linux .deb
-    # (the app is not in nixpkgs and does not self-update on Linux, so the
-    # version rides on this input's lock entry). Small third-party repo: read
-    # the diff when updating. We consume `overlays.default`, not `packages`,
-    # so it builds against our nixpkgs.
+    # Repacks Anthropic's official Linux .deb; not in nixpkgs, doesn't self-update.
     claude-desktop = {
       url = "github:nmcbride/claude-desktop-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # sitolam/stayfree-nix — our own repack of StayFree's AppImage. The app is
-    # proprietary, ships only a .deb/AppImage and is not in nixpkgs
-    # (NixOS/nixpkgs#338978). That flake's daily workflow bumps its src.json
-    # from upstream releases, so `nix flake update stayfree` is the version
-    # bump here. We consume `overlays.default` so it builds against our
-    # nixpkgs.
+    # Our repack of StayFree's proprietary AppImage; not in nixpkgs (NixOS/nixpkgs#338978).
     stayfree = {
       url = "github:sitolam/stayfree-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # ── Claude Code plugins ───────────────────────────────────────────────
-    # modules/apps/claude-code.nix wires these into ~/.claude/plugins itself
-    # rather than letting Claude clone and self-update them, so the plugin set
-    # is pinned by flake.lock like everything else. All flake=false: they are
-    # plugin/marketplace trees, not flakes. Bump with `nix flake update <name>`.
-    #
-    # Marketplaces — each holds a .claude-plugin/marketplace.json listing the
-    # plugins it offers and where in the tree each one lives.
+    # Claude Code plugins/marketplaces, wired into ~/.claude/plugins by modules/apps/claude-code.nix and pinned via flake.lock instead of letting Claude self-update them. All flake=false, not in nixpkgs.
     claude-marketplace-official = {
       url = "github:anthropics/claude-plugins-official";
       flake = false;
@@ -226,11 +167,7 @@
       flake = false;
     };
 
-    # Two plugins the official marketplace only *points* at: their manifest
-    # entries are `{"source":"url", ...}` rows naming another repo, so the
-    # marketplace tree above does not contain them and they need their own
-    # pins. Upstream pins a sha in marketplace.json; flake.lock is ours, so
-    # these track the repos' default branches instead.
+    # Plugins the official marketplace only points at by URL, so they need their own pin here.
     claude-plugin-superpowers = {
       url = "github:obra/superpowers";
       flake = false;
@@ -241,40 +178,31 @@
       flake = false;
     };
 
-    # Two more single-plugin repos, pinned directly because no marketplace we
-    # track lists them.
-    #
-    # mattpocock/skills is a Claude plugin at the repo root, nothing special.
+    # Single-plugin repo, pinned directly since no tracked marketplace lists it.
     claude-plugin-mattpocock = {
       url = "github:mattpocock/skills";
       flake = false;
     };
 
-    # cursor/plugins is Cursor's plugin monorepo; we take `pstack` out of it.
-    # It is a *Cursor* plugin — its manifest is .cursor-plugin/plugin.json,
-    # which Claude does not read — so claude-code.nix bolts a Claude manifest
-    # onto the tree. Drop that shim if upstream ever ships .claude-plugin/.
+    # Cursor's plugin monorepo, for `pstack`; claude-code.nix bolts on a Claude manifest since it only ships .cursor-plugin/plugin.json.
     claude-plugin-pstack = {
       url = "github:cursor/plugins";
       flake = false;
     };
 
-    # GunduLabs/gaze — Windows Hello-style face authentication (daemon + PAM
-    # modules); replaced howdy here, see modules/hardware/gaze.nix. Not in
-    # nixpkgs. Follows our nixpkgs deliberately: gaze links whatever
-    # onnxruntime that revision has, and it needs >= 1.21 (unstable is at
-    # 1.27) plus that build's OpenVINO execution provider — pinning gaze's own
-    # nixpkgs would link a second, unrelated ONNX Runtime.
+    # Windows Hello-style face auth (modules/hardware/gaze.nix). Not in nixpkgs. Follows our nixpkgs: gaze needs onnxruntime >= 1.21's OpenVINO provider, and a separate pin would link a second ONNX Runtime.
     gaze = {
       url = "github:GunduLabs/gaze";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # Secrets encrypted at rest, decrypted into place at activation.
     sops-nix = {
       url = "github:Mic92/sops-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # Per-hardware NixOS modules (kernel params, quirks) for supported devices.
     nixos-hardware.url = "github:NixOS/nixos-hardware";
   };
 

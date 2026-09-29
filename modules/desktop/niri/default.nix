@@ -12,26 +12,20 @@ in
   imports = [ inputs.niri.nixosModules.niri ];
 
   # niri tweaks live under startup.nix (niri_tile_to_n.py auto-tiler) and
-  # bindings.nix (niri-scratchpad-rs). TODO: consider MintyDoggo/miri later
-  # (https://github.com/MintyDoggo/miri) as an alternative tweak layer.
+  # bindings.nix (niri-scratchpad-rs).
 
   options.desktop.niri.enable = lib.mkEnableOption "niri scrollable Wayland compositor";
 
   config = lib.mkIf cfg.enable {
-    # nixpkgs dropped `libdisplay-info_0_2` ("has been removed as it is was
-    # unused in Nixpkgs"), but niri-flake still builds niri against it and
-    # asserts the version is exactly 0.2.0, so evaluating programs.niri.package
-    # hits the removal throw. niri-flake has not moved since 2026-08-04, so we
-    # put the package back ourselves: same upstream expression, our nixpkgs,
-    # only the src pinned back to 0.2.0 (the C ABI niri's libdisplay-info-sys
-    # 0.3 crate probes for; it accepts >= 0.1.0 < 0.4.0, so 0.3.0 would work
-    # too — but it cannot satisfy niri-flake's assert).
-    # Drop this once niri-flake stops asking for _0_2.
+    # nixpkgs removed `libdisplay-info_0_2`, but niri-flake still builds niri
+    # against it and asserts exactly version 0.2.0, so evaluating
+    # programs.niri.package hits the removal throw. Reinstate it ourselves
+    # (same upstream expression, src pinned back to 0.2.0) until niri-flake
+    # stops asking for it.
     #
-    # The fix only reaches niri through niri-flake's own overlay: its
-    # `packages.<system>` output is built from a pkgs instance we cannot add
-    # overlays to, while `overlays.niri` builds the same packages from *our*
-    # pkgs — so niri-unstable comes from `pkgs`, not from `inputs.niri.packages`.
+    # Applied via `overlays.niri`, not `inputs.niri.packages`: the latter's
+    # `packages.<system>` is built from a pkgs instance we can't add overlays
+    # to, while `overlays.niri` builds the same packages from *our* pkgs.
     nixpkgs.overlays = [
       (_final: prev: {
         libdisplay-info_0_2 = prev.libdisplay-info.overrideAttrs (
@@ -57,10 +51,8 @@ in
 
     # tools for the region-screenshot / OCR / color-pick keybinds, plus:
     #  - python3: runs the niri_tile_to_n.py auto-tiler (see startup.nix)
-    #  - niri-scratchpad: the Mod+M/Mod+S scratchpad binary (see bindings.nix)
-    #  - playerctl: XF86AudioPlay/Next/Prev binds (see bindings.nix). Nothing
-    #    else in this flake pulls it in — it was missing entirely until those
-    #    binds were caught silently no-op'ing (127, command not found).
+    #  - niri-scratchpad: the Mod+M scratchpad binary (see bindings.nix)
+    #  - playerctl: XF86AudioPlay/Next/Prev binds (see bindings.nix)
     environment.systemPackages = with pkgs; [
       grim
       slurp
@@ -75,7 +67,6 @@ in
     # login manager lives in modules/desktop/greetd.nix (greetd + DMS Greeter,
     # which launches its own niri using programs.niri.package above)
 
-    # xdg-portals for wayland
     xdg.portal = {
       enable = true;
       extraPortals = with pkgs; [
@@ -84,15 +75,12 @@ in
       ];
     };
 
-    # dbus + polkit gui agent
     services.dbus.enable = true;
 
-    # niri-flake's own module unconditionally starts a second agent
-    # (niri-flake-polkit, kdePackages.polkit-kde-agent-1) — no option turns
-    # it off. Running it alongside polkit_gnome below makes both race to
-    # register with polkitd: whichever loses gets "An authentication agent
-    # already exists for the given subject" and crash-loops into
-    # start-limit-hit. Masked so polkit_gnome (GTK) is the only agent running.
+    # niri-flake's module unconditionally starts a second polkit agent
+    # (niri-flake-polkit) with no option to turn it off. Running it alongside
+    # polkit_gnome below makes both race to register, and the loser
+    # crash-loops. Masked so polkit_gnome (GTK) is the only agent.
     systemd.user.services.niri-flake-polkit.enable = false;
 
     systemd.user.services.polkit-gnome-authentication-agent-1 = {

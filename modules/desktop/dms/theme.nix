@@ -3,15 +3,13 @@
   config = lib.mkIf config.desktop.dms.enable {
     home.extraOptions.programs.dank-material-shell.settings = {
       # Colours come from the wallpaper. DMS runs matugen on every wallpaper
-      # change and renders its built-in app templates plus the user templates
+      # change and renders its built-in templates plus the user templates
       # modules collect through theming.matugen.templates.
       currentThemeName = "dynamic";
-      # Declared here, so a scheme picked in DMS's UI lasts only until DMS
-      # restarts (settings.json is a store symlink). Try schemes live in the
-      # UI, then set the winner here. fidelity tracks the wallpaper's own
-      # colours most literally of matugen's schemes (the alternative,
-      # tonal-spot, is Material You's muted default and washes a photo's
-      # palette down to one hue).
+      # Declared here since settings.json is a store symlink — a scheme picked
+      # in the UI lasts only until DMS restarts. fidelity tracks the
+      # wallpaper's own colours most literally; tonal-spot (the alternative)
+      # washes a photo's palette down to one hue.
       matugenScheme = "scheme-fidelity";
       runUserMatugenTemplates = true;
 
@@ -22,28 +20,24 @@
       fontFamily = lib.head config.fonts.fontconfig.defaultFonts.sansSerif;
       monoFontFamily = lib.head config.fonts.fontconfig.defaultFonts.monospace;
 
-      # ---- blur (niri 26.04 ext-background-effect) ----
-      # frosted-glass blur behind DMS surfaces (bar, popouts, modals).
+      # blur (niri 26.04 ext-background-effect): frosted glass behind DMS
+      # surfaces (bar, popouts, modals).
       blurEnabled = true;
-      # "Foreground Layers" under Theme > Surface Styling: off, so cards
-      # nested inside popouts get no extra tinted surface of their own.
+      # "Foreground Layers" (Theme > Surface Styling): off, so cards nested
+      # inside popouts get no extra tinted surface of their own.
       blurForegroundLayers = false;
-      # Same toggle under Theme > Floating Windows (Settings, Notepad, polkit
-      # prompts). While "Sync with Global Settings" is on, DMS uses the global
-      # value above; set it explicitly too so it stays off if sync is turned off.
+      # Same toggle for floating windows (Settings, Notepad, polkit prompts);
+      # set explicitly so it stays off even if "Sync with Global Settings" is
+      # turned off.
       floatingWindowForegroundLayers = false;
-      # blur the wallpaper inside the overview. Two cooperating pieces:
-      #  - blurWallpaperOnOverview: blurs the live wallpaper in the workspace
-      #    tiles (internal MultiEffect, gated on inOverview).
-      #  - blurredWallpaperLayer: draws a blurred wallpaper duplicate on the
-      #    dms:blurwallpaper background layer, which the niri layer-rule (see
-      #    niri.nix) pins into the overview backdrop (place-within-backdrop).
+      # Blur the wallpaper in the overview: blurWallpaperOnOverview blurs the
+      # live tiles, blurredWallpaperLayer draws a duplicate on the
+      # dms:blurwallpaper layer that the niri.nix layer-rule pins into the
+      # overview backdrop.
       blurWallpaperOnOverview = true;
       blurredWallpaperLayer = true;
-      # blur only shows through transparent pixels (DMS: readableSurface =
-      # withAlpha(surfaceContainer, popupTransparency) — so this is the
-      # surface *alpha*, 1.0 = fully opaque). 0.3 is glassy; raise toward 0.5
-      # for more solid/readable.
+      # Surface alpha where blur shows through (1.0 = opaque). 0.3 is glassy;
+      # raise toward 0.5 for more solid/readable.
       popupTransparency = 0.3;
       dockTransparency = 0.3;
     };

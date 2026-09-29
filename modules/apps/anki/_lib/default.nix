@@ -1,28 +1,12 @@
-# Anki addons, managed declaratively but deployed into the *real*, mutable
-# ~/.local/share/Anki2/addons21 (not via pkgs.anki.withAddons's ANKI_ADDONS
-# env var, which replaces addons21 wholesale, forces every addon read-only in
-# the nix store, and blocks the GUI "save config" flow). Each addon's code is
-# redeployed from here on every home-manager activation; its meta.json (mod
-# time, enabled flag, and whatever config the user has tweaked via the GUI) is
-# left alone once it exists, so GUI edits survive rebuilds.
+# Anki addons deployed into the real, mutable ~/.local/share/Anki2/addons21,
+# not pkgs.anki.withAddons (blocks the GUI's save-config flow). Code
+# redeploys every activation; meta.json is left alone once it exists.
 #
-# Two addons hold live secrets (HyperTTS's Azure key, Anki Leaderboard's auth
-# token) which are stripped from their vendored/seeded config and re-merged in
-# from sops on every activation instead -- see `secretMerges` below and how
-# ../default.nix wires it to config.sops.secrets.*.path.
+# HyperTTS/Anki Leaderboard secrets are stripped from vendored config and
+# re-merged from sops every activation, see `secretMerges` below.
 #
-# This tree sits under `_lib` on purpose: import-tree's default filter skips
-# any path containing `/_`, so none of these data files are mistaken for NixOS
-# modules. ../default.nix imports it explicitly.
-#
-# ReColor's dark-mode colours follow the wallpaper. Nix writes a base
-# meta.json (labels, light values and CSS var names from recolor-schema.json,
-# dark slot = light value) on every activation; recolorApply then fills the
-# dark slot from the colours file matugen renders from ./recolor-template.nix.
-# matugen runs recolorApply as its post-hook on every wallpaper change, and
-# activation runs it again so a rebuild does not reset Anki to the light
-# values. Anki reads the file at startup, so a new wallpaper shows on the
-# next Anki start.
+# ReColor's dark colours follow the wallpaper: recolorApply fills the dark
+# slot from matugen's rendered colours.
 {
   pkgs,
   lib,
@@ -44,9 +28,7 @@ let
   recolorBaseMeta = (pkgs.formats.json { }).generate "recolor-meta.json" {
     mod = 0;
     disabled = false;
-    # This file replaces meta.json wholesale on every activation, so it has to
-    # carry the flag itself or Anki puts the addon back in its update prompt.
-    update_enabled = false;
+    update_enabled = false; # or Anki puts the addon back in its update prompt
     config = {
       colors = lib.mapAttrs (_key: v: [
         (builtins.elemAt v 0)
@@ -72,8 +54,6 @@ let
 
   fetched = import ./fetched { inherit pkgs; };
 
-  # id -> nothing but source (buildAnkiAddon with a local src is enough;
-  # pname only labels the store path, our activation script deploys by id).
   vendoredIds = [
     "1100811177" # syntax highlighting fork (css + night mode)
     "1247171202" # Study Time Stats
@@ -107,19 +87,14 @@ let
 
   addons = fetched // vendored;
 
-  # ids with a captured _meta.seed.json under ./seeds -- copied to meta.json
-  # only on first install, never overwriting a meta.json that already exists.
+  # copied to meta.json only on first install, never overwriting an existing one
   seededIds = [
     "1100811177"
     "111623432" # HyperTTS
     "1247171202"
     "1708250053"
-    # AnkiConnect. This seed exists only to widen webCorsOriginList: the
-    # stock list is ["http://localhost"], while Obsidian's renderer sends
-    # Origin: app://obsidian.md, so every request from Obsidian_to_Anki is
-    # refused. The failure is invisible from the outside -- that plugin's
-    # onload() returns early and registers no commands at all, so it looks
-    # like the plugin never installed. Still bound to loopback only.
+    # AnkiConnect: widens webCorsOriginList so Obsidian's app://obsidian.md
+    # origin isn't silently refused; still loopback only.
     "2055492159"
     "175794613" # Anki Leaderboard
     "24411424"
@@ -127,13 +102,8 @@ let
     "efficiency_tracker"
   ];
 
-  # ids that were actually disabled in Anki's own meta.json on the old
-  # machine (checked all 22 -- this is the only one). Everything else,
-  # including addons with no seed at all, was enabled, which matches what
-  # Anki does by default for a freshly-discovered addon folder -- so only
-  # this list needs special-casing.
   disabledIds = [
-    "175794613" # Anki Leaderboard -- was off, keep it off
+    "175794613" # Anki Leaderboard
   ];
 in
 {
@@ -147,17 +117,13 @@ in
     ;
   seedsDir = ./seeds;
 
-  # Builds the home.activation script body.
-  # - `secretMerges` merges live secrets into their addon's meta.json on every
-  #   run, keyed by addon id; the jq filter path is relative to `.config`
-  #   (meta.json's top-level config key).
-  # - `themedFiles` installs a Nix-generated meta.json verbatim on every run,
-  #   then runs recolorApply.
+  # secretMerges: jq filter path relative to `.config`. themedFiles installs a
+  # Nix-generated meta.json verbatim, then runs recolorApply.
   mkActivationScript =
     {
-      addonsDir, # e.g. "$HOME/.local/share/Anki2/addons21"
-      secretMerges, # [{ id = "111623432"; jqPath = ".configuration.service_config.Azure.api_key"; secretPath = "/run/secrets/..."; }]
-      themedFiles ? [ ], # [{ id = "688199788"; file = recolorBaseMeta; }]
+      addonsDir,
+      secretMerges, # [{ id, jqPath, secretPath }]
+      themedFiles ? [ ], # [{ id, file }]
     }:
     let
       deployOne = id: drv: ''
@@ -180,15 +146,9 @@ in
           else
             ""
         }
-        # Every addon here is deployed from the Nix store, so Anki must never
-        # update one: its updater would overwrite repo-managed code, and the
-        # next activation would silently revert that -- meanwhile Anki nags
-        # with an "add-ons have updates available" dialog on every launch,
-        # listing exactly these ids. `update_enabled` is set on every run
-        # rather than seeded once, because Anki writes the key itself (as
-        # true) for any addon folder it finds without a meta.json.
-        # `disabled` is left alone, so enabling or disabling an addon from
-        # Anki's own UI still works.
+        # Anki must never update a store-deployed addon: it writes
+        # update_enabled=true itself for any addon folder without meta.json,
+        # so reset it every run; `disabled` is left for Anki's own UI to toggle.
         if [ -e "${addonsDir}/${id}/meta.json" ]; then
           ${pkgs.jq}/bin/jq '.update_enabled = false' "${addonsDir}/${id}/meta.json" \
             > "${addonsDir}/${id}/meta.json.tmp"

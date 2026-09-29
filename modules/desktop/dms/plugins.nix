@@ -9,50 +9,15 @@ let
   # sops-decrypted Home Assistant token path (runtime tmpfs, never in the store).
   haTokenPath = config.sops.secrets.hass_token.path;
 
-  # ── MouthGuard ────────────────────────────────────────────────────────────
-  # MouthGuard lives in sitolam/dms-plugins. The registry has since adopted it
-  # (plugins/sitolam-mouthguard.json), and every other plugin of ours now takes
-  # the registry's build — but this one still hands plugins.<id> a `src`
-  # assembled here from that input's plugins/mouthguard subtree, because the
-  # registry's copy of the tree alone would not run. See the mkForce note at
-  # the option itself.
-  #
-  # StartupCheck.qml and MouthGuardDaemon.qml both resolve the detector as
-  # "<pluginDir>/result/bin/mouthguard-detector" — the artifact of running
-  # `nix build .#detector` *inside* the plugin directory. Under any Nix install
-  # the plugin directory is a read-only store path, so that build can never
-  # happen there; pre-create the symlink those two files look for instead,
-  # pointing at the very package that `nix build .#detector` would have made.
-  #
-  # That is now dms-plugins' own `packages.mouthguard-detector`, rather than a
-  # hand-assembled copy of its python environment. The copy existed because
-  # that flake builds from its own nixpkgs instance, which this config cannot
-  # add overlays to (same trap as niri, see ../niri/default.nix), and a dlib
-  # pin this file used to carry had to reach the detector. Since the detector
-  # moved from dlib to MediaPipe Face Mesh on OpenVINO it needs no overlay — and
-  # it now carries things this config would otherwise reproduce exactly: the two
-  # pinned MediaPipe model files, and the NPU runtime (Intel's NPU graph
-  # compiler, which nixpkgs does not package, placed where OpenVINO looks for
-  # it). Duplicating that here would be the same trap in reverse.
+  # QML expects "<pluginDir>/result/bin/mouthguard-detector", normally built
+  # in-place by `nix build .#detector` — impossible in a read-only store.
+  # Pre-link it to dms-plugins' own packages.mouthguard-detector instead.
   mouthGuardDetector =
     inputs.dms-plugins.packages.${pkgs.stdenv.hostPlatform.system}.mouthguard-detector;
 
-  # ── dankMenu ──────────────────────────────────────────────────────────────
-  # The menu tree, generated here rather than taken from the plugin's own
-  # menu.jsonc, so rows can point at this flake's checkout. Everything that is
-  # machine-agnostic still matches the bundled default; the `setup.config` and
-  # `update.*` rows are the reason this exists at all.
-  #
-  # Schema is omarchy's (basecamp/omarchy, default/omarchy/omarchy-menu.jsonc):
-  # dotted keys imply hierarchy, the kind of a row is inferred from its fields,
-  # and `when` / `checked` / `disabled` are shell snippets the plugin evaluates
-  # one level at a time.
-  #
-  # This is written as an ordered *list* rather than an attrset because Nix
-  # serialises attrsets alphabetically, and menu rows have a meaningful order:
-  # a power menu reading "lock, logout, reboot, shutdown, suspend" is not the
-  # one anybody wants. The plugin's parser reads declaration order, so emitting
-  # ordered JSONC text preserves it.
+  # Generated here (not the plugin's menu.jsonc) so setup.config/update.*
+  # rows can point at this checkout. A list, not an attrset — Nix serialises
+  # attrsets alphabetically and row order matters.
   flakeDir = "/home/otis/sitolamix";
 
   winappsCfg = config.services.winapps;
@@ -89,8 +54,7 @@ let
         "excel"
         "vm"
       ];
-      # The whole subtree disappears on a host without the VM, rather than
-      # offering rows that would fail.
+      # Hides the whole subtree on a host without the VM.
       when = if winappsCfg.enable then "true" else "false";
     }
     {
@@ -136,12 +100,9 @@ let
         "drill"
         "shortcuts"
       ];
-      # Disappears on a host without apps.keydrill — same pattern as the
-      # windows subtree above.
       when = if config.apps.keydrill.enable then "true" else "false";
-      # Same launch as Mod+Alt+P in apps.keydrill: practiceCommand releases
-      # niri's key grabs first, ghostty is required for the Kitty keyboard
-      # protocol keydrill needs.
+      # practiceCommand releases niri's key grabs first; ghostty is needed
+      # for the Kitty keyboard protocol keydrill requires.
       action = "${config.desktop.niri.practiceCommand} run ghostty -e keydrill run --from niri";
     }
     {
@@ -178,8 +139,8 @@ let
         "screenshot"
         "annotate"
       ];
-      # region capture straight into the annotation editor; the plugin's other
-      # modes (full, window, output, scroll) are reachable from its own UI.
+      # region capture straight into the annotation editor; other modes are
+      # reachable from the plugin's own UI.
       action = "dms ipc call quickCapture screenshot region edit";
     }
     {
@@ -231,12 +192,8 @@ let
         "kanata"
         "homerow"
       ];
-      # Disappears on a host without desktop.kanata — same pattern as the
-      # keydrill row above.
       when = if config.desktop.kanata.enable then "true" else "false";
-      # Games and tap-hold mods do not mix (see ../kanata/default.nix). Launching
-      # through gamemode already stops kanata by itself; this row is the manual
-      # path for everything that does not go through gamemode.
+      # Manual path for stopping kanata; gamemode already handles it for games.
       checked = "systemctl is-active --quiet kanata-default.service";
       action = "kanata-toggle";
     }
@@ -249,27 +206,18 @@ let
       action = "dms ipc call night toggle";
     }
 
-    # Windows — the VM is deliberately not running most of the time. `when` /
-    # `checked` / `disabled` / `labelCmd` are shell snippets the plugin
-    # evaluates when this submenu opens, so every row below reads the unit's
-    # real state rather than describing it.
+    # when/checked/disabled/labelCmd are shell snippets the plugin evaluates
+    # live when this submenu opens.
     {
       id = "windows.status";
       icon = "memory";
       label = "Status";
-      # labelCmd replaces the label with this snippet's output — the only way
-      # to show a live figure, since the menu tree itself is a static file.
-      # Reads "Stopped", or "Running · CPU 4% · RAM 2.1GiB / 4GiB". A snapshot
-      # taken when the menu opens, not a running meter.
+      # e.g. "Running · CPU 4% · RAM 2.1GiB / 4GiB" — a snapshot, not a live meter.
       labelCmd = "winapps-status";
-      # A readout, not a control. Without this a row with no action would be
-      # treated as an empty submenu to descend into.
-      disabled = "true";
+      disabled = "true"; # readout only, not a control
     }
-    # One button, two definitions: `when` makes them mutually exclusive, so
-    # exactly one is ever on screen and it is always the one that does
-    # something. Both go through winapps-vm rather than systemctl directly, so
-    # a manual start announces itself the same way an on-demand one does.
+    # start/stop go through winapps-vm, not systemctl, so manual and
+    # on-demand starts announce themselves the same way.
     {
       id = "windows.start";
       icon = "play_arrow";
@@ -284,7 +232,7 @@ let
       label = "Stop VM";
       aliases = [ "shutdown" ];
       when = "systemctl is-active --quiet docker-windows";
-      # Windows gets 120s to shut down cleanly (see ../../services/winapps).
+      # Windows gets 120s to shut down cleanly.
       action = "winapps-vm stop";
     }
     {
@@ -295,9 +243,7 @@ let
         "auto"
         "automatic"
       ];
-      # When on, opening Word starts the VM and waits for it, and the VM shuts
-      # itself down after services.winapps.idleTimeout minutes with no
-      # RemoteApp session open. When off, the VM is yours to start and stop.
+      # On: VM starts on app launch and stops after an idle timeout. Off: manual.
       checked = "winapps-on-demand status";
       action = "winapps-on-demand toggle";
     }
@@ -316,11 +262,8 @@ let
         "vnc"
         "install"
       ];
-      # dockurr/windows serves the guest's actual screen over HTTP. This is the
-      # only way in when RDP is not answering — during the 20-40 minute first
-      # boot, and afterwards if Windows breaks in a way that takes RDP with it.
-      # "Full Desktop" above is the everyday one: same desktop over RDP, which
-      # is far faster and properly integrated.
+      # HTTP console — the only way in before RDP answers (first boot, broken
+      # Windows). "Full Desktop" above is the everyday, faster RDP path.
       target = "http://127.0.0.1:8006";
     }
 
@@ -346,9 +289,8 @@ let
       action = "dms ipc call settings focusOrToggleWith wallpaper";
     }
     {
-      # The carousel (plugin below) rather than the settings page above: this
-      # is the picker you actually browse with, and since every colour on the
-      # desktop is derived from the wallpaper, it is a theming control.
+      # The picker you actually browse wallpapers with; every desktop colour
+      # derives from it, so it's a theming control.
       id = "style.carousel";
       icon = "view_carousel";
       label = "Wallpaper carousel";
@@ -411,8 +353,7 @@ let
       action = "dms ipc call settings open";
     }
 
-    # Update — each runs in a terminal: they are long, they can fail, and a
-    # detached process would hide both.
+    # Each runs in a terminal — long, can fail, a detached process would hide both.
     {
       id = "update.rebuild";
       icon = "build";
@@ -494,24 +435,14 @@ let
 in
 {
   config = lib.mkIf config.desktop.dms.enable {
-    # ydotool: key-injection backend for the virtualKeyboard plugin (raw
-    # keycode press/release, so shift/ctrl/alt can be held across separate
-    # taps — see plugins/virtualkeyboard/StartupCheck.qml, which blocks the
-    # plugin from enabling if this isn't reachable). uinput needs a kernel
-    # module and root (or a group with /dev/uinput access) to open, and
-    # nixpkgs ships no dedicated NixOS module for the daemon, so both are
-    # hand-rolled here: load the module, run ydotoold as a system service
-    # with a world-writable socket, and point dms.service at that socket
-    # (added to systemd.user.services.dms.Service.Environment below).
+    # Key-injection backend for virtualKeyboard. No NixOS module for the
+    # daemon exists, so it's hand-rolled: load uinput, run ydotoold, point
+    # dms.service at it below.
     boot.kernelModules = [ "uinput" ];
     environment.systemPackages = [
       pkgs.ydotool
-      # calculator: its qalcCommand below is an absolute store path, so the
-      # plugin does not need this — but QalcService.qml spawns its default
-      # bare `qalc` once on load, before Component.onCompleted has applied the
-      # setting, and that spawn dies ("qalc process died, retrying (1/3)") and
-      # leaves the launcher stuck on "Calculating..." for the second or so the
-      # retry takes. Having qalc on PATH makes that first spawn succeed.
+      # QalcService.qml spawns a bare `qalc` on load, before qalcCommand's
+      # path applies — needs qalc on PATH or it hangs on "Calculating...".
       pkgs.libqalculate
     ];
     systemd.services.ydotoold = {
@@ -524,122 +455,73 @@ in
     };
 
     home.extraOptions = {
-      # DMS plugins from the registry (github:AvengeMedia/dms-plugin-registry);
-      # the registry homeModule (imported in ./default.nix) provides the pinned
-      # src for each, we just enable + configure.
+      # Plugins from github:AvengeMedia/dms-plugin-registry; its homeModule
+      # provides the pinned src for each — we just enable + configure.
       programs.dank-material-shell.plugins = {
         claudeCodeUsage = {
           enable = true; # titeya/dms-claudecode (needs jq+curl, both in systemPackages)
-          # how often to fetch usage data, in minutes (SliderSetting range 2..15).
-          settings.refreshInterval = 2;
+          settings.refreshInterval = 2; # minutes (SliderSetting range 2..15)
         };
         emojiLauncher.enable = true; # devnullvoid/dms-emoji-launcher
         calculator = {
           enable = true; # rochacbruno/DankCalculator — launcher plugin
           settings = {
-            # libqalculate instead of the plugin's built-in JavaScript engine:
-            # it does units, currencies and hex. QalcService.qml splits this
-            # string itself and prepends `stdbuf -oL`, so it must be a plain
-            # argv line — the store path avoids needing qalc on the shell's
-            # PATH. Flags are the plugin's own defaults: -i interactive,
-            # -t terse output, -c 0 no colour.
+            # libqalculate over the built-in JS engine: handles units,
+            # currencies, hex.
             calcEngine = "qalc";
             qalcCommand = "${pkgs.libqalculate}/bin/qalc -i -t -set \"decimal comma off\" -c 0";
-            # keep the "=" prefix rather than answering every query: both are
-            # spelled out because noTrigger is only the settings-UI toggle and
-            # trigger is what the launcher actually reads (CalculatorSettings
-            # .qml clears one from the other, and that binding never runs when
-            # the settings come from Nix).
+            # Both set explicitly — CalculatorSettings.qml only syncs
+            # noTrigger/trigger from the UI, not from Nix values.
             noTrigger = false;
             trigger = "=";
           };
         };
         dankKDEConnect.enable = true; # AvengeMedia/dms-plugins DankKDEConnect (bar widget; kdeconnect via kde-connect.nix)
-        # searchable list of the compositor's keybinds, under the "\" trigger.
-        # It reads them from `dms keybinds show niri`, so what it lists is
-        # whatever niri has loaded — ../niri/bindings.nix plus the generated
-        # dms/*.kdl includes — not a second copy to keep in step.
+        # keybind search under "\", reads live from `dms keybinds show niri`.
         dankLauncherKeys.enable = true; # AvengeMedia/dms-plugins DankLauncherKeys
-        # unified system monitor (Dadangdut33/dms-plugins) — replaces the
-        # built-in memUsage + diskUsage bar widgets with one widget showing
-        # cpu/ram/disk as gauges.
+        # unified cpu/ram/disk gauges, replacing the built-in memUsage + diskUsage widgets.
         systemMonitorPlus = {
           enable = true;
           settings = {
-            # only cpu, ram, disk show (every other resource's <r>Enabled
-            # defaults to false); this also fixes their order.
-            resourceOrder = "cpuUsage,ramUsage,diskPartitionUsage";
+            resourceOrder = "cpuUsage,ramUsage,diskPartitionUsage"; # only these three show
             cpuUsageEnabled = true;
             ramUsageEnabled = true;
             diskPartitionUsageEnabled = true;
-            diskPartitionUsageMount = "/"; # root filesystem
-            # gauge (circular speedometer ring) look
+            diskPartitionUsageMount = "/";
             cpuUsageVisualStyle = "gauge";
             ramUsageVisualStyle = "gauge";
             diskPartitionUsageVisualStyle = "gauge";
-            # icon-only: drop the numeric percentage text, keep the gauge + icon.
-            cpuUsageShowText = false;
+            cpuUsageShowText = false; # icon-only: gauge + icon, no percentage text
             ramUsageShowText = false;
             diskPartitionUsageShowText = false;
-            # fixed color (UseValueColors=false disables the auto
-            # normal/warning/danger threshold colouring; colour = theme primary).
+            # fixed colour (theme primary) instead of value-threshold colouring
             cpuUsageUseValueColors = false;
             ramUsageUseValueColors = false;
             diskPartitionUsageUseValueColors = false;
           };
         };
-        # screenshot + annotation editor, opened by keybind (Mod+S in
-        # ../niri/bindings.nix) or from its control-center tile. Replaced
-        # JDKamalakar/DMS-ScreenCapture_Toolbar, which paired grim/slurp with
-        # satty as an external editor; this one captures through DMS's own
-        # `dms screenshot` and annotates in-shell, so neither is needed here.
-        # It does not record the screen — see programs.gpu-screen-recorder in
-        # ./default.nix for what is left of that.
-        # Deps (imagemagick/img2pdf/tesseract/zbar) are in ./default.nix.
+        # Screenshot + annotation editor (Mod+S or its control-center tile);
+        # captures via DMS's own `dms screenshot`, no external editor needed.
         quickCapture = {
-          enable = true; # hthienloc/dms-quick-capture, in dms-plugin-registry
+          enable = true; # hthienloc/dms-quick-capture
           settings = {
-            # "dms" (the default) captures via the `dms screenshot` CLI that
-            # ships with the shell. The alternative, "rust", runs a backend the
-            # plugin expects to download from its GitHub releases into its own
-            # directory at runtime — under Nix that directory is a read-only
-            # store path, so that install can never happen and every capture
-            # would fail. Pinned rather than left to the default so a change of
-            # default upstream cannot silently break capture.
+            # "rust", the alternative backend, downloads its binary from
+            # GitHub at runtime — impossible under a read-only store.
             screenshotBackend = "dms";
           };
         };
-        # fullscreen skewed carousel over the wallpaper folder DMS is already
-        # cycling (see ../wallpapers.nix), bound to Mod+Alt+W in
-        # ../niri/bindings.nix. Since this branch every colour on the desktop
-        # is matugen'd from the current wallpaper, so this is the fastest way
-        # to re-theme the machine. Settings are left at the plugin's own
-        # defaults: it reads the directory from DMS's wallpaper management
-        # rather than carrying its own, and the rest is overlay geometry best
-        # judged by eye in Settings > Plugins.
-        wallpaperCarousel.enable = true; # motor-dev/wallpaperCarousel, in dms-plugin-registry
+        # Fullscreen wallpaper carousel (Mod+Alt+W) — fastest re-theme since
+        # every colour derives from the wallpaper.
+        wallpaperCarousel.enable = true; # motor-dev/wallpaperCarousel
 
-        # control-center plugin (no bar widget, so NOT hideable by the hidden
-        # bar): a break reminder, surfaces as a control-center toggle.
-        # niriDS below is its own bar-widget control-center tile instead.
-        niriDS.enable = true; # hthienloc/dms-niri-display-settings (needs wl-mirror), in dms-plugin-registry
+        niriDS.enable = true; # hthienloc/dms-niri-display-settings (needs wl-mirror)
         takeABreak = {
           enable = true; # sitolam/dms-take-a-break, forked from hthienloc/dms-take-a-break
-          # mkForce: dms-plugin-registry still builds the unforked upstream
-          # and sets `src` at normal priority too (same conflict mouthGuard
-          # has above) — this fork adds countOnlyActiveUse, gating the break
-          # countdown on seat activity (idle-notify) instead of wall clock.
+          # mkForce: registry also builds unforked upstream at this priority.
+          # This fork adds countOnlyActiveUse (gate on seat activity, not wall clock).
           src = lib.mkForce inputs.dms-take-a-break;
-          # overlay = the fullscreen break screen dim; preWarning = the toast
-          # before a break. Both 0..100 (%). GUI edits to these revert because
-          # plugin settings are Nix-managed (managePluginSettings), so set here.
-          #
-          # shortBreakInterval/Duration, shortBreaksBeforeLong and
-          # longBreakDuration used to be overridden here (45m/10s/4/2m instead
-          # of the plugin's 20m/20s/3/5m) because the 20-minute cadence
-          # interrupted too often. countOnlyActiveUse fixed the actual
-          # problem — the interval no longer burns down while away from the
-          # keyboard — so the plugin defaults are back.
+          # overlay = fullscreen break dim; preWarning = pre-break toast.
+          # Set here since GUI edits revert (managePluginSettings).
           settings = {
             overlayOpacity = 80;
             preWarningOpacity = 80;
@@ -652,144 +534,69 @@ in
             hassTokenPath = haTokenPath; # sops-decrypted token file
           };
         };
-        # local project (see the `let` block) — webcam mouth-closure tracker.
-        # Needs the `video` group (users.nix) and QtMultimedia on the QML path
-        # (default.nix) for its SoundEffect alerts.
+        # Local project — webcam mouth-closure tracker. Needs the video
+        # group and QtMultimedia on the QML path for its SoundEffect alerts.
         mouthGuard = {
           enable = true;
-          # mkForce is required, not stylistic: dms-plugin-registry has adopted
-          # this plugin (plugins/sitolam-mouthguard.json) and its module sets
-          # every plugin's `src` at normal priority, not mkDefault — so without
-          # this the two definitions conflict and evaluation fails outright.
-          #
-          # This is the one plugin of ours that still overrides src at all.
-          # The registry would install the plugin tree alone, without the
-          # `result` symlink to the detector its QML resolves (see the `let`
-          # block above), and the plugin would not start. Every other one of
-          # ours is now registry-built.
+          # mkForce: registry sets src at normal priority too, and its tree
+          # lacks the detector symlink built above.
           src = lib.mkForce mouthGuardPlugin;
         };
-        # omarchy-style root menu, bound to Mod+Space in ../niri/bindings.nix.
-        # The tree is generated below rather than taken from the plugin's own
-        # menu.jsonc so rows can reference this checkout; the bundled file is
-        # only the default for a standalone install.
-        # No `src` here: the registry has adopted this one
-        # (plugins/sitolam-dankmenu.json) and its build of the plugin tree is
-        # exactly what a src pointing at the dms-plugins input would give, so
-        # taking the registry's is one pin fewer to keep current. Iterating on
-        # the plugin does not go through this input either — test a working
-        # checkout with `nh os build/switch --override-input dms-plugins
-        # path:/home/otis/Documents/dms-plugins .`. Only mouthGuard below still
-        # sets a src, and for a reason the registry cannot cover.
+        # Omarchy-style root menu (Mod+Space). Tree generated above so rows
+        # can reference this checkout. To iterate on the plugin itself:
+        # nh os build/switch --override-input dms-plugins path:/home/otis/Documents/dms-plugins .
         dankMenu = {
           enable = true;
           settings.menuPath = "${dankMenuFile}";
         };
-        # on-screen keyboard, ported from end-4/dots-hyprland. Registry-built
-        # (plugins/sitolam-virtualkeyboard.json), no src — same as dankMenu
-        # above.
-        virtualKeyboard.enable = true;
+        virtualKeyboard.enable = true; # end-4/dots-hyprland port, registry-built
         usbManager.enable = true; # NordicsSys/dms-usb-manager
-        # barDropdown — local, see the dms-plugins checkout. One bar button that
-        # drops a panel of real bar widgets *below* the bar.
-        #
-        # This is the third attempt at collapsing this cluster, and the first
-        # that can work. hthienloc/dms-hidden-bar and rdannenbring/widget-group
-        # both collapse widgets along the bar and reveal them the same way, and
-        # in a side section that reveal has nowhere to go: DankBarContent.qml
-        # anchors the three sections independently (left to parent.left, right
-        # to parent.right, centre to parent.horizontalCenter), so a wider
-        # right-section widget only pushes its own section's left edge into the
-        # empty middle of the bar. The centre widgets never move, and because
-        # the centre section paints last, a wide enough expansion ends up
-        # underneath the clock. No plugin setting changes that.
-        #
-        # barDropdown does not expand along the bar at all: the members go in a
-        # popout that DMS anchors under the trigger and paints over the windows
-        # below. Nothing on the bar moves and nothing overlaps.
-        #
-        # Registry-built (plugins/sitolam-bardropdown.json), no src — same as
-        # dankMenu and virtualKeyboard above.
+        # One bar button that drops a panel of real bar widgets below the
+        # bar. Earlier collapsers failed because DankBarContent.qml anchors
+        # bar sections independently; this renders members in a popout instead.
         barDropdown = {
           enable = true;
           settings = {
-            # member bar-widget ids, left to right in the panel. They are
-            # deliberately absent from rightWidgets in ./bar.nix: the panel
-            # instantiates them itself, so a member left on the bar too would be
-            # rendered twice. systemTray resolves against the plugin's built-in
-            # component table, the others through PluginService.
+            # left to right in the panel; deliberately absent from
+            # rightWidgets in bar.nix, which would render them twice.
             targets = [
               "ambientSound"
               "systemTray"
               "usbManager"
-              # webcam mouth-closure tracker. left click = popout,
-              # middle = start/stop, right = mute alerts.
-              "mouthGuard"
+              "mouthGuard" # left click = popout, middle = start/stop, right = mute
             ];
             icon = "widgets";
             display = "icon"; # no text label beside the icon
             showChevron = true;
           };
         };
-        # LuckShiba/DmsDockerManager, via dms-plugin-registry. The status half
-        # of the Windows VM controls: running/stopped, ports, logs, stop and
-        # restart. It cannot *start* the VM — NixOS runs oci-containers with
-        # `--rm`, so a stopped container no longer exists for the plugin's start
-        # button to act on. Start lives in the dankMenu `windows` subtree below.
-        # LuckShiba/DmsDockerManager, deliberately left off. Its only surface is
-        # a dankbar widget, and the bar is not where this belongs: the VM is
-        # off most of the time, so a permanent widget spends its life showing
-        # nothing. The Windows submenu below carries the status line instead,
-        # where it is read at the moment it is wanted. Re-enable here and add
-        # the id to rightWidgets in ./bar.nix if the general Docker view (all
-        # containers, compose projects, logs, shells) ever becomes useful.
+        # Left off: can only show VM status, not start it (oci-containers run
+        # with --rm, so a stopped container doesn't exist to start), and
+        # would be a permanent bar widget for a VM that's usually off.
+        # dankMenu's windows subtree covers status instead.
         dockerManager.enable = false;
-        ambientSound.enable = true; # hthienloc/dms-ambient-sound (bar widget — no control-center variant)
-        # AvengeMedia DankBatteryAlerts was dropped from dms-plugin-registry
-        # (registry commit 098a7f6, "remove builtin plugins"): its low/critical
-        # threshold alerts moved into DMS core Settings > Battery > Alerts
-        # (SettingsData.batteryAlerts*), no plugin entry needed. Removing this
-        # `enable = true` fixes `programs.dank-material-shell.plugins.dankBatteryAlerts.src'
-        # was accessed but has no value defined` after a flake update dropped
-        # the registry's pinned src for it.
-        # notsopreety/batteryOSD. Used to need its own flake input, back when it
-        # was missing from dms-plugin-registry; the registry has since adopted
-        # it (plugins/notsopreety-batteryOSD.json), so this is a plain `enable`
-        # again and the input is gone. Nothing local is layered on top of this
-        # one and it is somebody else's plugin, so there is no reason to carry
-        # a second pin for it — unlike dankMenu/mouthGuard above.
-        # (Its sibling kbdBacklightOSD was tried too, but this laptop has no
-        # kernel-visible keyboard backlight — no /sys/class/leds/*kbd_backlight*
-        # node, no UPower KbdBacklight D-Bus object — so that plugin was inert
-        # and got dropped.)
+        ambientSound.enable = true; # bar widget, no control-center variant
+        # dankBatteryAlerts dropped (moved into DMS core Settings > Battery >
+        # Alerts). kbdBacklightOSD also tried but dropped — this laptop has
+        # no kernel-visible keyboard backlight.
         batteryOSD.enable = true;
-        # arcatva/dms-battery-plus, via dms-plugin-registry. Bar widget with a
-        # charge-history popout plus the power-profile switcher; needs upower,
-        # already on in ./default.nix. It sits at the far right of the bar
-        # (../dms/bar.nix) and is why the control-center pill no longer draws a
-        # battery icon of its own — two battery readouts side by side.
+        # Charge-history popout + power-profile switcher; replaces the
+        # control-center pill's own battery icon.
         batteryPlus.enable = true;
       };
 
-      # write plugin_settings.json marking each enabled plugin active, so they
-      # actually turn on (not just install). NB: makes plugin settings
-      # HM-managed/read-only — set a plugin's options via plugins.<id>.settings
-      # rather than the DMS UI.
+      # Marks plugins active (not just installed), and makes settings
+      # HM-managed/read-only — set via plugins.<id>.settings, not the DMS UI.
       programs.dank-material-shell.managePluginSettings = true;
 
-      # virtualKeyboard's Ydotool.qml spawns `ydotool key ...`, which reads
-      # YDOTOOL_SOCKET to find ydotoold's socket (see the system service
-      # above). List-valued options merge across modules, so this adds to
-      # rather than replaces default.nix's Environment entries for the same
-      # unit.
+      # Ydotool.qml reads YDOTOOL_SOCKET for ydotoold's socket above. Merges
+      # with default.nix's entries for the same unit.
       systemd.user.services.dms.Service.Environment = [
         "YDOTOOL_SOCKET=/run/ydotoold.socket"
       ];
 
-      # The HA plugin keeps its monitored-entity list as plugin *state* (read via
-      # pluginService.loadPluginState), not a setting — so declare the state file
-      # to make the selection reproducible. Read-only: change the list here rather
-      # than in the plugin's GUI editor.
+      # Monitored-entity list is plugin state, not a setting — declare the
+      # file for reproducibility. Change it here, not in the GUI.
       home.file.".local/state/DankMaterialShell/plugins/homeAssistantMonitor_state.json".text =
         builtins.toJSON
           {

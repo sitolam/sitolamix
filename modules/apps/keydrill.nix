@@ -11,8 +11,8 @@ in
   options.apps.keydrill.enable = lib.mkEnableOption "keydrill keyboard-shortcut trainer";
 
   config = lib.mkIf cfg.enable {
-    # Our own tool (github:sitolam/keydrill). Nothing in nixpkgs trains
-    # keyboard shortcuts: the field is KeyCombiner and ShortcutFoo, both
+    # Own tool (github:sitolam/keydrill): nixpkgs has nothing for keyboard
+    # shortcut training, the alternatives (KeyCombiner, ShortcutFoo) are
     # closed and hosted.
     nixpkgs.overlays = [ inputs.keydrill.overlays.default ];
 
@@ -21,17 +21,12 @@ in
       {
         home.packages = [ pkgs.keydrill ];
 
-        # keydrill needs the keys it is drilling, so niri has to stop
-        # grabbing them first — practice mode does that, and restores them
-        # however keydrill exits. Mod+Alt+<letter> is the "run a tool" plane,
-        # see ../desktop/niri/KEYBINDINGS.md.
-        #
-        # ghostty rather than the ambient terminal because keydrill requires
-        # the Kitty keyboard protocol: an ordinary terminal cannot report
-        # Super at all, which would make most of the deck unanswerable.
-        # Every argument separate: `ghostty -e` execs what follows as argv,
-        # so a single string with spaces in it is one program name that does
-        # not exist, and the window closes the instant it opens.
+        # practiceCommand releases niri's key grabs so keydrill can read them,
+        # restoring them on exit. Must run in ghostty, not the ambient
+        # terminal: keydrill needs the Kitty keyboard protocol to report
+        # Super, which an ordinary terminal can't. Args must stay separate —
+        # `ghostty -e` execs them as argv, and one spaced string is a program
+        # name that doesn't exist.
         programs.niri.settings.binds."Mod+Alt+P".action.spawn = [
           config.desktop.niri.practiceCommand
           "run"

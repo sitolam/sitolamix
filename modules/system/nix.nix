@@ -3,12 +3,8 @@
   # Unfree in the NixOS + home-manager closures (HM shares this via useGlobalPkgs).
   nixpkgs.config.allowUnfree = true;
 
-  # Unfree in *ad-hoc* CLI usage too — `nix-shell -p`, `nix-build`, `nix-env`, and
-  # flake commands run with `--impure` (e.g. `nix shell --impure nixpkgs#nvtop`,
-  # which pulls unfree CUDA). Without this, those invocations use a nixpkgs with no
-  # config and abort on the unfree/CUDA-EULA gate. The env var covers the legacy
-  # tools outright; the config.nix file is the belt-and-suspenders for anything
-  # that reads it.
+  # Unfree in ad-hoc CLI usage too (nix-shell -p, nix-build, --impure flake
+  # commands) — without this those invocations abort on the unfree gate.
   environment.sessionVariables.NIXPKGS_ALLOW_UNFREE = "1";
   home.extraOptions.home.file.".config/nixpkgs/config.nix".text = ''
     { allowUnfree = true; }
@@ -23,11 +19,8 @@
         "flakes"
       ];
 
-      # flake.nix's nixConfig (extra-substituters/extra-trusted-public-keys)
-      # otherwise gets ignored with a warning on every rebuild unless the
-      # invocation passes --accept-flake-config. Safe here: those two lists
-      # are a subset of substituters/trusted-public-keys below, already
-      # trusted system-wide.
+      # Otherwise flake.nix's nixConfig substituters get ignored with a
+      # warning every rebuild; safe since they're already in the trusted lists below.
       accept-flake-config = true;
 
       trusted-users = [
@@ -35,18 +28,8 @@
         "otis"
       ];
 
-      # Four caches were dropped here (and from flake.nix):
-      #   cache.garnix.io  — 502s for days at a time, and nix 2.34 does not
-      #     skip a failing substituter: the download error interrupts the
-      #     daemon, which then aborts during cleanup, so every rebuild dies
-      #     with "Nix daemon disconnected unexpectedly". It only served
-      #     zen-browser, a binary repack that is cheap to build locally.
-      #   hyprland.cachix.org — nothing here uses hyprland.
-      #   attic.xuyh0120.win/lantian — zero hits against this closure.
-      #   noctalia.cachix.org — the noctalia shell was replaced by
-      #     DankMaterialShell; nothing in this config pulls from it any more.
-      # Every extra substituter is another outage that can break a rebuild, so
-      # only keep the ones that actually serve this config.
+      # garnix.io was dropped: its 502s interrupt the nix daemon mid-rebuild,
+      # and it only served zen-browser, which is cheap to build locally.
       substituters = [
         "https://cache.nixos.org/"
         "https://nix-community.cachix.org"
@@ -68,26 +51,19 @@
       auto-optimise-store = true; # hardlink-dedupe identical store paths (saves disk)
     };
 
-    # Garbage collection is handled by `nh clean` below (programs.nh.clean), which
-    # is generation-aware. Running nix.gc *and* nh clean is redundant, so the
-    # built-in timer stays off.
-    gc.automatic = false;
+    gc.automatic = false; # redundant with nh clean below (generation-aware)
   };
 
-  # nh = the nice `nix os switch` wrapper (already used by the `rebuild`/`update`
-  # fish aliases). Its clean timer supersedes nix.gc: it keeps a minimum number
-  # of generations regardless of age, so a rebuild spree can't leave you with
-  # zero rollback targets, while still reclaiming disk aggressively.
+  # nh's clean timer supersedes nix.gc: keeps a minimum number of generations
+  # regardless of age, so a rebuild spree can't zero out rollback targets.
   programs.nh = {
     enable = true; # installs nh (replaces the systemPackages entry)
     flake = "/home/otis/sitolamix"; # lets `nh os switch` run with no path arg
 
     clean = {
       enable = true;
-      dates = "daily"; # run often — this box is tight on storage
-      # keep the 3 newest generations no matter what, plus anything from the last
-      # 4 days. Tighten `--keep`/`--keep-since` further to reclaim more.
-      extraArgs = "--keep 3 --keep-since 4d";
+      dates = "daily"; # this box is tight on storage
+      extraArgs = "--keep 3 --keep-since 4d"; # tighten to reclaim more
     };
   };
 }

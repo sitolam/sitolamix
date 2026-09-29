@@ -16,60 +16,41 @@ in
       type = lib.types.str;
       default = "${../../../assets/wallpaper.jpg}";
       description = ''
-        Wallpaper written into session.json when it is first seeded. Only ever
-        applies on a fresh seed — afterwards the wallpaper is DMS's to change.
-        Its *directory* also becomes the folder DMS cycles through, so point it
-        inside a collection to get that for free (see ../wallpapers.nix).
+        Wallpaper written into session.json on first seed only; DMS owns it
+        afterwards. Its directory is also the folder DMS cycles through.
       '';
     };
   };
 
-  # The rest of the module is split across ./theme.nix, ./bar.nix, ./plugins.nix
-  # and ./niri.nix (all gated on desktop.dms.enable; their home.extraOptions
-  # merge). This file holds the option + core wiring.
+  # Split across sibling files (theme, bar, plugins, niri), all gated on
+  # desktop.dms.enable; this file holds the option + core wiring.
   config = lib.mkIf cfg.enable {
-    # external-monitor (DDC/CI) brightness: DMS opens /dev/i2c-* directly, so
-    # load i2c-dev (creates the nodes + i2c group + udev perms) and add the user
-    # to the i2c group so the shell can read/write them.
+    # DMS opens /dev/i2c-* directly for DDC monitor brightness.
     hardware.i2c.enable = true;
-    # i2c: DDC brightness (above).
     users.users.otis.extraGroups = [
       "i2c"
     ];
 
-    # screen *recording*, CLI only. It used to back the screenCaptureToolbar
-    # plugin's record button; quickCapture, which replaced that plugin, only
-    # does screenshots, so nothing in the shell drives this any more and there
-    # is no keybind for it — `gpu-screen-recorder` is run by hand. Kept because
-    # the NixOS module (not just the package) installs the setcap-wrapped
-    # binary that capture needs, which a bare systemPackages entry would not.
-    # Drop this and ./plugins.nix's note about it if a recorder plugin ever
-    # takes the job back.
+    # CLI screen recording; quickCapture replaced the plugin that drove
+    # this, so nothing calls it now — run by hand. Kept for the
+    # setcap-wrapped binary capture needs.
     programs.gpu-screen-recorder.enable = true;
 
     services = {
-      # backs the power-profile switcher in the battery control-center tile
-      # (see bar.nix controlCenterWidgets). No TLP here, so no conflict.
+      # power-profile switcher in the battery control-center tile (bar.nix).
       power-profiles-daemon.enable = true;
 
-      # DMS reads battery presence/charge/AC-online state over UPower's DBus
-      # API, not by polling /sys/class/power_supply itself. Without this the
-      # battery tile has nothing to query, which is why it showed no battery
-      # and defaulted to "plugged in".
+      # DMS reads battery state over UPower's DBus API; without this the
+      # tile shows nothing.
       upower.enable = true;
 
-      # the profile picture. DMS asks AccountsService for the user's IconFile
-      # (PortalService.getUserProfileImage -> freedesktop.accounts.getUserIconFile)
-      # and shows nothing at all when the bus name is missing, which is what a
-      # blank avatar looks like. Nothing else here pulls accounts-daemon in — it
-      # used to arrive with ReGreet, and went away with it — so enable it
-      # explicitly. accountsservice reports ~/.face as the icon when the user has
-      # no /var/lib/AccountsService entry, and that file is written below.
+      # DMS shows a blank avatar without AccountsService; it falls back to
+      # ~/.face (written below) when there's no entry.
       accounts-daemon.enable = true;
     };
 
-    # runtime deps the enabled DMS plugins shell out to (registry ships only the
-    # plugin source). nix dedups any already present (mpv/udisks/util-linux/...).
+    # Runtime deps the enabled plugins shell out to; the registry ships
+    # only source.
     environment.systemPackages = with pkgs; [
       jq
       curl
@@ -82,12 +63,8 @@ in
       exfatprogs # usb-manager
       udisks # usb-manager
       util-linux # usb-manager (lsblk)
-      # quickCapture. It annotates in-shell and captures through `dms
-      # screenshot`, so it needs no external editor (satty, which the
-      # screenCaptureToolbar plugin used, went with that plugin) — these are
-      # the optional extras its registry entry lists, one feature each.
-      # tesseract, the fourth, is already in ../niri/default.nix for the
-      # Mod+Ctrl+S OCR bind, and the plugin's OCR button uses the same binary.
+      # quickCapture's optional extras, one per feature; tesseract already
+      # comes from the OCR keybind elsewhere.
       imagemagick # webp/jpeg export, and the crop feeding OCR/QR
       img2pdf # pdf export
       zbar # QR scanning (zbarimg)
@@ -95,9 +72,8 @@ in
     ];
 
     home.extraOptions =
-      # `lib` is taken explicitly so it is home-manager's — it carries lib.hm.dag,
-      # used by the session-seeding activation below — rather than the NixOS lib
-      # this file closes over.
+      # `lib` here is home-manager's (carries lib.hm.dag for the activation
+      # below), not the NixOS lib this file otherwise closes over.
       {
         config,
         lib,
@@ -108,8 +84,8 @@ in
         imports = [
           inputs.dms.homeModules.dank-material-shell
           inputs.dms.homeModules.niri
-          # declares programs.dank-material-shell.plugins.<id> (enable=false + a
-          # pinned src) for every registry plugin; we flip on the ones we want.
+          # declares plugins.<id> (enable=false + pinned src) for every
+          # registry plugin; flipped on below.
           inputs.dms-plugin-registry.homeModules.default
         ];
 
@@ -117,41 +93,9 @@ in
           enable = true;
           systemd.enable = true;
 
-          # use the cached nixpkgs builds rather than the flake input building
-          # dms-shell + quickshell from source. (dgop already defaults to pkgs.)
-          #
-          # ...patched so the power menu picks options by NUMBER (the badge shows
-          # the row's position, 1..N top-to-bottom, and pressing that digit picks
-          # it). DMS hard-codes per-action letter shortcuts (R/X/P/L/S/H/D) with
-          # no setting to change them; rather than remap letter->letter (which
-          # scrambles the numbers vs the on-screen order, since the order is just
-          # SettingsData.powerMenuActions), drive the badge + key handling off the
-          # delegate index so it's always sequential regardless of order. The old
-          # letter shortcuts keep working as a bonus. Pinned to the current DMS
-          # layout: a version bump that moves these lines trips --replace-fail and
-          # fails the build loudly, which is the cue to refresh the patch.
-          #
-          # nixpkgs 1.5.3 -> 1.6.1 (2026-09-09, NixOS/nixpkgs#9d32272f7) dropped
-          # `$out/share/quickshell/dms` entirely: quickshell/ is now go:embed'd
-          # into the `dms` binary via `make sync-shell` in preBuild, so there is
-          # no installed .qml left to patch in postFixup (it never exists there
-          # any more, not just moved — this is a real nixpkgs packaging change,
-          # not an upstream DMS regression). Patch the source instead, before
-          # nixpkgs's own preBuild embeds it: append after its `chmod -R u+w
-          # ../quickshell` (so the tree is writable) but keep its `make
-          # sync-shell` last so the embed picks up our edit. Re-running
-          # sync-shell (old.preBuild already ran it once) regenerates the embed
-          # dir from the now-patched tree, but its `rm -rf` of the embed dir
-          # trips on the read-only files tar wrote there the first time —
-          # chmod that dir writable first, or the second sync-shell fails.
-          #
-          # DMS 1.6.1 also split the modal: Modals/PowerMenuModal.qml is now a
-          # thin DankModal wrapper, the actual grid/list + key handling moved to
-          # Modules/PowerMenu/PowerMenuContent.qml. handleActionShortcut() is the
-          # shared dispatcher grid+list navigation both call first — inject the
-          # number-key branch at its top instead of before a bare "switch
-          # (event.key) {", which now also matches the two unrelated
-          # arrow-key-navigation switches in the same file.
+          # Numbered power-menu shortcuts (1..N) instead of DMS's fixed
+          # letters. --replace-fail breaks the build on a DMS bump — that's
+          # the cue to refresh the patch.
           package = pkgs.dms-shell.overrideAttrs (old: {
             preBuild = (old.preBuild or "") + ''
               substituteInPlace ../quickshell/Modules/PowerMenu/PowerMenuContent.qml \
@@ -165,43 +109,29 @@ in
           });
           quickshell.package = pkgs.quickshell;
 
-          # session.json is deliberately left undeclared. The DMS home module
-          # writes it as a read-only store symlink whenever `session != {}`
-          # (`xdg.stateFile ... = lib.mkIf (cfg.session != {})`), and a read-only
-          # session.json is exactly why DMS could not save a wallpaper picked in
-          # its own UI. Wallpaper is runtime state, and the module offers no
-          # per-key ownership, so the whole file has to be runtime state.
-          #
-          # Weather and night mode therefore stop being declarative; they are
-          # seeded once below and are yours to change in the DMS settings UI
-          # afterwards.
+          # Deliberately undeclared: the DMS home module writes session.json
+          # as a read-only store symlink whenever `session != {}`, breaking
+          # DMS's own wallpaper save. Weather/night mode are seeded once below instead.
           session = { };
         };
 
-        # DMS only reads its settings at startup, and the systemd user service's
-        # unit doesn't change when only settings.json/the theme file change — so
-        # nothing restarts it on rebuild. Trigger a restart (via sd-switch) when
-        # the generated settings.json changes, so theme/blur edits take effect
-        # after `nixos-rebuild switch` without a manual restart or relogin.
+        # Nothing restarts dms when only settings.json/the theme file
+        # changes. Trigger one via sd-switch so edits apply after switch
+        # without relogin.
         systemd.user.services.dms.Unit.X-Restart-Triggers = [
           config.xdg.configFile."DankMaterialShell/settings.json".source
         ];
 
-        # Seed session.json once, then leave it alone — it is DMS's file to write
-        # (the wallpaper, and the settings below once you change them in the UI).
-        # Runs when the file is missing *or* is still a store symlink, which is
-        # what generations built while `session != {}` left behind; a plain -e
-        # test would skip that case and the stale read-only link would survive,
-        # leaving DMS still unable to save a wallpaper.
+        # Seed session.json once, then leave it to DMS. Runs when missing or
+        # still a store symlink (left by session != {} generations) — a
+        # plain -e check would miss the symlink case.
         home.activation.seedDmsSession =
           let
             seed = (pkgs.formats.json { }).generate "dms-session-seed.json" {
               weatherLocation = "Eeklo, 9900";
               weatherCoordinates = "51.2,3.6";
 
-              # always dark: the matugen templates in this repo only render
-              # dark tokens.
-              isLightMode = false;
+              isLightMode = false; # matugen templates here only render dark tokens
 
               nightModeEnabled = true;
               nightModeAutoEnabled = true;
@@ -211,8 +141,6 @@ in
               nightModeHighTemperature = 6500;
 
               # Starting wallpaper; picking another in DMS overwrites this file.
-              # Its directory is also the folder DMS cycles through, so this is
-              # how the wallpaper collection gets selected declaratively.
               wallpaperPath = cfg.initialWallpaper;
             };
           in
@@ -224,16 +152,10 @@ in
               # install, not cp: store files are read-only and DMS must write it.
               run install -m 644 ${seed} "$state"
             else
-              # A wallpaper collection that gets swapped out from under DMS (a
-              # wallpapers flake-input bump, a GC of the old collection's
-              # store path) leaves session.json naming a wallpaperPath that no
-              # longer exists. DMS then hands matugen a nonexistent image and
-              # matugen renders nothing at all — every registered template
-              # goes stale silently. Patch just that one key with jq, in
-              # place: this is the user's own live settings file (weather,
-              # night mode, whatever they've since picked in the DMS UI), so a
-              # full re-seed is not an option — only the one key that can go
-              # stale on its own gets touched, and only when it actually has.
+              # A wallpaper collection swapped out from under DMS (flake
+              # bump, GC'd path) leaves wallpaperPath pointing nowhere, so
+              # matugen silently goes stale. Patch just that key with jq —
+              # this is the live settings file, so no full re-seed.
               wp="$(${pkgs.jq}/bin/jq -r '.wallpaperPath // empty' "$state" 2>/dev/null)"
               if [ -n "$wp" ] && [ ! -e "$wp" ]; then
                 run sh -c '${pkgs.jq}/bin/jq --arg wp "$1" ".wallpaperPath = \$wp" "$2" > "$2.tmp" && mv "$2.tmp" "$2"' \
@@ -242,11 +164,8 @@ in
             fi
           '';
 
-        # Some plugins import Qt QML modules quickshell doesn't bundle:
-        #   QtWebSockets — homeAssistantMonitor
-        #   QtMultimedia — mouthGuard (SoundEffect alert sounds)
-        # Add them to the shell's QML path (the quickshell wrapper *prefixes*
-        # NIXPKGS_QT6_QML_IMPORT_PATH, so this value survives).
+        # Some plugins need Qt QML modules quickshell doesn't bundle
+        # (QtWebSockets, QtMultimedia) — add them to the shell's QML path.
         systemd.user.services.dms.Service = {
           Environment = [
             "NIXPKGS_QT6_QML_IMPORT_PATH=${
@@ -257,25 +176,14 @@ in
             }"
           ];
 
-          # systemd's default soft limit is 1024 fds, and the shell settles at
-          # ~1010 right after startup — 572 of them eventfds that no longer
-          # correspond to anything: `pw-dump` attributes zero graph objects to
-          # the quickshell process, so these are PipeWire streams that were set
-          # up and torn down without their fds coming back.
-          # The next stream then fails to allocate and quickshell dies inside
-          # pw_stream_connect:
-          #   ERROR: eventfd failed: "Too many open files"
-          #    WARN: pw_stream_connect failed "Too many open files"
-          #   #4 pw_stream_connect  #10 QRtAudioEngine  #11 QSoundEffect
-          # (SIGSEGV, four restarts in five minutes on 2026-08-16). PipeWire
-          # clients are expected to need far more than 1024; raise it to the
-          # limit systemd already allows as the hard cap.
+          # The shell hits systemd's 1024-fd soft limit at startup: torn-down
+          # PipeWire streams whose eventfds don't come back, crashing
+          # quickshell in pw_stream_connect. Raise to the hard cap.
           LimitNOFILE = 65536;
         };
 
-        # DMS reads the profile image from the AccountsService user icon, which
-        # defaults to ~/.face (confirmed via busctl). So just put the avatar
-        # there — the daemon that serves it is enabled above.
+        # DMS reads the profile image from AccountsService's user icon,
+        # default ~/.face.
         home.file.".face".source = ../../../assets/avatar.png;
       };
   };

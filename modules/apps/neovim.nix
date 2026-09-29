@@ -33,10 +33,8 @@ in
             })
           ];
 
-          # DMS's matugen renders colors/dms.lua on every wallpaper change and
-          # the file hot-reloads itself. Before DMS has run once the file does
-          # not exist, so a bare `colorscheme dms` would error on every start;
-          # pcall keeps nvim quiet until it appears.
+          # pcall: colors/dms.lua is rendered by DMS's matugen on the first
+          # wallpaper change and doesn't exist before that.
           initLua = ''
             pcall(vim.cmd.colorscheme, "dms")
           '';

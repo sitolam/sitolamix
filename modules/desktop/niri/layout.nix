@@ -9,18 +9,13 @@
           options = "compose:ralt";
         };
         touchpad = {
-          # false = traditional scroll direction (content moves opposite the
-          # fingers). true is the "natural"/touch-screen-like inversion that
-          # felt backwards on omnibook.
-          natural-scroll = false;
-          # default is 1.0; 0.5 was still way too fast on the omnibook trackpad.
-          scroll-factor = 0.25;
+          natural-scroll = false; # true felt backwards on omnibook
+          scroll-factor = 0.25; # default 1.0, even 0.5 was too fast here
           tap = true;
           tap-button-map = "left-right-middle";
           middle-emulation = true;
-          # keep the touchpad live even with a mouse connected: the bluetooth
-          # mouse is often out of reach and libinput counts it as external,
-          # so the default true left the laptop with no pointer at all.
+          # the bluetooth mouse is often out of reach and libinput counts it
+          # as external, so the default true left the laptop with no pointer.
           disabled-on-external-mouse = false;
           scroll-method = "two-finger";
         };
@@ -32,8 +27,8 @@
         workspace-auto-back-and-forth = true;
       };
 
-      # static workspace that niri-scratchpad-rs stashes windows onto (required
-      # by the tool; see bindings.nix Mod+M/Mod+S and startup.nix daemon).
+      # static workspace niri-scratchpad-rs stashes windows onto (required by
+      # the tool; see bindings.nix Mod+M and startup.nix daemon).
       workspaces."stash" = { };
 
       layout = {
@@ -61,9 +56,9 @@
         ELECTRON_OZONE_PLATFORM_HINT = "auto";
         XDG_SESSION_TYPE = "wayland";
         XDG_CURRENT_DESKTOP = "niri";
-        # GTK 4.20+ dropped built-in compose/dead-key handling on Wayland when no
-        # input method is running, breaking us-intl dead keys in GTK apps like
-        # ghostty. Force the classic simple IM to get dead keys/compose back.
+        # GTK 4.20+ dropped built-in compose/dead-key handling on Wayland
+        # with no input method running, breaking us-intl dead keys in GTK
+        # apps like ghostty. Forces the classic simple IM to get them back.
         GTK_IM_MODULE = "simple";
       };
     };

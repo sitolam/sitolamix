@@ -16,14 +16,11 @@ in
     home.extraOptions =
       { pkgs, ... }:
       let
-        # Upscayl's Electron UI crashes on our NVIDIA + Wayland setup:
-        #   libEGL: failed to create dri2 screen  (GPU process can't init EGL)
-        #   Fatal glibc error: tpp.c:83 __pthread_tpp_change_priority  (SIGABRT)
-        # The Chromium GPU thread requests an out-of-range RT scheduling prio and
-        # glibc aborts. The actual upscaling runs on a bundled Vulkan ncnn binary,
-        # not the Electron GPU process, so disabling the latter costs nothing.
-        # symlinkJoin + a real wrapper so the .desktop (Exec=upscayl, PATH-resolved)
-        # also picks up the flags.
+        # Upscayl's Electron UI crashes on our NVIDIA + Wayland setup (GPU
+        # process fails EGL init, glibc aborts on an out-of-range RT prio).
+        # The actual upscaling runs on a bundled Vulkan ncnn binary, not the
+        # Electron GPU process, so disabling the latter costs nothing.
+        # symlinkJoin + a real wrapper so the .desktop entry picks up the flags.
         upscayl-wrapped = pkgs.symlinkJoin {
           name = "upscayl";
           paths = [ pkgs.upscayl ];
@@ -48,9 +45,7 @@ in
           obs-studio
           noisetorch
 
-          # cava: audio visualiser. DMS already pulls it in for the bar widget,
-          # declared here so it does not depend on someone else's module.
-          cava
+          cava # audio visualiser; declared here so it isn't DMS's dependency
         ];
       };
   };
