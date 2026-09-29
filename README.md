@@ -546,6 +546,7 @@ hardware.gaze = {
   enable = true;
   irDevice = "usb:0408:5494";
   device = "npu";
+  unlockKeyring = true;
 };
 ```
 
@@ -564,6 +565,21 @@ modules need their IR LEDs switched on: `hardware.gaze.irEmitter.enable = true;`
 settings page can't save. Change `settings` in the module instead. Turn gaze off with
 `hardware.gaze.enable = false;` — PAM goes back to password-only immediately;
 templates stay under `/var/lib/gaze` until `gaze clear-user`.
+
+### Keyring unlock
+
+With `unlockKeyring = true`, a face login at the greeter also unlocks the
+GNOME keyring, so apps don't ask for the keyring password after boot. Enroll
+your login password once after rebuilding:
+
+```sh
+gaze keyring            # re-run after changing your password
+```
+
+The password is sealed to the TPM. It protects against a stolen disk, not
+against root on this machine. The greeter's face scan now runs before the
+password prompt instead of alongside it, because only the sequential PAM
+module can hand the password on. The lock screen still runs both at once.
 
 </details>
 
