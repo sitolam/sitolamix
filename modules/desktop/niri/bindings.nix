@@ -148,7 +148,8 @@
             ]);
             "Mod+Slash" = spawn (dms [
               "keybinds"
-              "toggleBinds"
+              "toggle"
+              "niri"
             ]);
             "Mod+P" = spawn (dms [
               "notepad"
@@ -162,6 +163,7 @@
             "Mod+D" = spawn (dms [
               "dash"
               "toggle"
+              ""
             ]);
             "Mod+Shift+D" = spawn (dms [
               "processlist"
