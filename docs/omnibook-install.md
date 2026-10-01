@@ -485,6 +485,7 @@ hardware.gaze = {
   enable = true;
   irDevice = "usb:0408:5494";
   device = "npu";
+  unlockKeyring = true;
 };
 ```
 
@@ -501,11 +502,9 @@ resolves that to the module's infrared node itself, so it survives the
 Then `just rebuild`.
 
 > [!NOTE]
-> `/etc/gaze/config.toml` is seeded from the Nix `settings` on first boot and
-> then left writable, because the GTK4 settings app edits it
-> (`services.gaze.mutableConfig`, true by default). Later changes to the module
-> do **not** rewrite an existing file: change it in the app, or
-> `sudo rm /etc/gaze/config.toml` and `just rebuild` to re-seed it.
+> `/etc/gaze/config.toml` is a read-only link to the Nix store
+> (`services.gaze.mutableConfig = false`), so the GTK4 app's settings page
+> can't save. Change `settings` in `modules/hardware/gaze.nix` instead.
 
 ### 3. Enrol
 
@@ -520,6 +519,16 @@ gaze auth --verbose          # test a scan without locking anything
 ```
 
 Lock with `Super+L` to try it for real.
+
+Then enroll the login password, so a face login at the greeter also unlocks
+the GNOME keyring (`unlockKeyring = true`):
+
+```sh
+gaze keyring                 # re-run after changing your password
+```
+
+The password is sealed to the TPM. It protects against a stolen disk, not
+against root on this machine.
 
 ### 4. If every frame is black
 
