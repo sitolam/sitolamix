@@ -28,7 +28,13 @@ in
       {
         home.packages = with pkgs; [
           antimicrox
-          zotero
+          # nixpkgs' zotero fails to build since a Firefox bump. Stable only has
+          # Zotero 9, which can't open a 10.x library, so pin the last nixpkgs
+          # that built 10.0.2. Drop once NixOS/nixpkgs#569006 lands.
+          (import (fetchTarball {
+            url = "https://github.com/NixOS/nixpkgs/archive/8d5d270900d3fc75655ea2d9d248b234f6631439.tar.gz";
+            sha256 = "sha256-fXrm/q9klVBtVq5rGQ+XpI/dokPuSB15ZK2CZvWxXOk=";
+          }) { inherit (pkgs.stdenv.hostPlatform) system; }).zotero
           onlyoffice-desktopeditors
           # GUI front-end for libqalculate — the same engine the DMS launcher's
           # calculator plugin shells out to (modules/desktop/dms/plugins.nix),

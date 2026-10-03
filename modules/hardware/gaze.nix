@@ -26,7 +26,7 @@ let
   gazePackage = withOpenvino packages.gaze {
     buildPhase = ''
       runHook preBuild
-      cargo build --release --offline -p gaze --features openvino
+      cargo build --release --offline -p gazed --features openvino
       cargo build --release --offline -p gaze-cli -p pam-gaze -p pam-gaze-grosshack \
         --features gaze-cli/openvino
       runHook postBuild
