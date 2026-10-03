@@ -486,6 +486,7 @@ hardware.gaze = {
   irDevice = "usb:0408:5494";
   device = "npu";
   unlockKeyring = true;
+  duress.enable = true;
 };
 ```
 
@@ -529,6 +530,10 @@ gaze keyring                 # re-run after changing your password
 
 The password is sealed to the TPM. It protects against a stolen disk, not
 against root on this machine.
+
+Last, test the duress signal (`duress.enable = true`). Run `gaze auth --verbose`
+with one eye held closed: it should end in a lockout. `gaze duress --clear`
+turns face unlock back on, as does a password login.
 
 ### 4. If every frame is black
 
