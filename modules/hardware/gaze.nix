@@ -189,6 +189,7 @@ in
           rules.auth.gnome_keyring_face = {
             control = "optional";
             modulePath = "${pkgs.gnome-keyring}/lib/security/pam_gnome_keyring.so";
+            args = [ "use_authtok" ];
             order = config.security.pam.services.greetd.rules.auth.login.order + 10;
           };
         };
