@@ -8,15 +8,26 @@ in
   config = lib.mkIf cfg.enable {
     home.extraOptions =
       { pkgs, ... }:
+      let
+        glassOpens = "--add-opens javafx.graphics/com.sun.glass.ui=ALL-UNNAMED";
+      in
       {
         home.packages = with pkgs; [
           jdk25 # course requires Java >= 21; jdk25 is latest LTS-track release
-          # Unstable's bluej/greenfoot pull an openjdk21 that builds openjfx's
-          # web module from source and fails (`perl` exits 1 in
-          # :web:compileNativeLinux). Stable's build is cached, so pin these
-          # two to pkgs.stable until unstable's openjfx build is fixed.
-          stable.bluej # course requires >= 5.5.0
-          stable.greenfoot # course requires >= 3.9.0
+          bluej # course requires >= 5.5.0
+          # nixpkgs' greenfoot lacks the scene.input --add-opens its bluej has:
+          # every editor open or "Set image" dies with IllegalAccessError, so
+          # actors keep the Greenfoot logo. It must be a JVM flag, before -cp.
+          # Drop once the nixpkgs wrapper carries it.
+          (greenfoot.overrideAttrs (old: {
+            installPhase =
+              builtins.replaceStrings
+                [ glassOpens ]
+                [
+                  "${glassOpens} --add-opens javafx.graphics/com.sun.javafx.scene.input=ALL-UNNAMED"
+                ]
+                old.installPhase;
+          })) # course requires >= 3.9.0
         ];
       };
   };
