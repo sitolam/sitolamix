@@ -547,6 +547,7 @@ hardware.gaze = {
   irDevice = "usb:0408:5494";
   device = "npu";
   unlockKeyring = true;
+  duress.enable = true;
 };
 ```
 
@@ -580,6 +581,22 @@ The password is sealed to the TPM. It protects against a stolen disk, not
 against root on this machine. The greeter's face scan now runs before the
 password prompt instead of alongside it, because only the sequential PAM
 module can hand the password on. The lock screen still runs both at once.
+
+### Duress signal
+
+With `duress.enable = true`, you can refuse a forced face unlock. Hold one or
+both eyes closed while the camera sees you. Gaze rejects the match and turns
+face unlock off for your user until you log in with your password.
+
+```sh
+gaze auth --verbose     # test: a held wink should end in a lockout
+gaze duress             # show whether face unlock is locked
+gaze duress --clear     # turn it back on
+```
+
+Close the eye before the camera sees you: one matched frame with both eyes
+open unlocks as usual. The eye model (about 46 KB) downloads into
+`/var/cache/gaze` on first use.
 
 </details>
 

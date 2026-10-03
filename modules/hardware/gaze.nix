@@ -102,6 +102,12 @@ in
       and the greeter's scan becomes sequential instead of simultaneous
     '';
 
+    duress.enable = lib.mkEnableOption ''
+      refusing a forced face unlock: hold an eye closed while the camera sees
+      you and gaze rejects the match and turns face unlock off for your user
+      until a password login or `gaze duress --clear`
+    '';
+
     openvino.enable =
       lib.mkEnableOption ''
         the OpenVINO execution provider, running inference on the iGPU or NPU
@@ -159,6 +165,7 @@ in
           unlock_gnome_keyring = true;
         };
         liveness = lib.mkIf cfg.unlockKeyring { enabled = true; };
+        duress = lib.mkIf cfg.duress.enable { enabled = true; };
 
         inference = {
           execution_provider = if cfg.openvino.enable then "openvino" else "cpu";
