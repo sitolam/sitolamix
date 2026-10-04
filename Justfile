@@ -16,6 +16,12 @@ build host=`hostname`:
 rebuild:
     nh os switch .
 
+# build and set as the next boot entry without activating; reboot to apply.
+# Use after an update that bumps systemd or glibc: a live switch can freeze
+# systemd mid-activation (NixOS/nixpkgs#375376).
+boot:
+    nh os boot .
+
 update:
     nix flake update
     just rebuild
