@@ -73,7 +73,9 @@ statix enforces this.
 
 **Files this repo owns that applications also write:** Claude Code's plugin
 manifests, DMS's `outputs.kdl`, Anki's `meta.json`, cliamp's `config.toml`, VS
-Code's `keybindings.json` and `settings.json`, and DMS's matugen outputs
+Code's `keybindings.json` and `settings.json`, OpenTabletDriver's
+`settings.json` and `screen-*` presets, the pressure and colour properties in
+Xournal++'s `settings.xml`, and DMS's matugen outputs
 (`ghostty/themes/dankcolors`, `niri/dms/colors.kdl`, the Obsidian snippet,
 `spicetify-dms/colors.css`, …) — regenerated on every wallpaper change.
 Changing these in the app's own UI will not stick, or will be overwritten on

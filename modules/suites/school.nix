@@ -21,7 +21,12 @@ in
       # requires apps.vscode.enable (suites.development) for the
       # LaTeX Workshop extension to have a profile to attach to.
       latex.enable = true;
+
+      xournalpp.enable = true;
     };
+
+    # Pen tablet for handwritten notes in apps.xournalpp.
+    hardware.drawing-tablet.enable = true;
 
     home.extraOptions =
       { pkgs, ... }:
