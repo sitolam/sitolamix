@@ -37,6 +37,16 @@
     niri = {
       url = "github:sodiboo/niri-flake";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.niri-unstable.follows = "niri-unstable";
+    };
+
+    # niri's source, pinned here because niri-flake's own lock is stuck on
+    # 2026-08-02 and a plain `nix flake update` resets a nested bump to it.
+    # That build leaks CRTCs on dock replug (fixed in smithay e76f1af). Drop
+    # once niri-flake's lock moves past it.
+    niri-unstable = {
+      url = "github:YaLTeR/niri";
+      flake = false;
     };
 
     # Our own keyboard-shortcut trainer, drilled against niri's binds; nothing comparable in nixpkgs.
