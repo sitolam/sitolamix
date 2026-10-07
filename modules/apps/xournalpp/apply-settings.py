@@ -1,9 +1,8 @@
-"""Merge the repo's settings and wallpaper colours into Xournal++'s settings.xml.
+"""Merge the repo's settings into Xournal++'s settings.xml.
 
-usage: apply-settings.py SETTINGS_JSON COLORS_JSON
+usage: apply-settings.py SETTINGS_JSON
 
 Only the listed properties are touched; everything else Xournal++ wrote stays.
-COLORS_JSON is matugen's output and may not exist before the first wallpaper change.
 """
 
 import json
@@ -24,16 +23,8 @@ def load(path):
         return {}
 
 
-def argb(color):
-    # Xournal++ stores colours as an unsigned decimal 0xAARRGGBB.
-    return str(0xFF000000 | int(color.lstrip("#"), 16))
-
-
 def main():
-    values = dict(load(sys.argv[1]))
-    for name, color in load(sys.argv[2]).items():
-        if re.fullmatch(r"#[0-9a-fA-F]{6}", color):
-            values[name] = argb(color)
+    values = load(sys.argv[1])
 
     try:
         with open(TARGET) as f:
