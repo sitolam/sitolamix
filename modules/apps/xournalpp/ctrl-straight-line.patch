@@ -1,0 +1,16 @@
+--- a/src/core/gui/PageView.cpp
++++ b/src/core/gui/PageView.cpp
+@@ -263,7 +263,12 @@
+         }
+ 
+         Control* control = this->xournal->getControl();
+-        switch (h->getDrawingType()) {
++        // Ctrl held when the stroke starts: draw a straight line instead of a freehand stroke.
++        auto drawingType = h->getDrawingType();
++        if (drawingType == DRAWING_TYPE_DEFAULT && pos.isControlDown() && h->getToolType() != TOOL_ERASER) {
++            drawingType = DRAWING_TYPE_LINE;
++        }
++        switch (drawingType) {
+             case DRAWING_TYPE_LINE:
+                 this->inputHandler = std::make_unique<RulerHandler>(control, getPage());
+                 break;

@@ -1,0 +1,20 @@
+--- a/src/core/gui/XournalView.cpp
++++ b/src/core/gui/XournalView.cpp
+@@ -290,7 +290,7 @@
+             return true;
+         }
+         if (!state) {
+-            if (control->getSettings()->isPresentationMode()) {
++            if (keyval == GDK_KEY_Left || control->getSettings()->isPresentationMode()) {
+                 control->getScrollHandler()->goToPreviousPage();
+             } else {
+                 layout->scrollRelative(-scrollKeySize, 0);
+@@ -306,7 +306,7 @@
+         }
+ 
+         if (!state) {
+-            if (control->getSettings()->isPresentationMode()) {
++            if (keyval == GDK_KEY_Right || control->getSettings()->isPresentationMode()) {
+                 control->getScrollHandler()->goToNextPage();
+             } else {
+                 layout->scrollRelative(scrollKeySize, 0);
