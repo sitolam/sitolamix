@@ -26,14 +26,25 @@ in
             ${pkgs.writeText "xournalpp-settings.json" (builtins.toJSON settings)} || true
         '';
 
+        # Two behaviours Xournal++ hardcodes in its canvas, so no setting or
+        # plugin can reach them; the price is building Xournal++ locally.
+        #  - Left/Right flip pages instead of scrolling sideways.
+        #  - Ctrl held when the pen touches down draws a straight line.
+        xournalpp = pkgs.xournalpp.overrideAttrs (old: {
+          patches = (old.patches or [ ]) ++ [
+            ./arrow-keys-flip-pages.patch
+            ./ctrl-straight-line.patch
+          ];
+        });
+
         xournalpp-wrapped = pkgs.symlinkJoin {
           name = "xournalpp-wrapped";
-          paths = [ pkgs.xournalpp ];
+          paths = [ xournalpp ];
           nativeBuildInputs = [ pkgs.makeWrapper ];
           postBuild = ''
             for bin in xournalpp xournalpp-wrapper; do
               rm $out/bin/$bin
-              makeWrapper ${pkgs.xournalpp}/bin/$bin $out/bin/$bin --run ${apply}
+              makeWrapper ${xournalpp}/bin/$bin $out/bin/$bin --run ${apply}
             done
           '';
         };
