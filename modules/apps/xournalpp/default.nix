@@ -29,7 +29,8 @@ in
         # Two behaviours Xournal++ hardcodes in its canvas, so no setting or
         # plugin can reach them; the price is building Xournal++ locally.
         #  - Left/Right flip pages instead of scrolling sideways.
-        #  - Ctrl held when the pen touches down draws a straight line.
+        #  - Ctrl held when the pen touches down draws a straight line,
+        #    snapped to angles but not to the grid.
         xournalpp = pkgs.xournalpp.overrideAttrs (old: {
           patches = (old.patches or [ ]) ++ [
             ./arrow-keys-flip-pages.patch
