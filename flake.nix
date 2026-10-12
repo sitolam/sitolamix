@@ -121,12 +121,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # Fork of dms-take-a-break adding countOnlyActiveUse; modules/desktop/dms/plugins.nix overrides `src` for this one plugin.
-    dms-take-a-break = {
-      url = "github:sitolam/dms-take-a-break";
-      flake = false;
-    };
-
     # DMS's fork of NvChad's base46 colour engine, carrying the `_DMS_SUPPORT` marker nixpkgs' unforked copy lacks.
     base46-dms = {
       url = "github:AvengeMedia/base46";

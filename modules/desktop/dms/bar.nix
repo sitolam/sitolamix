@@ -188,8 +188,7 @@
           enabled = true;
           width = 50;
         }
-        # plugin toggles (id = "plugin_<pluginId>"); takeABreak omitted — its
-        # pause toggle's cross-instance lookup is unreliable.
+        # plugin toggles (id = "plugin_<pluginId>")
         {
           id = "plugin_niriDS";
           enabled = true;

@@ -120,7 +120,7 @@ Things this config does that a stock desktop does not:
   i2c, one `dms ipc` call per panel.
 - 🤖 **Claude Code, two ways** — a bar widget that tracks API usage, and `ccl`,
   which points Claude Code at a model running locally in LM Studio.
-- 🎧 **Bar full of plugins** — take-a-break, ambient sound, USB manager, KDE
+- 🎧 **Bar full of plugins** — ambient sound, USB manager, KDE
   Connect, Home Assistant, emoji launcher, and a searchable list of every
   keybind the compositor has loaded.
 - 🔣 **Launcher triggers** — type `=` for a calculator on
