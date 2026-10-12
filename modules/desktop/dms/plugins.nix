@@ -515,18 +515,6 @@ in
         wallpaperCarousel.enable = true; # motor-dev/wallpaperCarousel
 
         niriDS.enable = true; # hthienloc/dms-niri-display-settings (needs wl-mirror)
-        takeABreak = {
-          enable = true; # sitolam/dms-take-a-break, forked from hthienloc/dms-take-a-break
-          # mkForce: registry also builds unforked upstream at this priority.
-          # This fork adds countOnlyActiveUse (gate on seat activity, not wall clock).
-          src = lib.mkForce inputs.dms-take-a-break;
-          # overlay = fullscreen break dim; preWarning = pre-break toast.
-          # Set here since GUI edits revert (managePluginSettings).
-          settings = {
-            overlayOpacity = 80;
-            preWarningOpacity = 80;
-          };
-        };
         homeAssistantMonitor = {
           enable = true; # xxyangyoulin/dms-plugin-hass (hyprland-only upstream)
           settings = {
