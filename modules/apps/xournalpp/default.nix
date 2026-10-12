@@ -30,7 +30,7 @@ in
         # plugin can reach them; the price is building Xournal++ locally.
         #  - Left/Right flip pages instead of scrolling sideways.
         #  - Ctrl held when the pen touches down draws a straight line,
-        #    snapped to angles but not to the grid.
+        #    snapped as the ruler tool is (the app's own snap settings).
         xournalpp = pkgs.xournalpp.overrideAttrs (old: {
           patches = (old.patches or [ ]) ++ [
             ./arrow-keys-flip-pages.patch
