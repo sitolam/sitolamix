@@ -11,6 +11,7 @@ in
       vscode.enable = true;
       zed.enable = true;
       android.enable = true;
+      python.enable = true;
     };
     services.docker.enable = true;
 
