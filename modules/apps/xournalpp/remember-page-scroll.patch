@@ -1,0 +1,78 @@
+--- a/src/core/gui/XournalView.cpp
++++ b/src/core/gui/XournalView.cpp
+@@ -441,6 +441,23 @@
+     // Make sure it is visible
+     Layout* layout = this->getLayout();
+ 
++    // Remember how far the page being left was scrolled, and return to that spot whenever a jump
++    // lands on it again. Only for whole-page jumps: a link or a search hit names its own target.
++    // Leaving a page by plain scrolling never comes through here, so it records nothing.
++    const bool wholePage = rect.x1 == 0 && rect.y1 == 0 && rect.x2 == -1 && rect.y2 == -1;
++    const size_t from = this->currentPage;
++    if (wholePage && !this->scrollMemoryPaused && from != pageNo && from < this->viewPages.size()) {
++        this->scrollMemory[this->viewPages[from]->getPage().get()] =
++                (layout->getVisibleRect().y - this->viewPages[from]->getY()) / zoom;
++        if (auto it = this->scrollMemory.find(v->getPage().get()); it != this->scrollMemory.end()) {
++            // first the stock behaviour, which also settles the horizontal position
++            layout->ensureRectIsVisible(v->getX(), v->getY(), v->getDisplayWidth(), v->getDisplayHeight());
++            layout->scrollAbs(layout->getVisibleRect().x, v->getY() + it->second * zoom);
++            control->firePageSelected(pageNo);
++            return;
++        }
++    }
++
+     int x = v->getX() + round_cast<int>(rect.x1 * zoom);
+     int y = v->getY() + round_cast<int>(rect.y1 * zoom);
+     int width;
+@@ -605,15 +622,21 @@
+ void XournalView::pageDeleted(size_t page) {
+     const size_t currentPageNo = control->getCurrentPageNo();
+ 
++    if (page < viewPages.size()) {
++        scrollMemory.erase(viewPages[page]->getPage().get());
++    }
+     viewPages.erase(begin(viewPages) + static_cast<long>(page));
+ 
+     layoutPages();
+ 
++    // the page indices just shifted, so "the page being left" would be the wrong one
++    scrollMemoryPaused = true;
+     if (currentPageNo > page) {
+         control->getScrollHandler()->scrollToPage(currentPageNo - 1);
+     } else {
+         control->getScrollHandler()->scrollToPage(currentPageNo);
+     }
++    scrollMemoryPaused = false;
+ }
+ 
+ auto XournalView::getTextEditor() const -> TextEditor* {
+@@ -791,6 +814,7 @@
+     doc->lock_shared();
+ 
+     viewPages.clear();
++    scrollMemory.clear();
+     size_t pagecount = doc->getPageCount();
+     viewPages.reserve(pagecount);
+     for (size_t i = 0; i < pagecount; i++) {
+--- a/src/core/gui/XournalView.h
++++ b/src/core/gui/XournalView.h
+@@ -15,6 +15,7 @@
+ #include <limits>   // for numeric_limits
+ #include <memory>   // for unique_ptr
+ #include <string>   // for string
++#include <unordered_map>
+ #include <utility>  // for pair
+ #include <vector>   // for vector
+ 
+@@ -179,6 +180,11 @@
+     size_t currentPage = 0;
+     size_t lastSelectedPage = npos;
+ 
++    /// How far each page was scrolled when it was last left by a whole-page jump, in page units from
++    /// its top. Keys are page addresses, compared only and never dereferenced. See scrollTo().
++    std::unordered_map<const void*, double> scrollMemory;
++    bool scrollMemoryPaused = false;
++
+     std::unique_ptr<PdfCache> cache;
+ 
+     /**

@@ -26,15 +26,18 @@ in
             ${pkgs.writeText "xournalpp-settings.json" (builtins.toJSON settings)} || true
         '';
 
-        # Two behaviours Xournal++ hardcodes in its canvas, so no setting or
+        # Behaviours Xournal++ hardcodes in its canvas, so no setting or
         # plugin can reach them; the price is building Xournal++ locally.
         #  - Left/Right flip pages instead of scrolling sideways.
         #  - Ctrl held when the pen touches down draws a straight line,
         #    snapped as the ruler tool is (the app's own snap settings).
+        #  - Jumping to a page returns to where it was scrolled when it was
+        #    last left by a jump, instead of its top. Session only.
         xournalpp = pkgs.xournalpp.overrideAttrs (old: {
           patches = (old.patches or [ ]) ++ [
             ./arrow-keys-flip-pages.patch
             ./ctrl-straight-line.patch
+            ./remember-page-scroll.patch
           ];
         });
 
