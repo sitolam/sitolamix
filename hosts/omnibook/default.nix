@@ -27,7 +27,6 @@
       irDevice = "usb:0408:5494";
       device = "npu";
       unlockKeyring = true;
-      duress.enable = true;
     };
   };
 
