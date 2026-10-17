@@ -25,6 +25,30 @@ let
   serviceName = name: "rclone-${name}";
   units = map (name: "${serviceName name}.service") (lib.attrNames cfg.remotes);
 
+  syncName = name: "rclone-sync-${name}";
+
+  # bisync refuses to run without prior listings, so the very first run (or one
+  # after its state was wiped) has to be a --resync.
+  bisync =
+    name: sync:
+    pkgs.writeShellScript "rclone-sync-${name}" ''
+      config="$1"
+      workdir="''${XDG_STATE_HOME:-$HOME/.local/state}/rclone-sync/${name}"
+      path="$HOME"/${lib.escapeShellArg sync.path}
+      ${pkgs.coreutils}/bin/mkdir -p "$workdir" "$path"
+      set -- --workdir "$workdir"
+      if ! ${pkgs.coreutils}/bin/ls "$workdir"/*.path1.lst >/dev/null 2>&1; then
+        set -- "$@" --resync --resync-mode newer
+      fi
+      exec ${pkgs.rclone}/bin/rclone bisync "$@" \
+        --config="$config" \
+        --resilient --recover --max-lock 2m \
+        --conflict-resolve newer \
+        --create-empty-src-dirs \
+        --drive-skip-gdocs \
+        "$path" ${lib.escapeShellArg sync.remote}
+    '';
+
   rclone-mounts = pkgs.writeShellScriptBin "rclone-mounts" ''
     set -u
     units="${lib.concatStringsSep " " units}"
@@ -127,58 +151,140 @@ in
         )
       );
     };
+
+    syncs = lib.mkOption {
+      default = { };
+      example = {
+        uni = {
+          remote = "gdrive_personal:uni";
+          path = "Documents/uni";
+        };
+      };
+      description = ''
+        Folders kept as a real local copy with `rclone bisync`, for fast and
+        offline use. Changes on either side are synced every few minutes; when
+        both sides changed a file, the newer one wins and the other is kept
+        with a `.conflict` suffix.
+      '';
+      type = lib.types.attrsOf (
+        lib.types.submodule {
+          options = {
+            remote = lib.mkOption {
+              type = lib.types.str;
+              description = "Remote folder, as `remote:Path`.";
+            };
+
+            path = lib.mkOption {
+              type = lib.types.str;
+              description = "Local path, relative to the home directory. Created if it doesn't exist.";
+            };
+
+            bookmark = lib.mkOption {
+              type = lib.types.bool;
+              default = true;
+              description = "Add the local folder to Nautilus's sidebar.";
+            };
+          };
+        }
+      );
+    };
   };
 
   config = lib.mkIf cfg.enable {
-    home.extraOptions = {
-      home.packages = [
-        pkgs.rclone
-        rclone-mounts
-        reload-rclone
-      ];
+    # `config` and `lib` below are home-manager's; this module's own options are `cfg`
+    home.extraOptions =
+      { config, lib, ... }:
+      {
+        home = {
+          packages = [
+            pkgs.rclone
+            rclone-mounts
+            reload-rclone
+          ];
 
-      systemd.user.services = lib.mapAttrs' (
-        name: remote:
-        lib.nameValuePair (serviceName name) {
-          Unit = {
-            Description = "rclone mount ${remote.remote} at ${remote.mountPoint}";
-            Documentation = "https://rclone.org/commands/rclone_mount/";
-            After = [ "network-online.target" ];
-            # skip (rather than fail) on a machine where `rclone config` hasn't run yet.
-            ConditionPathExists = cfg.configFile;
-            StartLimitIntervalSec = 600;
-            StartLimitBurst = 10;
-          };
+          # exist before the first sync, or Nautilus marks the bookmark as missing
+          activation.rcloneSyncDirs = lib.hm.dag.entryAfter [ "writeBoundary" ] (
+            lib.concatMapStringsSep "\n" (
+              sync: "mkdir -p ${lib.escapeShellArg "${config.home.homeDirectory}/${sync.path}"}"
+            ) (lib.attrValues cfg.syncs)
+          );
+        };
 
-          Service = {
-            # rclone signals readiness once the mount is actually usable, so a
-            # `systemctl start` that returns has really mounted the remote.
-            Type = "notify";
-            Environment = [ "PATH=${wrappers}" ];
-            ExecStartPre = ''${prepare} "${remote.mountPoint}"'';
-            ExecStart = lib.concatStringsSep " " (
-              [
-                "${pkgs.rclone}/bin/rclone mount"
-                "--config=${cfg.configFile}"
-              ]
-              ++ cfg.flags
-              ++ remote.extraFlags
-              ++ [
-                ''"${remote.remote}"''
-                ''"${remote.mountPoint}"''
-              ]
-            );
-            # rclone unmounts itself on SIGTERM — this only cleans up after a crash.
-            ExecStopPost = ''-${wrappers}/fusermount3 -uz "${remote.mountPoint}"'';
-            Restart = "on-failure";
-            RestartSec = 10;
-          };
+        systemd.user.services =
+          lib.mapAttrs' (
+            name: remote:
+            lib.nameValuePair (serviceName name) {
+              Unit = {
+                Description = "rclone mount ${remote.remote} at ${remote.mountPoint}";
+                Documentation = "https://rclone.org/commands/rclone_mount/";
+                After = [ "network-online.target" ];
+                # skip (rather than fail) on a machine where `rclone config` hasn't run yet.
+                ConditionPathExists = cfg.configFile;
+                StartLimitIntervalSec = 600;
+                StartLimitBurst = 10;
+              };
 
-          # not graphical-session.target: the mount should survive a compositor
-          # restart and work in a plain TTY session too.
-          Install.WantedBy = [ "default.target" ];
-        }
-      ) cfg.remotes;
-    };
+              Service = {
+                # rclone signals readiness once the mount is actually usable, so a
+                # `systemctl start` that returns has really mounted the remote.
+                Type = "notify";
+                Environment = [ "PATH=${wrappers}" ];
+                ExecStartPre = ''${prepare} "${remote.mountPoint}"'';
+                ExecStart = lib.concatStringsSep " " (
+                  [
+                    "${pkgs.rclone}/bin/rclone mount"
+                    "--config=${cfg.configFile}"
+                  ]
+                  ++ cfg.flags
+                  ++ remote.extraFlags
+                  ++ [
+                    ''"${remote.remote}"''
+                    ''"${remote.mountPoint}"''
+                  ]
+                );
+                # rclone unmounts itself on SIGTERM — this only cleans up after a crash.
+                ExecStopPost = ''-${wrappers}/fusermount3 -uz "${remote.mountPoint}"'';
+                Restart = "on-failure";
+                RestartSec = 10;
+              };
+
+              # not graphical-session.target: the mount should survive a compositor
+              # restart and work in a plain TTY session too.
+              Install.WantedBy = [ "default.target" ];
+            }
+          ) cfg.remotes
+          // lib.mapAttrs' (
+            name: sync:
+            lib.nameValuePair (syncName name) {
+              Unit = {
+                Description = "rclone bisync ~/${sync.path} <-> ${sync.remote}";
+                Documentation = "https://rclone.org/bisync/";
+                After = [ "network-online.target" ];
+                ConditionPathExists = cfg.configFile;
+              };
+              # fails while offline; the timer simply tries again later
+              Service = {
+                Type = "oneshot";
+                # config path as an argument: `%h` only expands in the unit itself
+                ExecStart = "${bisync name sync} ${cfg.configFile}";
+              };
+            }
+          ) cfg.syncs;
+
+        systemd.user.timers = lib.mapAttrs' (
+          name: _:
+          lib.nameValuePair (syncName name) {
+            Timer = {
+              OnStartupSec = "1min";
+              OnUnitInactiveSec = "5min";
+            };
+            Install.WantedBy = [ "timers.target" ];
+          }
+        ) cfg.syncs;
+
+        gtk.gtk3.bookmarks = lib.mapAttrsToList (
+          _: sync: "file://${config.home.homeDirectory}/${lib.replaceStrings [ " " ] [ "%20" ] sync.path}"
+        ) (lib.filterAttrs (_: sync: sync.bookmark) cfg.syncs);
+      };
   };
 }

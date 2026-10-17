@@ -21,6 +21,11 @@
     rclone = {
       enable = true;
       remotes.gdrive_personal = { };
+      # local copy: used daily, and needed offline
+      syncs.uni = {
+        remote = "gdrive_personal:uni";
+        path = "Documents/uni";
+      };
     };
 
     # Automounted on first access, so the paths exist even when unreachable.

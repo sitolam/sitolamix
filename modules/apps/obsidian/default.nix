@@ -114,6 +114,11 @@ in
             ${appearanceScript}
           '';
         };
+
+        # bookmark URIs need spaces escaped ("Obsidian notes")
+        gtk.gtk3.bookmarks = [
+          "file://${lib.replaceStrings [ " " ] [ "%20" ] cfg.vault} Obsidian"
+        ];
       };
 
     theming.matugen.templates.obsidian = {
