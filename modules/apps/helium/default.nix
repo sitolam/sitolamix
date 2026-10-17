@@ -111,10 +111,6 @@ let
       matches = [ "https://event.supercell.com/brawlstars/*" ];
     })
   ];
-
-  # Unpacked theme extension matugen renders on wallpaper change (see
-  # theming.matugen.templates.helium below); helium re-reads it on next launch.
-  themeDir = "${config.users.users.otis.home}/.local/state/sitolamix/helium-theme";
 in
 {
   imports = [ inputs.helium.nixosModules.default ];
@@ -142,7 +138,7 @@ in
         "--enable-smooth-scrolling"
         "--enable-features=VaapiVideoDecoder,Vulkan,VulkanFromANGLE,DefaultANGLEVulkan"
         # only way to load unpacked extensions: policy install needs a Web Store id
-        "--load-extension=${lib.concatMapStringsSep "," toString (userscripts ++ [ themeDir ])}"
+        "--load-extension=${lib.concatMapStringsSep "," toString userscripts}"
       ];
 
       # This build reads /etc/chromium/policies/managed (/etc/opt/chrome is
@@ -175,38 +171,15 @@ in
       };
     };
 
-    # Chrome theme extension, not GTK mode: GTK paints the active tab
-    # indistinguishable from the rest (tested 2026-09-27, 0.18.1.1). Helium
-    # also maps theme keys oddly — ignores `frame`, uses `toolbar` for both
-    # frame and active tab, draws inactive tabs as pills in `background_tab`.
-    # Drop once GTK active-tab is fixed: imputnet/helium-linux#131, imputnet/helium#1850.
-    theming.matugen.templates.helium = {
-      input = ./theme-manifest.json;
-      output = "${themeDir}/manifest.json";
+    home.extraOptions = {
+      # Helium's ungoogled-chromium base never fetches Widevine (DRM); point
+      # this hint file at nixpkgs' widevine-cdm instead. Drop if helium ever
+      # bundles it itself.
+      xdg.configFile."net.imput.helium/WidevineCdm/latest-component-updated-widevine-cdm".text =
+        builtins.toJSON
+          {
+            Path = "${pkgs.widevine-cdm}/share/google/chrome/WidevineCdm";
+          };
     };
-
-    home.extraOptions =
-      { lib, ... }:
-      {
-        # Helium's ungoogled-chromium base never fetches Widevine (DRM); point
-        # this hint file at nixpkgs' widevine-cdm instead. Drop if helium ever
-        # bundles it itself.
-        xdg.configFile."net.imput.helium/WidevineCdm/latest-component-updated-widevine-cdm".text =
-          builtins.toJSON
-            {
-              Path = "${pkgs.widevine-cdm}/share/google/chrome/WidevineCdm";
-            };
-
-        # Seed an empty but valid theme so --load-extension has somewhere to
-        # point before DMS's first render; never overwrite once it has one.
-        home.activation.heliumThemeSeed = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-          if [ ! -e "${themeDir}/manifest.json" ]; then
-            run mkdir -p "${themeDir}"
-            run sh -c 'printf "%s\n" "$1" > "$2"' -- \
-              '{"manifest_version":3,"name":"sitolamix wallpaper theme","version":"1.0","theme":{}}' \
-              "${themeDir}/manifest.json"
-          fi
-        '';
-      };
   };
 }
