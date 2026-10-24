@@ -1,6 +1,6 @@
 # sitolamix — house rules
 
-Personal NixOS flake: niri + DankMaterialShell, every colour taken from the
+Personal NixOS flake: niri + Dux Shell (formerly DankMaterialShell), every colour taken from the
 wallpaper by DMS's matugen. Read this before changing anything here.
 
 ## The one rule
@@ -115,7 +115,7 @@ nix shell nixpkgs#statix nixpkgs#deadnix --command sh -c \
 anything claiming to be a pure refactor, run `just build` then `just diff` and
 confirm the closure delta is empty or is exactly what you intended.
 
-## Testing a change to a flake input's own repo (e.g. dms-plugins)
+## Testing a change to a flake input's own repo (e.g. dux-plugins)
 
 Several flake inputs are this user's own repos, checked out separately under
 `~/Documents/<repo>` (not a subtree of this repo — `flake.nix`'s comment on

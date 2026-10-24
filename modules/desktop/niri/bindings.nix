@@ -275,7 +275,15 @@
               action.spawn = "ghostty";
             };
             "Mod+B" = spawn "helium";
-            "Mod+E" = spawn "nautilus";
+            "Mod+E" = spawn (
+              if config.apps.dux-files.preferred then
+                [
+                  "dfiles"
+                  "open"
+                ]
+              else
+                "nautilus"
+            );
 
             # Mod+Alt+<letter>: Alt on a letter means "run this thing"; Alt
             # on a nav key means "move without following" — different key classes.

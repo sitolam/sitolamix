@@ -9,11 +9,18 @@ let
   # sops-decrypted Home Assistant token path (runtime tmpfs, never in the store).
   haTokenPath = config.sops.secrets.hass_token.path;
 
+  # The TimeEdit feed URL carries a personal access key, so it can't sit in
+  # hoshiCalendar's settings (world-readable store, public repo). A timer
+  # fetches it from sops into this file instead.
+  timetableFile = "/home/otis/.cache/hoshi/ugent.ics";
+
   # QML expects "<pluginDir>/result/bin/mouthguard-detector", normally built
   # in-place by `nix build .#detector` — impossible in a read-only store.
-  # Pre-link it to dms-plugins' own packages.mouthguard-detector instead.
-  mouthGuardDetector =
-    inputs.dms-plugins.packages.${pkgs.stdenv.hostPlatform.system}.mouthguard-detector;
+  # Pre-link it to dux-plugins' own packages.mouthguard-detector instead.
+  # Our own plugins come from the dux-plugins input, not the registry's pinned
+  # copy, so `nix flake update dux-plugins` (or --override-input) reaches them.
+  ownPlugins = inputs.dux-plugins.packages.${pkgs.stdenv.hostPlatform.system};
+  mouthGuardDetector = ownPlugins.mouthguard-detector;
 
   # Generated here (not the plugin's menu.jsonc) so setup.config/update.*
   # rows can point at this checkout. A list, not an attrset — Nix serialises
@@ -428,13 +435,13 @@ let
 
   mouthGuardPlugin = pkgs.runCommand "dms-plugin-mouthguard" { } ''
     mkdir -p $out
-    cp -r ${inputs.dms-plugins}/plugins/mouthguard/. $out/
+    cp -r ${inputs.dux-plugins}/plugins/mouthguard/. $out/
     chmod -R u+w $out
     ln -s ${mouthGuardDetector} $out/result
   '';
 in
 {
-  config = lib.mkIf config.desktop.dms.enable {
+  config = lib.mkIf config.desktop.dux-shell.enable {
     # Key-injection backend for virtualKeyboard. No NixOS module for the
     # daemon exists, so it's hand-rolled: load uinput, run ydotoold, point
     # dms.service at it below.
@@ -454,8 +461,44 @@ in
       };
     };
 
+    sops.secrets.ugent_timetable_url = {
+      sopsFile = ../../../secrets/ugent.yaml;
+      owner = "otis";
+      mode = "0400";
+    };
+
     home.extraOptions = {
-      # Plugins from github:AvengeMedia/dms-plugin-registry; its homeModule
+      systemd.user = {
+        services.hoshi-timetable = {
+          # Before dms: hoshi loads its sources once at startup, so a fetch
+          # landing after that shows an error until its next refresh.
+          Unit = {
+            Description = "Fetch the UGent timetable for hoshiCalendar";
+            Before = [ "dms.service" ];
+          };
+          Install.WantedBy = [ "dms.service" ];
+          Service = {
+            Type = "oneshot";
+            # Write-then-rename, so a failed fetch keeps the last good copy.
+            ExecStart = pkgs.writeShellScript "hoshi-timetable" ''
+              set -eu
+              mkdir -p "$(dirname ${timetableFile})"
+              ${pkgs.curl}/bin/curl -fsSL --retry 3 --max-time 20 \
+                -o ${timetableFile}.tmp "$(cat ${config.sops.secrets.ugent_timetable_url.path})"
+              mv ${timetableFile}.tmp ${timetableFile}
+            '';
+          };
+        };
+        timers.hoshi-timetable = {
+          Timer = {
+            OnStartupSec = "1min";
+            OnUnitActiveSec = "1h";
+          };
+          Install.WantedBy = [ "timers.target" ];
+        };
+      };
+
+      # Plugins from github:duxlabs-dev/dux-plugin-registry; its homeModule
       # provides the pinned src for each — we just enable + configure.
       programs.dank-material-shell.plugins = {
         claudeCodeUsage = {
@@ -476,9 +519,9 @@ in
             trigger = "=";
           };
         };
-        dankKDEConnect.enable = true; # AvengeMedia/dms-plugins DankKDEConnect (bar widget; kdeconnect via kde-connect.nix)
+        dankKDEConnect.enable = true; # duxlabs-dev/dux-plugins DankKDEConnect (bar widget; kdeconnect via kde-connect.nix)
         # keybind search under "\", reads live from `dms keybinds show niri`.
-        dankLauncherKeys.enable = true; # AvengeMedia/dms-plugins DankLauncherKeys
+        dankLauncherKeys.enable = true; # duxlabs-dev/dux-plugins DankLauncherKeys
         # unified cpu/ram/disk gauges, replacing the built-in memUsage + diskUsage widgets.
         systemMonitorPlus = {
           enable = true;
@@ -532,32 +575,32 @@ in
         };
         # Omarchy-style root menu (Mod+Space). Tree generated above so rows
         # can reference this checkout. To iterate on the plugin itself:
-        # nh os build/switch --override-input dms-plugins path:/home/otis/Documents/dms-plugins .
+        # nh os build/switch --override-input dux-plugins path:/home/otis/Documents/dms-plugins .
         dankMenu = {
           enable = true;
+          src = lib.mkForce ownPlugins.dankmenu;
           settings.menuPath = "${dankMenuFile}";
         };
-        virtualKeyboard.enable = true; # end-4/dots-hyprland port, registry-built
-        usbManager.enable = true; # NordicsSys/dms-usb-manager
-        # One bar button that drops a panel of real bar widgets below the
-        # bar. Earlier collapsers failed because DankBarContent.qml anchors
-        # bar sections independently; this renders members in a popout instead.
-        barDropdown = {
+        # .ics calendar as a bar pill and desktop widget (TheDoukiDrift/hoshiCalendar).
+        hoshiCalendar = {
           enable = true;
           settings = {
-            # left to right in the panel; deliberately absent from
-            # rightWidgets in bar.nix, which would render them twice.
-            targets = [
-              "ambientSound"
-              "systemTray"
-              "usbManager"
-              "mouthGuard" # left click = popout, middle = start/stop, right = mute
+            # { source = "<path or https/webcal URL>"; name = "<label>"; }
+            sources = [
+              {
+                source = timetableFile; # fetched below; the feed URL is a secret
+                name = "UGent";
+              }
             ];
-            icon = "widgets";
-            display = "icon"; # no text label beside the icon
-            showChevron = true;
+            # Re-reads the local file, so fetches show up within 15 min.
+            refreshMinutes = 15;
           };
         };
+        virtualKeyboard = {
+          enable = true; # end-4/dots-hyprland port
+          src = lib.mkForce ownPlugins.virtualkeyboard;
+        };
+        usbManager.enable = true; # NordicsSys/dms-usb-manager
         # Left off: can only show VM status, not start it (oci-containers run
         # with --rm, so a stopped container doesn't exist to start), and
         # would be a permanent bar widget for a VM that's usually off.
@@ -585,16 +628,14 @@ in
 
       # Monitored-entity list is plugin state, not a setting — declare the
       # file for reproducibility. Change it here, not in the GUI.
-      home.file.".local/state/DankMaterialShell/plugins/homeAssistantMonitor_state.json".text =
-        builtins.toJSON
-          {
-            entityIds = lib.concatStringsSep ", " [
-              "light.lamp_otis"
-              "sensor.temperature_otis"
-              "sensor.humidity_otis"
-              "sensor.temperature_humidity_sensor_otis_battery"
-            ];
-          };
+      home.file.".local/state/dms/plugins/homeAssistantMonitor_state.json".text = builtins.toJSON {
+        entityIds = lib.concatStringsSep ", " [
+          "light.lamp_otis"
+          "sensor.temperature_otis"
+          "sensor.humidity_otis"
+          "sensor.temperature_humidity_sensor_otis_battery"
+        ];
+      };
     };
   };
 }

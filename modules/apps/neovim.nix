@@ -25,9 +25,9 @@ in
 
           plugins = [
             (pkgs.vimUtils.buildVimPlugin {
-              pname = "base46-dms";
-              version = inputs.base46-dms.shortRev or "unstable";
-              src = inputs.base46-dms;
+              pname = "base46-dux";
+              version = inputs.base46-dux.shortRev or "unstable";
+              src = inputs.base46-dux;
               # plugin runtime is loaded lazily by the colorscheme; nothing to require-check.
               doCheck = false;
             })

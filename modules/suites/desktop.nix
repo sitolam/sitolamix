@@ -3,12 +3,12 @@ let
   cfg = config.suites.desktop;
 in
 {
-  options.suites.desktop.enable = lib.mkEnableOption "niri + DankMaterialShell + wallpaper theming + kanata desktop";
+  options.suites.desktop.enable = lib.mkEnableOption "niri + Dux Shell + wallpaper theming + kanata desktop";
 
   config = lib.mkIf cfg.enable {
     desktop = {
       niri.enable = true;
-      dms.enable = true;
+      dux-shell.enable = true;
       greetd.enable = true;
       kanata.enable = true;
     };
@@ -19,6 +19,11 @@ in
       # StayFree extension in apps.helium.
       stayfree.enable = true;
       localsend.enable = true; # LAN AirDrop-alike — GUI only, no keybind/menu row
+      # On trial next to Nautilus; flip preferred once it has earned Mod+E.
+      dux-files = {
+        enable = true;
+        preferred = false;
+      };
     };
     theming.matugen.enable = true;
     services.kde-connect.enable = true;

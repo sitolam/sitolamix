@@ -10,9 +10,9 @@ in
 {
   # Safe to import unconditionally: the module only acts once
   # programs.dms-greeter.enable is set (imports can't sit under an mkIf).
-  imports = [ inputs.dank-greeter.nixosModules.default ];
+  imports = [ inputs.dux-greeter.nixosModules.default ];
 
-  options.desktop.greetd.enable = lib.mkEnableOption "greetd + DMS Greeter (DankMaterialShell login screen)";
+  options.desktop.greetd.enable = lib.mkEnableOption "greetd + Dux Greeter (Dux Shell login screen)";
 
   config = lib.mkIf cfg.enable {
     programs.dms-greeter = {
@@ -25,7 +25,8 @@ in
       compositor.name = "niri";
 
       # greetd's preStart copies DMS's settings.json, session.json and
-      # dms-colors.json from this home into /var/lib/dms-greeter so the login
+      # dms-colors.json (dms/ dirs, falling back to pre-2.0
+      # DankMaterialShell/ ones) from this home into /var/lib/dms-greeter so the login
       # screen matches the desktop theme. It's a copy taken at greetd start,
       # so a theme change only shows up after the next reboot or
       # `systemctl restart greetd`.

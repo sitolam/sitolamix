@@ -25,7 +25,7 @@ in
         # but never installs the extension itself, and needs it writable —
         # home-manager's extensions would symlink a read-only store path. See
         # the activation below.
-        dmsVsixBuild = "${inputs.dms}/quickshell/matugen/vsix-build";
+        dmsVsixBuild = "${inputs.dux-shell}/quickshell/matugen/vsix-build";
         dmsThemeVersion = (builtins.fromJSON (builtins.readFile "${dmsVsixBuild}/package.json")).version;
 
         nixpkgsExtensions = with pkgs.vscode-extensions; [
@@ -174,7 +174,7 @@ in
           };
         };
 
-        # Re-copies everything except themes/ on every activation, so a dms
+        # Re-copies everything except themes/ on every activation, so a dux-shell
         # input bump reaches package.json; themes/ is left alone once it
         # exists so matugen's rendered colours aren't reverted to the
         # placeholder. Stale versions are removed first.

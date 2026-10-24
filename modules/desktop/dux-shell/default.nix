@@ -6,11 +6,11 @@
   ...
 }:
 let
-  cfg = config.desktop.dms;
+  cfg = config.desktop.dux-shell;
 in
 {
-  options.desktop.dms = {
-    enable = lib.mkEnableOption "DankMaterialShell (Quickshell bar + panels, blur)";
+  options.desktop.dux-shell = {
+    enable = lib.mkEnableOption "Dux Shell, formerly DankMaterialShell (Quickshell bar + panels, blur)";
 
     initialWallpaper = lib.mkOption {
       type = lib.types.str;
@@ -23,7 +23,7 @@ in
   };
 
   # Split across sibling files (theme, bar, plugins, niri), all gated on
-  # desktop.dms.enable; this file holds the option + core wiring.
+  # desktop.dux-shell.enable; this file holds the option + core wiring.
   config = lib.mkIf cfg.enable {
     # DMS opens /dev/i2c-* directly for DDC monitor brightness.
     hardware.i2c.enable = true;
@@ -82,32 +82,22 @@ in
       }:
       {
         imports = [
-          inputs.dms.homeModules.dank-material-shell
-          inputs.dms.homeModules.niri
+          # Upstream kept the pre-rename option names (programs.dank-material-shell).
+          inputs.dux-shell.homeModules.dank-material-shell
+          inputs.dux-shell.homeModules.niri
           # declares plugins.<id> (enable=false + pinned src) for every
           # registry plugin; flipped on below.
-          inputs.dms-plugin-registry.homeModules.default
+          inputs.dux-plugin-registry.homeModules.default
         ];
 
         programs.dank-material-shell = {
           enable = true;
           systemd.enable = true;
-
-          # Numbered power-menu shortcuts (1..N) instead of DMS's fixed
-          # letters. --replace-fail breaks the build on a DMS bump — that's
-          # the cue to refresh the patch.
-          package = pkgs.dms-shell.overrideAttrs (old: {
-            preBuild = (old.preBuild or "") + ''
-              substituteInPlace ../quickshell/Modules/PowerMenu/PowerMenuContent.qml \
-                --replace-fail 'text: gridButtonRect.actionData.key' 'text: (gridButtonRect.index + 1)' \
-                --replace-fail 'text: listButtonRect.actionData.key' 'text: (listButtonRect.index + 1)' \
-                --replace-fail '(event.key === Qt.Key_P && !(event.modifiers & Qt.ControlModifier))) {' '(event.key === Qt.Key_P && !(event.modifiers & Qt.ControlModifier)) || (event.key >= Qt.Key_1 && event.key <= Qt.Key_9 && !(event.modifiers & Qt.ControlModifier))) {' \
-                --replace-fail 'function handleActionShortcut(event) {' 'function handleActionShortcut(event) { if (event.key >= Qt.Key_1 && event.key <= Qt.Key_9 && !(event.modifiers & Qt.ControlModifier)) { const numIndex = event.key - Qt.Key_1; if (numIndex < visibleActions.length) { startHold(getActionAtIndex(numIndex), numIndex); event.accepted = true; return true; } }'
-              chmod -R u+w internal/shellembed/dist
-              make sync-shell
-            '';
-          });
-          quickshell.package = pkgs.quickshell;
+          # khal-backed events in the clock popout; no khal calendars are set
+          # up here, and hoshiCalendar (plugins.nix) reads the .ics feeds.
+          enableCalendarEvents = false;
+          # package left at the module default: built from the dux-shell
+          # input, so `nix flake update dux-shell` is the whole upgrade.
 
           # Deliberately undeclared: the DMS home module writes session.json
           # as a read-only store symlink whenever `session != {}`, breaking
@@ -119,12 +109,14 @@ in
         # changes. Trigger one via sd-switch so edits apply after switch
         # without relogin.
         systemd.user.services.dms.Unit.X-Restart-Triggers = [
-          config.xdg.configFile."DankMaterialShell/settings.json".source
+          config.xdg.configFile."dms/settings.json".source
         ];
 
         # Seed session.json once, then leave it to DMS. Runs when missing or
         # still a store symlink (left by session != {} generations) — a
-        # plain -e check would miss the symlink case.
+        # plain -e check would miss the symlink case. Skipped while a
+        # pre-2.0 DankMaterialShell/session.json exists: `dms run` moves that
+        # dir to dms/ itself, and a seed here would shadow the live file.
         home.activation.seedDmsSession =
           let
             seed = (pkgs.formats.json { }).generate "dms-session-seed.json" {
@@ -145,8 +137,11 @@ in
             };
           in
           lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-            state="$HOME/.local/state/DankMaterialShell/session.json"
-            if [ ! -e "$state" ] || [ -L "$state" ]; then
+            state="$HOME/.local/state/dms/session.json"
+            legacy="$HOME/.local/state/DankMaterialShell/session.json"
+            if [ -f "$legacy" ] && [ ! -L "$legacy" ] && [ ! -e "$state" ]; then
+              : # left for DMS's own legacy-dir migration
+            elif [ ! -e "$state" ] || [ -L "$state" ]; then
               run mkdir -p "$(dirname "$state")"
               run rm -f "$state"
               # install, not cp: store files are read-only and DMS must write it.
@@ -164,16 +159,11 @@ in
             fi
           '';
 
-        # Some plugins need Qt QML modules quickshell doesn't bundle
-        # (QtWebSockets, QtMultimedia) — add them to the shell's QML path.
+        # Some plugins need QtWebSockets, which the shell's wrapper doesn't
+        # bundle (it already brings QtMultimedia) — add it to the QML path.
         systemd.user.services.dms.Service = {
           Environment = [
-            "NIXPKGS_QT6_QML_IMPORT_PATH=${
-              lib.concatMapStringsSep ":" (p: "${p}/lib/qt-6/qml") [
-                pkgs.qt6.qtwebsockets
-                pkgs.qt6.qtmultimedia
-              ]
-            }"
+            "NIXPKGS_QT6_QML_IMPORT_PATH=${pkgs.qt6.qtwebsockets}/lib/qt-6/qml"
           ];
 
           # The shell hits systemd's 1024-fd soft limit at startup: torn-down

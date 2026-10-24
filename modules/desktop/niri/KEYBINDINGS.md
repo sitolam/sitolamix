@@ -114,7 +114,7 @@ stack, un-stack it first with `Mod+.` (expel) and then move it.
 | `Mod+[` / `Mod+]` | consume or expel window left / right |
 | `Mod+,` / `Mod+.` | consume window into column / expel from column |
 
-## Shell surfaces (DankMaterialShell)
+## Shell surfaces (Dux Shell)
 
 | Key | `Mod` | `Mod+Shift` | `Mod+Ctrl` |
 | --- | --- | --- | --- |

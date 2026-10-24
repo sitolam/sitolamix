@@ -31,9 +31,9 @@ let
   chosen = lib.head images;
 in
 {
-  config = lib.mkIf config.desktop.dms.enable {
+  config = lib.mkIf config.desktop.dux-shell.enable {
     # Consumed by the session.json seeding in ./dms/default.nix.
-    desktop.dms.initialWallpaper = "${collection}/${chosen}";
+    desktop.dux-shell.initialWallpaper = "${collection}/${chosen}";
 
     home.extraOptions =
       {
@@ -55,8 +55,6 @@ in
           let
             folder = "${config.home.homeDirectory}/Pictures/Wallpapers";
             seed = (pkgs.formats.json { }).generate "dms-cache-seed.json" {
-              wallpaperLastPath = folder;
-              profileLastPath = "";
               fileBrowserSettings.wallpaper = {
                 lastPath = folder;
                 viewMode = "grid";
@@ -65,12 +63,13 @@ in
                 iconSizeIndex = 1;
                 showSidebar = true;
               };
-              configVersion = 2; # CacheData.qml cacheConfigVersion
+              configVersion = 3; # CacheData.qml cacheConfigVersion
             };
           in
           lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-            cache="$HOME/.cache/DankMaterialShell/cache.json"
-            if [ ! -e "$cache" ]; then
+            cache="$HOME/.cache/dms/cache.json"
+            # A pre-2.0 cache is moved here by DMS itself; don't shadow it.
+            if [ ! -e "$cache" ] && [ ! -e "$HOME/.cache/DankMaterialShell/cache.json" ]; then
               run mkdir -p "$(dirname "$cache")"
               run install -m 644 ${seed} "$cache"
             fi

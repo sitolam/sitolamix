@@ -8,9 +8,9 @@ enable-switch, side by side.
 
 [![NixOS](https://img.shields.io/badge/NixOS-flake-5277C3?style=flat-square&logo=nixos&logoColor=white)](https://nixos.org)
 [![niri](https://img.shields.io/badge/wm-niri-cba6f7?style=flat-square)](https://github.com/YaLTeR/niri)
-[![DankMaterialShell](https://img.shields.io/badge/shell-DankMaterialShell-f5c2e7?style=flat-square)](https://github.com/AvengeMedia/DankMaterialShell)
+[![Dux Shell](https://img.shields.io/badge/shell-Dux%20Shell-f5c2e7?style=flat-square)](https://github.com/duxlabs-dev/dux-shell)
 [![home-manager](https://img.shields.io/badge/home--manager-folded%20in-41439a?style=flat-square)](https://github.com/nix-community/home-manager)
-[![matugen](https://img.shields.io/badge/theme-DMS%20matugen%20·%20wallpaper--driven-89b4fa?style=flat-square)](https://github.com/AvengeMedia/DankMaterialShell)
+[![matugen](https://img.shields.io/badge/theme-DMS%20matugen%20·%20wallpaper--driven-89b4fa?style=flat-square)](https://github.com/duxlabs-dev/dux-shell)
 [![built with Claude Code](https://img.shields.io/badge/vibe%20coded%20with-Claude%20Code-d97757?style=flat-square)](https://claude.com/claude-code)
 [![licence: GPL-3.0](https://img.shields.io/badge/licence-GPL--3.0-a6e3a1?style=flat-square)](LICENSE)
 
@@ -20,7 +20,7 @@ enable-switch, side by side.
 
 ![the desktop](assets/screenshots/desktop.png)
 
-<em>niri + DankMaterialShell — nitch in a terminal on the left, yazi floating on the right, every colour taken from the wallpaper</em>
+<em>niri + Dux Shell — nitch in a terminal on the left, yazi floating on the right, every colour taken from the wallpaper</em>
 
 </div>
 
@@ -77,15 +77,15 @@ A single-user NixOS configuration built on three ideas:
 | Layer | Choice |
 |---|---|
 | **Compositor** | [niri](https://github.com/YaLTeR/niri) — scrollable-tiling Wayland |
-| **Shell / bar** | [DankMaterialShell](https://github.com/AvengeMedia/DankMaterialShell) (Quickshell) — bar, control center, notifications, lock screen, blur, plugins |
-| **Launcher** | [dankMenu](https://github.com/sitolam/dms-plugins/tree/main/plugins/dankmenu) (`Mod+Space`) — omarchy-style root menu: one key to every command, with its own search and app list |
+| **Shell / bar** | [Dux Shell](https://github.com/duxlabs-dev/dux-shell), formerly DankMaterialShell (Quickshell) — bar, control center, notifications, lock screen, blur, plugins |
+| **Launcher** | [dankMenu](https://github.com/sitolam/dux-plugins/tree/main/plugins/dankmenu) (`Mod+Space`) — omarchy-style root menu: one key to every command, with its own search and app list |
 | **Terminal** | [ghostty](https://ghostty.org/) |
 | **Login shell** | fish + [starship](https://starship.rs/) |
 | **Files** | GNOME Files (nautilus) |
 | **Browser** | [helium](https://helium.computer/) (default) + [zen](https://zen-browser.app/) — helium's flags, policies and extension set are declared in Nix |
 | **Idle / lock** | swayidle → lock · DPMS · suspend (pauses while media plays) |
-| **Theming** | DankMaterialShell's own [matugen](https://github.com/InioX/matugen) run — a Material 3 scheme derived from the current wallpaper; `theming.matugen.templates` registers a template per app so every themable surface follows |
-| **Greeter** | [dank-greeter](https://github.com/AvengeMedia/dank-greeter) — greetd + DMS's own login screen, drawn per-output by the same niri build as the session, wearing a copy of the desktop's theme |
+| **Theming** | Dux Shell's own [matugen](https://github.com/InioX/matugen) run — a Material 3 scheme derived from the current wallpaper; `theming.matugen.templates` registers a template per app so every themable surface follows |
+| **Greeter** | [Dux Greeter](https://github.com/duxlabs-dev/dux-greeter) — greetd + DMS's own login screen, drawn per-output by the same niri build as the session, wearing a copy of the desktop's theme |
 | **Keyboard** | [kanata](https://github.com/jtroo/kanata) home-row mods, system-wide |
 | **Fonts** | Nerd Fonts + the Microsoft sets (corefonts, vista-fonts) so foreign documents keep their metrics |
 | **Boot** | GRUB EFI + [catppuccin-grub](https://github.com/catppuccin/grub) |
@@ -96,12 +96,12 @@ A single-user NixOS configuration built on three ideas:
 Things this config does that a stock desktop does not:
 
 - 🦷 **Mouth guard** — a webcam watches whether your mouth stays closed and nags
-  from the bar when it doesn't ([`dms-plugins/mouthguard`](https://github.com/sitolam/dms-plugins/tree/main/plugins/mouthguard),
+  from the bar when it doesn't ([`dux-plugins/mouthguard`](https://github.com/sitolam/dux-plugins/tree/main/plugins/mouthguard),
   MediaPipe Face Mesh on OpenVINO, built straight from the flake input).
 - 🗂️ **One key to everything** — `Mod+Space` opens an omarchy-style root menu
   (see the screenshot above): drill in with `Enter`, out with `Esc`, or just
   type and it searches every command in the tree *and* every installed app
-  ([`dms-plugins/dankmenu`](https://github.com/sitolam/dms-plugins/tree/main/plugins/dankmenu)).
+  ([`dux-plugins/dankmenu`](https://github.com/sitolam/dux-plugins/tree/main/plugins/dankmenu)).
   Its tree is generated from this flake, so `Update ▸ Rebuild` runs against
   this very checkout.
 - ⌨️ **Home-row mods** — kanata turns `asdf`/`jkl;` into modifiers on hold, caps
@@ -283,7 +283,7 @@ Suites toggle groups of them; hosts just flip suites:
 # hosts/gamingpc/default.nix
 suites = {
   core.enable = true;      # shell + CLI programs
-  desktop.enable = true;   # niri + dms + matugen theming + greetd/dank-greeter
+  desktop.enable = true;   # niri + dux-shell + matugen theming + greetd/dux-greeter
   development.enable = true;   # vscode, docker, tooling
   media.enable = true;
   gaming.enable = true;
@@ -408,7 +408,7 @@ No machine that can decrypt (forking, or the old key is gone)? Replace the
 `gamingpc` key in `.sops.yaml` with your own and write fresh ciphertext with
 `nix run nixpkgs#sops -- secrets/home-assistant.yaml` — or, with no Home
 Assistant at all, delete `modules/system/sops.nix` **and** the
-`homeAssistantMonitor`/`haTokenPath` bits in `modules/desktop/dms/plugins.nix`
+`homeAssistantMonitor`/`haTokenPath` bits in `modules/desktop/dux-shell/plugins.nix`
 together, or evaluation breaks.
 
 ### 5. Install, then first boot
@@ -434,7 +434,7 @@ sudo chown -R otis:users ~/sitolamix   # it was cloned as root
 On `omnibook`, face unlock still needs a one-off enrollment — see
 [Face unlock](#-face-unlock-gaze) below. The checkout is already at
 `~/sitolamix`, which is what the dankMenu `Update ▸ Rebuild` rows assume
-(`flakeDir` in `modules/desktop/dms/plugins.nix`); from here on it is
+(`flakeDir` in `modules/desktop/dux-shell/plugins.nix`); from here on it is
 `just rebuild`. Monitors are configured in DMS's settings UI, not the flake.
 
 ### Just trying it out?
@@ -442,7 +442,7 @@ On `omnibook`, face unlock still needs a one-off enrollment — see
 No install needed — build the closure on any NixOS machine:
 `nix build github:sitolam/sitolamix#nixosConfigurations.gamingpc.config.system.build.toplevel`.
 Or cherry-pick: the modules are self-contained enough that copying
-`modules/desktop/dms/` or a single `modules/apps/*.nix` into your own config
+`modules/desktop/dux-shell/` or a single `modules/apps/*.nix` into your own config
 usually works, with only the `home.extraOptions` bridge (`modules/hm.nix`)
 to port along with it.
 
@@ -462,7 +462,7 @@ the lot.
 | `just doctor` | `check` + `drybuild` — the pre-push gate |
 | `just diff` | `nvd diff /run/current-system result` — what a build would change |
 | `just fmt` | `nix fmt` (nixfmt via treefmt, walks the tree) |
-| `just dms-reload` | restart the DankMaterialShell user service |
+| `just dms-reload` | restart the Dux Shell (`dms`) user service |
 | `just outputs` / `just windows` | `niri msg outputs` / `niri msg windows` |
 | `just secret <file>` | edit an encrypted secret — see § Secrets |
 | `just updatekeys <file>` | re-encrypt a secret after adding a host |
@@ -470,7 +470,7 @@ the lot.
 Fish also wraps `just` so it works from any cwd (`modules/apps/fish.nix`). For
 working *on* the flake, `nix develop` (or `direnv allow`) gives you `nvd`,
 `deadnix`, `statix`, `nil`, `nixd`, `nh`, `just` and `nixfmt` without
-installing any of them globally. After a rebuild that touches DankMaterialShell
+installing any of them globally. After a rebuild that touches Dux Shell
 plugins or settings, run `dms restart` so the shell reloads them.
 
 ## 🔑 GitHub auth
@@ -502,7 +502,7 @@ host key to age and hands it to sops for that one command instead. Don't run
 ```nix
 # modules/system/sops.nix
 sops.secrets.hass_token = { owner = "otis"; mode = "0400"; };
-# consumer, e.g. modules/desktop/dms/plugins.nix
+# consumer, e.g. modules/desktop/dux-shell/plugins.nix
 config.sops.secrets.hass_token.path   # => /run/secrets/hass_token
 ```
 
@@ -875,7 +875,7 @@ Two things the licence deliberately does *not* cover:
   tree keep the licences their own authors chose. A per-add-on table is in
   [that directory's README](modules/apps/anki/_lib/vendored/README.md). Read
   it before redistributing any of them.
-- **Everything behind a flake input** — nixpkgs, niri, DankMaterialShell,
+- **Everything behind a flake input** — nixpkgs, niri, Dux Shell,
   Helium, WinApps and the rest are fetched at build time under their own
   terms.
 

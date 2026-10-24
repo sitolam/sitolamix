@@ -1,6 +1,6 @@
 { config, lib, ... }:
 {
-  config = lib.mkIf config.desktop.dms.enable {
+  config = lib.mkIf config.desktop.dux-shell.enable {
     home.extraOptions =
       { lib, ... }:
       {

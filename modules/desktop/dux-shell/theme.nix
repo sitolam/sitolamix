@@ -1,6 +1,6 @@
 { config, lib, ... }:
 {
-  config = lib.mkIf config.desktop.dms.enable {
+  config = lib.mkIf config.desktop.dux-shell.enable {
     home.extraOptions.programs.dank-material-shell.settings = {
       # Colours come from the wallpaper. DMS runs matugen on every wallpaper
       # change and renders its built-in templates plus the user templates
@@ -23,9 +23,14 @@
       # blur (niri 26.04 ext-background-effect): frosted glass behind DMS
       # surfaces (bar, popouts, modals).
       blurEnabled = true;
-      # "Foreground Layers" (Theme > Surface Styling): off, so cards nested
-      # inside popouts get no extra tinted surface of their own.
-      blurForegroundLayers = false;
+      # Thin border around blurred surfaces; 2.0 split it out of blurEnabled.
+      # Seeded marks it as already decided so DMS doesn't re-derive it.
+      blurBorderEnabled = true;
+      blurBorderSeeded = true;
+      # "Foreground layers" (Theme > Surfaces): cards nested inside popouts get
+      # a faint tinted surface of their own, at 25% alpha.
+      blurForegroundLayers = true;
+      foregroundLayerTransparency = 0.25;
       # Same toggle for floating windows (Settings, Notepad, polkit prompts);
       # set explicitly so it stays off even if "Sync with Global Settings" is
       # turned off.
@@ -39,7 +44,6 @@
       # Surface alpha where blur shows through (1.0 = opaque). 0.3 is glassy;
       # raise toward 0.5 for more solid/readable.
       popupTransparency = 0.3;
-      dockTransparency = 0.3;
     };
   };
 }

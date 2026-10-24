@@ -1,5 +1,5 @@
 {
-  description = "sitolamix — enable-options NixOS: niri + DankMaterialShell, themed from the wallpaper";
+  description = "sitolamix — enable-options NixOS: niri + Dux Shell, themed from the wallpaper";
 
   nixConfig = {
     extra-substituters = [
@@ -67,15 +67,22 @@
       flake = false;
     };
 
-    # DankMaterialShell: the bar, panels, control center, lock screen and plugin host. Not in nixpkgs.
-    dms = {
-      url = "github:AvengeMedia/DankMaterialShell/stable";
+    # Dux Shell (formerly DankMaterialShell): the bar, panels, control center, lock screen and
+    # plugin host. nixpkgs' dms-shell lags releases; `stable` follows tagged releases.
+    dux-shell = {
+      url = "github:duxlabs-dev/dux-shell/stable";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # The greetd login screen matching the DMS lock screen. Not in nixpkgs.
-    dank-greeter = {
-      url = "github:AvengeMedia/dank-greeter";
+    # Dux Greeter: the greetd login screen matching the shell's lock screen. Not in nixpkgs.
+    dux-greeter = {
+      url = "github:duxlabs-dev/dux-greeter";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    # Dux Files: Dux Labs' file manager, themed like the shell. Not in nixpkgs.
+    dux-files = {
+      url = "github:duxlabs-dev/dux-files";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -109,25 +116,26 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # DMS plugin registry — source for modules/desktop/dms/plugins.nix builds.
-    dms-plugin-registry = {
-      url = "github:AvengeMedia/dms-plugin-registry";
+    # Dux Shell plugin registry — source for modules/desktop/dux-shell/plugins.nix builds.
+    dux-plugin-registry = {
+      url = "github:duxlabs-dev/dux-plugin-registry";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # Our own DMS plugins; kept only for mouthGuard, which needs wrapping with this flake's own `mouthguard-detector` package (see modules/desktop/dms/plugins.nix).
-    dms-plugins = {
-      url = "github:sitolam/dms-plugins";
+    # Our own Dux Shell plugins (dankMenu, virtualKeyboard, mouthGuard), taken from here rather than the registry's pinned copy; mouthGuard also needs this flake's `mouthguard-detector` (see modules/desktop/dux-shell/plugins.nix).
+    # Local checkout: ~/Documents/dms-plugins.
+    dux-plugins = {
+      url = "github:sitolam/dux-plugins";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # DMS's fork of NvChad's base46 colour engine, carrying the `_DMS_SUPPORT` marker nixpkgs' unforked copy lacks.
-    base46-dms = {
-      url = "github:AvengeMedia/base46";
+    # Dux Labs' fork of NvChad's base46 colour engine, carrying the `_DMS_SUPPORT` marker nixpkgs' unforked copy lacks.
+    base46-dux = {
+      url = "github:duxlabs-dev/base46";
       flake = false;
     };
 
-    # Our wallpaper collection (modules/desktop/wallpapers.nix); DMS derives every desktop colour from these. Images, not a flake.
+    # Our wallpaper collection (modules/desktop/wallpapers.nix); Dux Shell derives every desktop colour from these. Images, not a flake.
     wallpapers = {
       url = "github:sitolam/mywalls";
       flake = false;

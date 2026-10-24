@@ -26,7 +26,7 @@ in
         # `home.packages` entry with nothing else to gate. Split out if zen
         # grows a second concern (flags, policies, an extension set).
         #
-        # DMS renders ~/.config/DankMaterialShell/zen.css. zen only loads
+        # DMS renders ~/.config/dms/zen.css. zen only loads
         # userChrome.css with the legacy stylesheet pref on, and creates its
         # profile dir under a random name itself, so link into every profile
         # found — picked up on the first rebuild after zen has run once.
@@ -40,7 +40,7 @@ in
               # Skip a userChrome.css the user wrote by hand: ln -sfn would
               # silently replace it with the DMS symlink.
               [ -f "$f" ] && [ ! -L "$f" ] && continue
-              run ln -sfn "$HOME/.config/DankMaterialShell/zen.css" "$f"
+              run ln -sfn "$HOME/.config/dms/zen.css" "$f"
               if ! grep -q 'legacyUserProfileCustomizations.stylesheets' "$profile/user.js" 2>/dev/null; then
                 run sh -c "echo 'user_pref(\"toolkit.legacyUserProfileCustomizations.stylesheets\", true);' >> '$profile/user.js'"
               fi
