@@ -52,6 +52,11 @@
     };
 
     gc.automatic = false; # redundant with nh clean below (generation-aware)
+
+    # Builds (e.g. a patched kernel) only get CPU/disk the desktop isn't using,
+    # so a rebuild doesn't make the machine laggy; full speed when idle.
+    daemonCPUSchedPolicy = "idle";
+    daemonIOSchedClass = "idle";
   };
 
   # nh's clean timer supersedes nix.gc: keeps a minimum number of generations
