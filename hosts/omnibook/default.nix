@@ -33,9 +33,22 @@
   # Xe3 display-engine bug (not misconfiguration): DSB commit stalls flood dmesg
   # with "DSB 0 poll error" and read as dropped frames. Retest after kernel
   # bumps with `journalctl -k -b | grep -c "DSB 0 poll error"`.
-  boot.kernelParams = [
-    "xe.enable_dsb=0"
-  ];
+  boot = {
+    kernelParams = [
+      "xe.enable_dsb=0"
+    ];
+
+    # A hung CNVi Bluetooth controller returns -EBUSY from its PM callbacks,
+    # vetoing every suspend/hibernate with the lid closed. Backport of the
+    # bluetooth-next fixes (20dfccf8d854 and three more); drop once the
+    # kernel carries them (expected 7.4).
+    kernelPatches = [
+      {
+        name = "btintel-pcie-pm-fixes";
+        patch = ./btintel-pcie-pm-fixes.patch;
+      }
+    ];
+  };
 
   # 2880x1800 panel at scale 1.75 makes the shared 7px cursor default nearly
   # invisible — cursor size is logical, so it doesn't grow with output scale.
