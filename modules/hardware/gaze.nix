@@ -17,28 +17,15 @@ let
 
   packages = inputs.gaze.packages.${pkgs.stdenv.hostPlatform.system};
 
-  # Stock packages build CPU-only. openvino/gpu/npu need the `openvino`
-  # Cargo feature across every crate touching [inference], or the CLI/GUI
-  # reject config.toml. Drop this if upstream exposes it as a package argument.
-  withOpenvino =
-    package: overrides: if !cfg.openvino.enable then package else package.overrideAttrs overrides;
-
-  gazePackage = withOpenvino packages.gaze {
-    buildPhase = ''
-      runHook preBuild
-      cargo build --release --offline -p gazed --features openvino
-      cargo build --release --offline -p gaze-cli -p pam-gaze -p pam-gaze-grosshack \
-        --features gaze-cli/openvino
-      runHook postBuild
-    '';
-  };
-
-  guiPackage = withOpenvino packages.gaze-gui (old: {
-    cargoBuildFlags = old.cargoBuildFlags ++ [
-      "--features"
-      "gaze-gui/openvino"
-    ];
-  });
+  # Level Zero is dlopened by bare name by OpenVINO's NPU/GPU plugin; without
+  # it on gazed's link path, inference silently falls back to CPU.
+  openvinoLibraryPath = pkgs.writeText "gaze-openvino-library-path" (
+    lib.makeLibraryPath [
+      pkgs.onnxruntime
+      pkgs.level-zero
+    ]
+    + ":/run/opengl-driver/lib"
+  );
 in
 {
   imports = [ inputs.gaze.nixosModules.default ];
@@ -140,14 +127,14 @@ in
 
     services.gaze = {
       enable = true;
-      package = gazePackage;
+      package = packages.gaze;
       # Upstream's mutableConfig = true seeds config.toml once, then ignores
       # later `settings` changes. false makes it a read-only symlink instead
       # (the GUI's settings page can no longer save; enrollment is unaffected).
       mutableConfig = false;
       gui = {
         enable = true;
-        package = guiPackage;
+        package = packages.gaze-gui;
       };
       # Ours is `pamServices`; this default would enable gaze for sudo/polkit behind the list's back.
       pam.defaultServices = [ ];
@@ -198,10 +185,26 @@ in
 
     security.tpm2.enable = lib.mkIf cfg.unlockKeyring true;
 
-    # OpenVINO's NPU/GPU plugin dlopens the Level Zero loader by bare name;
-    # without this on gazed's link path, it silently falls back to CPU.
-    systemd.services.gazed.environment.LD_LIBRARY_PATH = lib.mkIf cfg.openvino.enable (
-      lib.makeLibraryPath [ pkgs.level-zero ] + ":/run/opengl-driver/lib"
+    # Registers nixpkgs' onnxruntime (it ships the OpenVINO provider) where
+    # gazed and `gaze doctor` look for it; FHS path, so tmpfiles instead of the store.
+    # The provider libs are linked too: onnxruntime looks for them next to the
+    # path it was loaded from (this symlink), not next to its store path.
+    systemd.tmpfiles.settings.gaze-openvino = lib.mkIf cfg.openvino.enable (
+      lib.genAttrs'
+        [
+          "libonnxruntime.so"
+          "libonnxruntime_providers_shared.so"
+          "libonnxruntime_providers_openvino.so"
+        ]
+        (
+          name:
+          lib.nameValuePair "/usr/lib/gaze/runtimes/openvino/${name}" {
+            "L+".argument = "${lib.getLib pkgs.onnxruntime}/lib/${name}";
+          }
+        )
+      // {
+        "/usr/lib/gaze/runtimes/openvino/library-path"."L+".argument = "${openvinoLibraryPath}";
+      }
     );
 
     # For `v4l2-ctl --list-devices` when hunting the IR node.
