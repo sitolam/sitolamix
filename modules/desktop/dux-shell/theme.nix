@@ -28,9 +28,9 @@
       blurBorderEnabled = true;
       blurBorderSeeded = true;
       # "Foreground layers" (Theme > Surfaces): cards nested inside popouts get
-      # a faint tinted surface of their own, at 25% alpha.
+      # a faint tinted surface of their own, at 10% alpha.
       blurForegroundLayers = true;
-      foregroundLayerTransparency = 0.25;
+      foregroundLayerTransparency = 0.1;
       # Same toggle for floating windows (Settings, Notepad, polkit prompts);
       # set explicitly so it stays off even if "Sync with Global Settings" is
       # turned off.
