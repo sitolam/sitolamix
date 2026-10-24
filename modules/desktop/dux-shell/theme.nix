@@ -7,10 +7,11 @@
       # modules collect through theming.matugen.templates.
       currentThemeName = "dynamic";
       # Declared here since settings.json is a store symlink — a scheme picked
-      # in the UI lasts only until DMS restarts. fidelity tracks the
-      # wallpaper's own colours most literally; tonal-spot (the alternative)
-      # washes a photo's palette down to one hue.
-      matugenScheme = "scheme-fidelity";
+      # in the UI lasts only until DMS restarts. "dms" is Dux Shell's own
+      # palette (2025 spec, stronger accents on neutral surfaces) instead of
+      # matugen's 2021 output.
+      matugenSpec = "dms";
+      matugenScheme = "scheme-tonal-spot";
       runUserMatugenTemplates = true;
 
       # neovim's template is off by default in DMS; modules/apps/neovim.nix
@@ -28,9 +29,9 @@
       blurBorderEnabled = true;
       blurBorderSeeded = true;
       # "Foreground layers" (Theme > Surfaces): cards nested inside popouts get
-      # a faint tinted surface of their own, at 10% alpha.
+      # a faint tinted surface of their own, at 20% alpha.
       blurForegroundLayers = true;
-      foregroundLayerTransparency = 0.1;
+      foregroundLayerTransparency = 0.2;
       # Same toggle for floating windows (Settings, Notepad, polkit prompts);
       # set explicitly so it stays off even if "Sync with Global Settings" is
       # turned off.

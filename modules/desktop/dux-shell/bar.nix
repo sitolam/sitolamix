@@ -28,6 +28,17 @@
       # limits would have to live here, the UI can't write settings.json.
       wellbeingEnabled = true;
 
+      # DMS fills every unset dock key from its defaults. Smart auto-hide
+      # hides it only while a window overlaps it.
+      dockConfigs = [
+        {
+          id = "dock";
+          name = "Dock";
+          enabled = true;
+          smartAutoHide = true;
+        }
+      ];
+
       dankLauncherV2ShowFooter = false;
       dankLauncherV2UnloadOnClose = true;
 

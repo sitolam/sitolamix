@@ -96,8 +96,21 @@ in
           # khal-backed events in the clock popout; no khal calendars are set
           # up here, and hoshiCalendar (plugins.nix) reads the .ics feeds.
           enableCalendarEvents = false;
-          # package left at the module default: built from the dux-shell
-          # input, so `nix flake update dux-shell` is the whole upgrade.
+          # The flake's own build, so `nix flake update dux-shell` is the whole
+          # upgrade. One patch: the dock's launcher button opens dankMenu
+          # (plugins.nix) instead of spotlight, falling back to spotlight if
+          # dankMenu isn't loaded. Drop once upstream has an option for it
+          # (duxlabs-dev/dux-shell#3908); the QML is copied in postInstall, so
+          # `patches` can't reach it.
+          package =
+            inputs.dux-shell.packages.${pkgs.stdenv.hostPlatform.system}.dms-shell.overrideAttrs
+              (old: {
+                postInstall = old.postInstall + ''
+                  substituteInPlace $out/share/quickshell/dms/Modules/Dock/DockLauncherButton.qml \
+                    --replace-fail 'PopoutService.toggleDankLauncherV2();' \
+                      'const menu = PluginService.pluginDaemonInstances["dankMenu"]; if (!menu) return PopoutService.toggleDankLauncherV2(); menu.menuVisible ? menu.closeMenu() : menu.openAt("root");'
+                '';
+              });
 
           # Deliberately undeclared: the DMS home module writes session.json
           # as a read-only store symlink whenever `session != {}`, breaking
