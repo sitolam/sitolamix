@@ -147,6 +147,15 @@ in
 
               # Starting wallpaper; picking another in DMS overwrites this file.
               wallpaperPath = cfg.initialWallpaper;
+
+              # Lock clock placed by hand (autoPosition off, ./lockscreen.nix):
+              # centred, a bit above the middle.
+              desktopWidgetInstancePositions.lock_clock._synced = {
+                x = 0;
+                y = -0.14439019097222222;
+                anchorX = "center";
+                anchorY = "center";
+              };
             };
           in
           lib.hm.dag.entryAfter [ "writeBoundary" ] ''

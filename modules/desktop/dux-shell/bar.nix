@@ -44,9 +44,9 @@
 
       clipboardEnterToPaste = true;
 
-      lockScreenShowPowerActions = false;
-
-      lockBeforeSuspend = true;
+      # DMS records here that it already added its "DMS windows float" niri
+      # rule; unset, it re-seeds and tries to write settings.json every start.
+      dmsWindowsFloatingSeeded = [ "niri" ];
 
       powerMenuActions = [
         "logout"
