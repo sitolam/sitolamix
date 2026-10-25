@@ -433,6 +433,39 @@ let
     }
   '';
 
+  # The registry's own builds, to patch one before handing it back as src.
+  registryPlugins = import "${inputs.dux-plugin-registry}/nix" { inherit pkgs; };
+
+  # The glow runs a bare `python3` expecting numpy and Pillow on PATH; point
+  # it at a Python that has them.
+  audioFxPlugin = pkgs.runCommand "dms-plugin-audiofx-patched" { } ''
+    cp -r ${registryPlugins.audioFx} $out
+    chmod -R u+w $out
+    substituteInPlace $out/AudioFxGlow.qml --replace-fail \
+      '["python3", root.script' \
+      '["${
+        pkgs.python3.withPackages (ps: [
+          ps.numpy
+          ps.pillow
+        ])
+      }/bin/python3", root.script'
+    # Pre-2.0 cache dir; Dux Shell 2.0 uses ~/.cache/dms.
+    substituteInPlace $out/audiofx-glow.py \
+      --replace-fail '~/.cache/DankMaterialShell/' '~/.cache/dms/'
+    # The player disc's DankAlbumArt is gone in Dux Shell 2.0, and one broken
+    # component stops the whole plugin, glow included. MediaArtwork draws the
+    # same round cover. Drop once upstream supports 2.0.
+    sed -i '/DankAlbumArt {/,/showAnimation: false/{
+      s/DankAlbumArt {/MediaArtwork {/
+      s/root\.artSpan/root.coverSize/
+      s/activePlayer: root\.player/cornerRadius: width \/ 2/
+      s/artUrl: root\.hiResArt/artUrl: root.hiResArt || (root.player?.trackArtUrl ?? "")/
+      /albumSize:/d
+      /showAnimation:/d
+    }' $out/AudioFxDiscDesktop.qml
+    grep -q 'MediaArtwork {' $out/AudioFxDiscDesktop.qml
+  '';
+
   mouthGuardPlugin = pkgs.runCommand "dms-plugin-mouthguard" { } ''
     mkdir -p $out
     cp -r ${inputs.dux-plugins}/plugins/mouthguard/. $out/
@@ -451,6 +484,7 @@ in
       # QalcService.qml spawns a bare `qalc` on load, before qalcCommand's
       # path applies — needs qalc on PATH or it hangs on "Calculating...".
       pkgs.libqalculate
+      pkgs.cava # audioFx's visualizer and glow
     ];
     systemd.services.ydotoold = {
       description = "ydotool daemon";
@@ -614,6 +648,20 @@ in
         # Charge-history popout + power-profile switcher; replaces the
         # control-center pill's own battery icon.
         batteryPlus.enable = true;
+        # satoshoe-dev/dms-audiofx, for its wallpaper glow only: the bright
+        # spots of the wallpaper pulse to the music. The edge visualizer is
+        # off and the player disc is never placed. No place-within-backdrop
+        # rule (upstream's README has one): DMS's wallpaper is on the
+        # workspaces, so the backdrop would put the glow underneath it.
+        audioFx = {
+          enable = true;
+          src = lib.mkForce audioFxPlugin;
+          settings = {
+            glowOn = true;
+            glowStrength = 10; # percent, 10-300 (the plugin's minimum)
+            on = false; # edge visualizer
+          };
+        };
       };
 
       # Marks plugins active (not just installed), and makes settings
