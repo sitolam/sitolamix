@@ -9,6 +9,8 @@ let
       "org.gnome.Nautilus.desktop";
   video = "mpv.desktop";
   image = "org.gnome.Loupe.desktop";
+  # Installed by apps.nautilus.
+  archive = "org.gnome.FileRoller.desktop";
 
   forMimes = app: mimes: lib.genAttrs mimes (_: app);
 in
@@ -62,7 +64,26 @@ in
             "image/bmp"
             "image/avif"
             "image/heif"
-          ];
+          ]
+          // lib.optionalAttrs config.apps.nautilus.enable (
+            forMimes archive [
+              "application/zip"
+              "application/x-zip-compressed"
+              "application/x-tar"
+              "application/x-compressed-tar"
+              "application/gzip"
+              "application/x-bzip-compressed-tar"
+              "application/x-xz-compressed-tar"
+              "application/x-zstd-compressed-tar"
+              "application/zstd"
+              "application/x-xz"
+              "application/x-bzip2"
+              "application/x-7z-compressed"
+              "application/vnd.rar"
+              "application/x-rar"
+              "application/x-cpio"
+            ]
+          );
       };
 
       # Folder shortcuts in Nautilus's sidebar (~/.config/gtk-3.0/bookmarks).

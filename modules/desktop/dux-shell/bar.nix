@@ -16,6 +16,8 @@
 
       # batteryNotifyLow: matches DMS core Settings > Battery > Alerts.
       batteryNotifyLow = true;
+      # Switches power-profiles-daemon to power-saver at low battery.
+      batteryAutoPowerSaver = true;
 
       launcherStyle = "spotlight"; # compact style, not the "full" app-drawer grid
       # Enter on an app that's already open focuses its window instead of
@@ -23,6 +25,11 @@
       launcherEnterAction = "focus";
 
       osdMediaPlaybackEnabled = true;
+      # Bluetooth headset buttons (AVRCP) drive DMS's active media player.
+      bluetoothMprisEnabled = true;
+      # Animated Apple Music covers in the dash's media tab, where a track
+      # has one.
+      dashOptions.media.animatedArt = true;
 
       # Screen time per app in Dash > Digital Wellbeing. Tracking only:
       # limits would have to live here, the UI can't write settings.json.
@@ -88,7 +95,12 @@
           ];
           centerWidgets = [
             "music"
-            "clock"
+            {
+              id = "clock";
+              enabled = true;
+              clockCompactMode = true;
+              clockNotificationBadge = false;
+            }
             "hoshiCalendar" # plugins.nix
             "weather"
           ];
