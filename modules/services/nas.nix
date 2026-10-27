@@ -12,13 +12,44 @@ let
 
   mountPoints = map (share: "${cfg.mountRoot}/${share}") cfg.shares;
   mountUnits = map (path: "${utils.escapeSystemdPath path}.mount") mountPoints;
+  automountUnits = map (path: "${utils.escapeSystemdPath path}.automount") mountPoints;
+
+  # A CIFS session left over from before a suspend or a network switch is
+  # dead, and every stat on it (Nautilus checks all mounts at startup) hangs
+  # until the kernel gives up on the server. So mount only while the NAS
+  # answers on 445, and otherwise drop the shares and their automounts.
+  # `release` is lazy and forced so it never waits on the dead server.
+  nasSync = pkgs.writeShellScript "nas-sync" ''
+    release() {
+      for mp in ${lib.escapeShellArgs mountPoints}; do
+        if ${pkgs.util-linux}/bin/findmnt -n -t cifs "$mp" >/dev/null; then
+          ${pkgs.util-linux}/bin/umount -f -l "$mp"
+        fi
+      done
+      ${pkgs.systemd}/bin/systemctl stop --no-block ${
+        lib.escapeShellArgs (automountUnits ++ mountUnits)
+      }
+    }
+    case "$1" in
+      release) release ;;
+      check)
+        if ${pkgs.coreutils}/bin/timeout 2 ${pkgs.bash}/bin/bash -c ': </dev/tcp/$0/445' ${lib.escapeShellArg cfg.server} 2>/dev/null; then
+          ${pkgs.systemd}/bin/systemctl start --no-block ${
+            lib.escapeShellArgs (automountUnits ++ mountUnits)
+          }
+        else
+          release
+        fi ;;
+    esac
+  '';
 
   # noauto keeps the shares out of the boot transaction — the laptop is often
   # away from the home LAN, and a boot-time mount would stall/fail there.
   # Mounting instead happens from the NetworkManager dispatcher below;
-  # x-systemd.automount is the fallback if that attempt missed the NAS still
-  # booting. x-gvfs-show lists the share in the Nautilus sidebar; no
+  # x-systemd.automount remounts on access in between, while the NAS answers. x-gvfs-show lists the share in the Nautilus sidebar; no
   # idle-timeout, since it should stay mounted while the network is up.
+  # echo_interval=10: a server that stops answering is dropped after 30 s
+  # (3 missed echoes) instead of the default 180 s.
   mountOptions = share: [
     "credentials=${credentials}"
     "uid=1000"
@@ -26,6 +57,7 @@ let
     "file_mode=0644"
     "dir_mode=0755"
     "iocharset=utf8"
+    "echo_interval=10"
     "nofail"
     "_netdev"
     "noauto"
@@ -76,24 +108,30 @@ in
 
     fileSystems = lib.listToAttrs (map mount cfg.shares);
 
-    # Mount on any connection-up, release once NetworkManager reports fully
-    # disconnected (not just this connection down — toggling the WireGuard
-    # tunnel also fires `down` while Wi-Fi stays up). --no-block: the
-    # dispatcher must not wait on the NAS.
+    # Re-check on every connection change: a switch to another network
+    # fires these too, not only a full disconnect.
     networking.networkmanager.dispatcherScripts = [
       {
         type = "basic";
         source = pkgs.writeShellScript "nas-mount" ''
           case "$2" in
-            up | vpn-up | connectivity-change)
-              ${pkgs.systemd}/bin/systemctl start --no-block ${lib.escapeShellArgs mountUnits} ;;
-            down)
-              if [ "$(${pkgs.networkmanager}/bin/nmcli -t -f STATE general)" = disconnected ]; then
-                ${pkgs.systemd}/bin/systemctl stop --no-block ${lib.escapeShellArgs mountUnits}
-              fi ;;
+            up | down | vpn-up | vpn-down | connectivity-change | dhcp4-change)
+              ${nasSync} check ;;
           esac
         '';
       }
     ];
+
+    # Drop the shares before suspend/hibernate; NetworkManager's `up` on
+    # resume mounts them again.
+    systemd.services.nas-release-before-sleep = {
+      description = "Unmount NAS shares before sleep";
+      before = [ "sleep.target" ];
+      wantedBy = [ "sleep.target" ];
+      serviceConfig = {
+        Type = "oneshot";
+        ExecStart = "${nasSync} release";
+      };
+    };
   };
 }
