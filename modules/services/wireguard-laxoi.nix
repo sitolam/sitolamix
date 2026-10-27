@@ -12,14 +12,14 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    # Only the private key is sensitive — peer, endpoint and address below
-    # live in the profile in plain sight.
+    # Private key and endpoint (home IP) are secret; peer pubkey and tunnel
+    # address below are not.
     sops.secrets.wireguard_laxoi_env = {
       sopsFile = ../../secrets/wireguard.yaml;
       mode = "0400";
     };
 
-    # ensureProfiles envsubst-expands $WG_PRIVATE_KEY into the profile it
+    # ensureProfiles envsubst-expands $WG_* into the profile it
     # writes to /run/NetworkManager/system-connections/, never the Nix store.
     networking.networkmanager.ensureProfiles = {
       environmentFiles = [ envPath ];
@@ -37,14 +37,14 @@ in
             mtu = 1420;
           };
           "wireguard-peer.fjr5K4p6NLC0wHkNRq4Rs4r6yz0GhdzsMdzCQaPaPHA=" = {
-            endpoint = "REDACTED:51820";
+            endpoint = "$WG_ENDPOINT";
             allowed-ips = "0.0.0.0/0";
             persistent-keepalive = 21;
           };
           ipv4 = {
             method = "manual";
             address1 = "10.0.0.7/32";
-            dns = "192.168.68.138";
+            dns = "192.168.68.53";
           };
           ipv6.method = "disabled";
         };
