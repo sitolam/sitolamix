@@ -80,12 +80,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # Dux Files: Dux Labs' file manager, themed like the shell. Not in nixpkgs.
-    dux-files = {
-      url = "github:duxlabs-dev/dux-files";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     # Zen browser packaging; not in nixpkgs.
     zen-browser = {
       url = "github:0xc000022070/zen-browser-flake";

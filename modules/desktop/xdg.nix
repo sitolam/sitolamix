@@ -2,11 +2,7 @@
 let
   # default handler per category -> its .desktop id
   browser = "helium.desktop";
-  fileManager =
-    if config.apps.dux-files.preferred then
-      "dev.duxlabs.files.desktop"
-    else
-      "org.gnome.Nautilus.desktop";
+  fileManager = "org.gnome.Nautilus.desktop";
   video = "mpv.desktop";
   image = "org.gnome.Loupe.desktop";
   # Installed by apps.nautilus.

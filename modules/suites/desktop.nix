@@ -19,11 +19,6 @@ in
       # StayFree extension in apps.helium.
       stayfree.enable = true;
       localsend.enable = true; # LAN AirDrop-alike — GUI only, no keybind/menu row
-      # On trial next to Nautilus; flip preferred once it has earned Mod+E.
-      dux-files = {
-        enable = true;
-        preferred = false;
-      };
     };
     theming.matugen.enable = true;
     services.kde-connect.enable = true;
