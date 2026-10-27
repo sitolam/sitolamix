@@ -118,12 +118,13 @@ in
           session = { };
         };
 
-        # Nothing restarts dms when only settings.json/the theme file
-        # changes. Trigger one via sd-switch so edits apply after switch
-        # without relogin.
-        systemd.user.services.dms.Unit.X-Restart-Triggers = [
-          config.xdg.configFile."dms/settings.json".source
-        ];
+        # Nothing restarts dms when only its config files change (settings,
+        # plugin settings, plugins). Trigger one via sd-switch so edits apply
+        # after switch without relogin; a running shell only half-reloads
+        # swapped plugin files.
+        systemd.user.services.dms.Unit.X-Restart-Triggers = lib.mapAttrsToList (_: f: f.source) (
+          lib.filterAttrs (name: _: lib.hasPrefix "dms/" name) config.xdg.configFile
+        );
 
         # Seed session.json once, then leave it to DMS. Runs when missing or
         # still a store symlink (left by session != {} generations) — a
