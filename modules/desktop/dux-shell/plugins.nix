@@ -464,6 +464,50 @@ let
       /showAnimation:/d
     }' $out/AudioFxDiscDesktop.qml
     grep -q 'MediaArtwork {' $out/AudioFxDiscDesktop.qml
+    # niri stacks same-layer surfaces in creation order, and Dux Shell
+    # rebuilds its wallpaper windows after every wake or monitor change,
+    # burying the glow under them. Rebuild the glow once that settles (it
+    # then also sits above desktop widgets; none are used here). Drop once
+    # upstream handles DMS's surface recovery.
+    sed -i '/id: glowScreens/,/model:/s/model: Quickshell\.screens/model: daemon.glowScreenModel/' \
+      $out/AudioFxDaemon.qml
+    sed -i '/readonly property bool glowReady: glowScreens/r ${glowRestack}' $out/AudioFxDaemon.qml
+    grep -q 'model: daemon.glowScreenModel' $out/AudioFxDaemon.qml
+    grep -q 'id: glowRestackTimer' $out/AudioFxDaemon.qml
+  '';
+
+  glowRestack = pkgs.writeText "audiofx-glow-restack.qml" ''
+    property var glowScreenModel: Quickshell.screens
+    function restackGlow() {
+        daemon.glowScreenModel = [];
+        glowRestackTimer.restart();
+    }
+    Timer {
+        id: glowRestackTimer
+        // past ShellCore's recovery passes (debounce + 800 + 2000 ms)
+        interval: 6000
+        onTriggered: {
+            // A placeholder-only screen list crashes per-screen delegates.
+            let real = false;
+            for (let i = 0; i < Quickshell.screens.length; i++)
+                real = real || Quickshell.screens[i].name.length > 0;
+            if (!real)
+                return restart();
+            daemon.glowScreenModel = Quickshell.screens;
+        }
+    }
+    Connections {
+        target: SessionService
+        function onSessionResumed() {
+            daemon.restackGlow();
+        }
+    }
+    Connections {
+        target: Quickshell
+        function onScreensChanged() {
+            daemon.restackGlow();
+        }
+    }
   '';
 
   mouthGuardPlugin = pkgs.runCommand "dms-plugin-mouthguard" { } ''
