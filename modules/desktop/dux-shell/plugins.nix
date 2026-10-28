@@ -468,7 +468,7 @@ let
     # rebuilds its wallpaper windows after every wake or monitor change,
     # burying the glow under them. Rebuild the glow once that settles (it
     # then also sits above desktop widgets; none are used here). Drop once
-    # upstream handles DMS's surface recovery.
+    # upstream handles DMS's surface recovery (satoshoe-dev/dms-audiofx#1).
     sed -i '/id: glowScreens/,/model:/s/model: Quickshell\.screens/model: daemon.glowScreenModel/' \
       $out/AudioFxDaemon.qml
     sed -i '/readonly property bool glowReady: glowScreens/r ${glowRestack}' $out/AudioFxDaemon.qml
