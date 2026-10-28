@@ -17,6 +17,7 @@ in
       obsidian.enable = true;
 
       oop-apps.enable = true;
+      sage.enable = true;
 
       # requires apps.vscode.enable (suites.development) for the
       # LaTeX Workshop extension to have a profile to attach to.
