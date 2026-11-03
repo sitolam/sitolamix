@@ -23,7 +23,19 @@ in
         # wrapped; the desktop entry uses the second.
         apply = pkgs.writeShellScript "xournalpp-apply-settings" ''
           ${pkgs.python3}/bin/python3 ${./apply-settings.py} \
-            ${pkgs.writeText "xournalpp-settings.json" (builtins.toJSON settings)} || true
+            ${
+              pkgs.writeText "xournalpp-settings.json" (
+                builtins.toJSON (
+                  settings
+                  // {
+                    # Xournal++ saves the store path it was started from; a
+                    # rebuild moves it and LaTeX then fails with "Global
+                    # template file is not a regular file".
+                    "latexSettings.globalTemplatePath" = "${xournalpp}/share/xournalpp/resources/default_template.tex";
+                  }
+                )
+              )
+            } || true
         '';
 
         # Behaviours Xournal++ hardcodes in its canvas, so no setting or
