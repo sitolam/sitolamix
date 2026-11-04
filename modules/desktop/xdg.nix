@@ -23,6 +23,10 @@ in
         setSessionVariables = true;
       };
 
+      # xdg-open ignores mimeapps.list for single-slash `file:/…` URLs (Jupyter
+      # emits these) and falls back to $BROWSER, as does Python's webbrowser.
+      home.sessionVariables.BROWSER = "helium";
+
       # Makes ~/.config/mimeapps.list HM-managed (read-only) — change a
       # default here, not via an app's "set as default".
       xdg.mimeApps = {
