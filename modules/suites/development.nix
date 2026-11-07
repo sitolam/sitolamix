@@ -9,7 +9,6 @@ in
     apps = {
       claude-code.enable = true;
       vscode.enable = true;
-      zed.enable = true;
       android.enable = true;
       python.enable = true;
     };
