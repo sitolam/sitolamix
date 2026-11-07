@@ -449,21 +449,6 @@ let
           ps.pillow
         ])
       }/bin/python3", root.script'
-    # Pre-2.0 cache dir; Dux Shell 2.0 uses ~/.cache/dms.
-    substituteInPlace $out/audiofx-glow.py \
-      --replace-fail '~/.cache/DankMaterialShell/' '~/.cache/dms/'
-    # The player disc's DankAlbumArt is gone in Dux Shell 2.0, and one broken
-    # component stops the whole plugin, glow included. MediaArtwork draws the
-    # same round cover. Drop once upstream supports 2.0.
-    sed -i '/DankAlbumArt {/,/showAnimation: false/{
-      s/DankAlbumArt {/MediaArtwork {/
-      s/root\.artSpan/root.coverSize/
-      s/activePlayer: root\.player/cornerRadius: width \/ 2/
-      s/artUrl: root\.hiResArt/artUrl: root.hiResArt || (root.player?.trackArtUrl ?? "")/
-      /albumSize:/d
-      /showAnimation:/d
-    }' $out/AudioFxDiscDesktop.qml
-    grep -q 'MediaArtwork {' $out/AudioFxDiscDesktop.qml
     # niri stacks same-layer surfaces in creation order, and Dux Shell
     # rebuilds its wallpaper windows after every wake or monitor change,
     # burying the glow under them. Rebuild the glow once that settles (it
