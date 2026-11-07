@@ -6,6 +6,12 @@ in
   options.apps.sage.enable = lib.mkEnableOption "SageMath, with a Jupyter kernel for VS Code notebooks";
 
   config = lib.mkIf cfg.enable {
+    # The nixpkgs VS Code Jupyter extension's zeromq has no build for its
+    # Electron, so it starts kernels through `python -m jupyter` on the system
+    # interpreter (apps.python). Drop once its log stops showing
+    # "No native build was found" for zeromq.
+    apps.python.extraPackages = ps: [ ps.notebook ];
+
     home.extraOptions =
       { pkgs, ... }:
       let
