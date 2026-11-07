@@ -40,8 +40,8 @@
 
     # A hung CNVi Bluetooth controller returns -EBUSY from its PM callbacks,
     # vetoing every suspend/hibernate with the lid closed. Backport of the
-    # bluetooth-next fixes (20dfccf8d854 and three more); drop once the
-    # kernel carries them (expected 7.4).
+    # bluetooth-next fixes (20dfccf8d854 and three more); mainline since
+    # 7.4-rc1 (2926eb396711), not tagged for stable. Drop on kernel 7.4.
     kernelPatches = [
       {
         name = "btintel-pcie-pm-fixes";
