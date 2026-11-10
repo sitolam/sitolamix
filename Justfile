@@ -24,7 +24,6 @@ boot:
 
 update:
     nix flake update
-    just rebuild
 
 diff:
     nvd diff /run/current-system result

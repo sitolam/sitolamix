@@ -29,7 +29,7 @@ in
 
       shellAliases = {
         rebuild = "nh os switch path:$HOME/sitolamix";
-        update = "nix flake update --flake path:$HOME/sitolamix && nh os switch path:$HOME/sitolamix";
+        update = "nix flake update --flake path:$HOME/sitolamix";
         check = "nix flake check --no-build path:$HOME/sitolamix";
         drybuild = "nix build path:$HOME/sitolamix#nixosConfigurations.gamingpc.config.system.build.toplevel --dry-run";
         diff = "nix build path:$HOME/sitolamix#nixosConfigurations.gamingpc.config.system.build.toplevel && nvd diff /run/current-system result";

@@ -455,7 +455,7 @@ the lot.
 |---|---|
 | `just rebuild` | `nh os switch .` — build and activate this checkout |
 | `just boot` | `nh os boot .` — build, apply on next reboot. Safer after a systemd or glibc bump |
-| `just update` | `nix flake update`, then rebuild |
+| `just update` | `nix flake update` (only bumps `flake.lock`; run `just rebuild` after) |
 | `just check` | `nix flake check --no-build` |
 | `just drybuild [host]` | dry-run build (defaults to `hostname`) |
 | `just build [host]` | real build, leaves a `result` symlink |
