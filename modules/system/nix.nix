@@ -49,6 +49,12 @@
       ];
 
       auto-optimise-store = true; # hardlink-dedupe identical store paths (saves disk)
+
+      # Defaults (max-jobs = nproc, cores = all) allow nproc² compiler threads:
+      # RAM fills, the desktop swaps and the laptop heats up even at idle priority.
+      # 3 jobs × 4 threads leaves a few cores and most memory for the desktop.
+      max-jobs = 3;
+      cores = 4;
     };
 
     gc.automatic = false; # redundant with nh clean below (generation-aware)
@@ -58,6 +64,10 @@
     daemonCPUSchedPolicy = "idle";
     daemonIOSchedClass = "idle";
   };
+
+  # Past this the kernel reclaims the build's memory, not the desktop's.
+  # MemoryHigh only throttles; it never OOM-kills a build.
+  systemd.services.nix-daemon.serviceConfig.MemoryHigh = "60%";
 
   # nh's clean timer supersedes nix.gc: keeps a minimum number of generations
   # regardless of age, so a rebuild spree can't zero out rollback targets.
